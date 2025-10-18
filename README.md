@@ -11,4 +11,7 @@ This project will be a work in progress, meaning that code could change at anyti
 
 OK. Lets get started!
 
-
+Requirements:
+- Visual Studio 2022 or higher
+- Raytracing capable card
+- x64 projects

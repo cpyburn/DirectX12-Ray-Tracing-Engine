@@ -60,10 +60,13 @@ to
 ```
 
 Copy and paste the entire contents pch.h file from TestGame into CPyburnRTXEngine pchlib.h
+
 Right click on CPyburnRTXEngine project and build
 
 Right click on TestGame > Add > Reference > CPyburnRTXEngine > Ok
+
 Right click on TestGame > Properties > C/C++ > General > Additional Include Directories > Edit > *folder > ..\CPyburnRTXEngine\ > OK
+
 Now delete everything in TestGame pch.h and paste below into the  pch.h file
 ```
 //

@@ -7,7 +7,7 @@ Going to name the solution CPyburnRTXEngine. Going to name the game TestGame. Ma
 <img width="688" height="120" alt="Screenshot 2025-10-18 080833" src="https://github.com/user-attachments/assets/eb49e53e-ce76-44f5-b7e2-f6b7ed9741b9" />
 
 You should get a cornflower blue screen.
-<img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/d9a4dacc-c8fa-4b11-936a-59874874908d" />
+<img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/8840c156-681a-4638-8453-a31428efecd7" />
 
 At this point we have a working game but it isn't going to be super reusable for all our purposes.  We want a .lib that we can reference from any game project with all the methods we will create to make our engine.
 
@@ -92,3 +92,7 @@ to
 ```
 
 A little clean up. Delete farmework.h and CPyburnRTXEngine.cpp from CPyburnRTXEngine
+
+You should now be able to hit the play button and see the cornflower blue screen
+<img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/8e43012f-dc88-434d-bfc5-c4a651705302" />
+

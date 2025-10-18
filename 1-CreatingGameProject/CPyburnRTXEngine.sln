@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35431.28
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CPyburnRTXEngine", "CPyburnRTXEngine\CPyburnRTXEngine.vcxproj", "{94FF767E-39F6-446D-AD67-DC7FE16763EF}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestGame", "TestGame\TestGame.vcxproj", "{28945D7F-C7F8-48D7-8278-BAE77C0EA305}"
 EndProject
 Global
@@ -15,14 +13,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Debug|x64.ActiveCfg = Debug|x64
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Debug|x64.Build.0 = Debug|x64
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Debug|x86.ActiveCfg = Debug|Win32
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Debug|x86.Build.0 = Debug|Win32
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Release|x64.ActiveCfg = Release|x64
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Release|x64.Build.0 = Release|x64
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Release|x86.ActiveCfg = Release|Win32
-		{94FF767E-39F6-446D-AD67-DC7FE16763EF}.Release|x86.Build.0 = Release|Win32
 		{28945D7F-C7F8-48D7-8278-BAE77C0EA305}.Debug|x64.ActiveCfg = Debug|x64
 		{28945D7F-C7F8-48D7-8278-BAE77C0EA305}.Debug|x64.Build.0 = Debug|x64
 		{28945D7F-C7F8-48D7-8278-BAE77C0EA305}.Debug|x86.ActiveCfg = Debug|Win32

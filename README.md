@@ -25,4 +25,4 @@ A good book to read:
 
 ### [1-CreatingGameProject](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/1-CreatingGameProject) - Creating the game project
 
-### [2-Fullscreen]([https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen) - Adding Fullscreen code
+### [2-Fullscreen](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen) - Adding Fullscreen code

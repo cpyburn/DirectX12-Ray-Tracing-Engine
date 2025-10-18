@@ -22,3 +22,7 @@ Requirements:
 
 A good book to read:
 [3D Game Programming with DirectX 12](https://www.amazon.com/Introduction-3D-Game-Programming-DirectX/dp/1942270062/ref=sr_1_1?crid=L5KHVXIH2G9O&dib=eyJ2IjoiMSJ9.Skg7Qn77SnWByJTez6Z5q1IUJeMVfWZ7JopNz06FEhJwgvj7_Q8cUk1D2CHY7fG-pqc3i3z6Ne481D7pRMehLgPNf7TsvM8tLvrO2gtspFQ-DtczrMtf_rQkf-dC-dNoDAg49u3Frskkr_Ro-ZWrzoleaaBuAK-DKXXR6HhI_hawSCuBh_1bUtb3X5WK56n4FtSJ9ZY7topVIfrj407yDkNvd28aXqZWAYnWIz423QE.QQfxwaL_oAgcTV377fbwiT--YGlDXLUCki-qlk8pjVo&dib_tag=se&keywords=directx+12+book&qid=1760812558&sprefix=directx+12+boo%2Caps%2C169&sr=8-1)
+
+### [1-CreatingGameProject](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/1-CreatingGameProject) - Creating the game project
+
+### [2-Fullscreen]([https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen) - Adding Fullscreen code

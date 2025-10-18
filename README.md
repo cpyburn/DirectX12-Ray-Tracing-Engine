@@ -1,7 +1,5 @@
 # DirectX12-Ray-Tracing-Engine
-How to create a ray tracing engine from scratch in DirectX12. If you are trying to make a Vulkan engine, all of these tutorial principals will apply to the Vulkan framework.
-
-The purpose of this repo is to go through all the steps of creating a ray tracing engine from scratch using directx 12 and visual studio.
+How to create a ray tracing engine from scratch in DirectX12 using Visual Studio Pro. If you are trying to make a Vulkan engine, all of these tutorial principals will apply to the Vulkan framework.
 
 I am also looking for a few people to join my team to create a ray tracing RTS similar to warcraft3 with heros, set up a kick starter, and a discord server. If you have any interest please send your resume and interests to cpyburn78@gmail.com.  There will be no money involved until the game is released on Steam, or the kick starter makes enough money to pay for your services.
 

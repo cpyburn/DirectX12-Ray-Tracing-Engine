@@ -2,10 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Common">
-      <UniqueIdentifier>1f584caa-017e-424e-9aa7-71a9c0c6063c</UniqueIdentifier>
+      <UniqueIdentifier>7f80f4d1-fe92-4998-a835-cd14c19abf08</UniqueIdentifier>
     </Filter>
     <Filter Include="Assets">
-      <UniqueIdentifier>efa79d96-22bc-48d9-a7a8-2e9b80349abe</UniqueIdentifier>
+      <UniqueIdentifier>4bed7de1-5b5b-4a42-82e2-e23ef579469a</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>

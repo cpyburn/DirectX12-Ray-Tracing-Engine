@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <RootNamespace>CPyburnRTXEngine</RootNamespace>
-    <ProjectGuid>{94ff767e-39f6-446d-ad67-dc7fe16763ef}</ProjectGuid>
+    <RootNamespace>TestGame</RootNamespace>
+    <ProjectGuid>{28945d7f-c7f8-48d7-8278-bae77c0ea305}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>

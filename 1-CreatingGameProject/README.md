@@ -28,9 +28,9 @@ Right click on CPyburnRTXEngine > properties > Librarian > General Additional De
 
 Right click on CPyburnRTXEngine > properties > C/C++ > Precompiled headers > Precompiled Header File > pchlib.h > OK
 
-Rename pch.h to pchlib.h
+Rename pch.h in CPyburnRTXEngine to pchlib.h
 
-Rename pch.cpp to pchlib.cpp
+Rename pch.cpp in CPyburnRTXEngine to pchlib.cpp
 
 Edit pchlib.cpp and change
 ```

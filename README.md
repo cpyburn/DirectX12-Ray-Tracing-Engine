@@ -14,4 +14,4 @@ OK. Lets get started!
 Requirements:
 - Visual Studio 2022 or higher
 - Raytracing capable card
-- x64 projects
+- x64 project

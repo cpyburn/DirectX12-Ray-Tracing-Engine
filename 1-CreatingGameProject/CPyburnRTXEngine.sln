@@ -5,6 +5,8 @@ VisualStudioVersion = 17.11.35431.28
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestGame", "TestGame\TestGame.vcxproj", "{28945D7F-C7F8-48D7-8278-BAE77C0EA305}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CPyburnRTXEngine", "CPyburnRTXEngine\CPyburnRTXEngine.vcxproj", "{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{28945D7F-C7F8-48D7-8278-BAE77C0EA305}.Release|x64.Build.0 = Release|x64
 		{28945D7F-C7F8-48D7-8278-BAE77C0EA305}.Release|x86.ActiveCfg = Release|Win32
 		{28945D7F-C7F8-48D7-8278-BAE77C0EA305}.Release|x86.Build.0 = Release|Win32
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Debug|x64.ActiveCfg = Debug|x64
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Debug|x64.Build.0 = Debug|x64
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Debug|x86.ActiveCfg = Debug|Win32
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Debug|x86.Build.0 = Debug|Win32
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Release|x64.ActiveCfg = Release|x64
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Release|x64.Build.0 = Release|x64
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Release|x86.ActiveCfg = Release|Win32
+		{3AA3B22D-7F98-48CD-AA1C-9D37A34B5C7A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,12 +9,13 @@ Going to name the solution CPyburnRTXEngine. Going to name the game TestGame. Ma
 You should get a cornflower blue screen.
 <img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/d9a4dacc-c8fa-4b11-936a-59874874908d" />
 
-At this point we have a working game but it isn't going to be super reusable for all our purposes.  We want a .lib that we can reference from any game project with all the methods we will create to make our engine.  It is a little intense going back and forth from game to library if you have never done anything like this before.
+At this point we have a working game but it isn't going to be super reusable for all our purposes.  We want a .lib that we can reference from any game project with all the methods we will create to make our engine.
 
 Time to create our Static Library. Right click on the solution. Add new project. Type static library in the search. Add the Static Library and name it CPyburnRTXEngine
 <img width="1111" height="193" alt="image" src="https://github.com/user-attachments/assets/9909e657-ee79-4eb6-920e-619626e9f648" />
 
 Once it is added right click on the CPyburnRTXEngine project and select properties. Now pick c++ Language Standard and select ISO C++20 Standard.
+
 Do the same for the TestGame project.
 
 Now show all files for both projects. 
@@ -22,10 +23,15 @@ Now show all files for both projects.
 <img width="331" height="121" alt="image" src="https://github.com/user-attachments/assets/b1945bf4-b3b3-4b15-afd9-7c0688331930" />
 
 Move DeviceResources.h, DeviceResources.cpp, StepTimer.h from TestGame up to CPyburnRTXEngine library.
+
 Right click on CPyburnRTXEngine > properties > Librarian > General Additional Dependencies > d3d12.lib;dxgi.lib;dxguid.lib; > OK
+
 Right click on CPyburnRTXEngine > properties > C/C++ > Precompiled headers > Precompiled Header File > pchlib.h > OK
+
 Rename pch.h to pchlib.h
+
 Rename pch.cpp to pchlib.cpp
+
 Edit pchlib.cpp and change
 ```
 // pch.cpp: source file corresponding to the pre-compiled header

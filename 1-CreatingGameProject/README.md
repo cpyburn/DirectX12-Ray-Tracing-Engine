@@ -23,11 +23,11 @@ Now show all files for both projects.
 
 Move DeviceResources.h, DeviceResources.cpp, StepTimer.h from TestGame up to CPyburnRTXEngine library.
 Right click on CPyburnRTXEngine > properties > Librarian > General Additional Dependencies > d3d12.lib;dxgi.lib;dxguid.lib;
-uuid.lib;kernel32.lib;user32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;runtimeobject.lib;%(AdditionalDependencies)
-
 Copy and paste the entire contents pch.h file from TestGame into CPyburnRTXEngine pch.h
 Right click on CPyburnRTXEngine project and build
 
+Right click on TestGame > Add > Reference > CPyburnRTXEngine > Ok
+Right click on TestGame > Properties > C/C++ > General > Additional Include Directories > Edit > *folder ..\CPyburnRTXEngine\ > OK
 Now delete everything in TestGame pch.h and paste below into the  pch.h file
 ```
 //
@@ -38,7 +38,6 @@ Now delete everything in TestGame pch.h and paste below into the  pch.h file
 #pragma once
 
 #include <pch.h>
-//using namespace CPyburnRTXEngine;
 ```
 In Game.h change 
 ```

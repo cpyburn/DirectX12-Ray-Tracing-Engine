@@ -18,6 +18,7 @@ Once it is added right click on the CPyburnRTXEngine project and select properti
 Do the same for the TestGame project.
 
 Now show all files for both projects. 
+
 <img width="331" height="121" alt="image" src="https://github.com/user-attachments/assets/b1945bf4-b3b3-4b15-afd9-7c0688331930" />
 
 Move DeviceResources.h, DeviceResources.cpp, StepTimer.h from TestGame up to CPyburnRTXEngine library.
@@ -25,7 +26,9 @@ Right click on CPyburnRTXEngine > properties > Librarian > General Additional De
 uuid.lib;kernel32.lib;user32.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;runtimeobject.lib;%(AdditionalDependencies)
 
 Copy and paste the entire contents pch.h file from TestGame into CPyburnRTXEngine pch.h
-Now copy and paste below into the TestGame pch.h file
+Right click on CPyburnRTXEngine project and build
+
+Now delete everything in TestGame pch.h and paste below into the  pch.h file
 ```
 //
 // pch.h
@@ -36,4 +39,16 @@ Now copy and paste below into the TestGame pch.h file
 
 #include <pch.h>
 //using namespace CPyburnRTXEngine;
+```
+In Game.h change 
+```
+#include "DeviceResources.h"
+#include "StepTimer.h"
+
+#include <memory>
+```
+to
+```
+#include <DeviceResources.h>
+#include <StepTimer.h>
 ```

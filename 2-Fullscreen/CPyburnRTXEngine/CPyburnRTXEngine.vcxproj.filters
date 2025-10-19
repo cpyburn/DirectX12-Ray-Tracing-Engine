@@ -45,10 +45,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\..\..\..\..\..\Applications\DirectX-Graphics-Samples-master\DirectX-Graphics-Samples-master\Samples\Desktop\D3D12Fullscreen\src\sceneShaders.hlsl">
+    <CustomBuild Include="postShaders.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\..\..\..\..\..\Applications\DirectX-Graphics-Samples-master\DirectX-Graphics-Samples-master\Samples\Desktop\D3D12Fullscreen\src\postShaders.hlsl">
+    <CustomBuild Include="sceneShaders.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
   </ItemGroup>

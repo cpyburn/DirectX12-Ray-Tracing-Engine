@@ -110,6 +110,8 @@ using namespace concurrency;
 using namespace DX;
 ```
 
+Go to Tools > Nuget Package Manager > Manage Nuget Packages for Solution > Browse > Search > WinPixEventRuntime > Select all projects > Install
+
 You should now be able to hit the play button and see the cornflower blue screen
 <img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/8e43012f-dc88-434d-bfc5-c4a651705302" />
 

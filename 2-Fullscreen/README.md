@@ -2,7 +2,7 @@ This tutorial is going to add fullscreen capability to the library. For the most
 
 In CPyburnRTXEngine:
 
-Create a class called Fullscreen and put it in the common filter
+Create a class called Fullscreen and put it in the Common filter
 
 Create a Shaders filter
 

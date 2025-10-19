@@ -8,6 +8,10 @@
     <Filter Include="Common">
       <UniqueIdentifier>{326f11c4-009a-4c61-8ade-2e470285007d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{5b6709a1-e15e-47bc-8df5-a294ed3bd377}</UniqueIdentifier>
+      <Extensions>hlsl;</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StepTimer.h">
@@ -22,7 +26,9 @@
     <ClInclude Include="pchlib.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Fullscreen.h" />
+    <ClInclude Include="Fullscreen.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -31,9 +37,19 @@
     <ClCompile Include="pchlib.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="Fullscreen.cpp" />
+    <ClCompile Include="Fullscreen.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\..\..\..\..\..\Applications\DirectX-Graphics-Samples-master\DirectX-Graphics-Samples-master\Samples\Desktop\D3D12Fullscreen\src\sceneShaders.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\..\..\..\..\Applications\DirectX-Graphics-Samples-master\DirectX-Graphics-Samples-master\Samples\Desktop\D3D12Fullscreen\src\postShaders.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

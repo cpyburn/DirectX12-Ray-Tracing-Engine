@@ -1,4 +1,99 @@
 This tutorial is going to add fullscreen capability to the library. For the most part, we are backwards engineering / copy pasteing this [Microsoft DirectX 12 sample project](https://github.com/microsoft/DirectX-Graphics-Samples/tree/master/Samples/Desktop/D3D12Fullscreen) and adding it to ours. You may ask why? It is a good way for us to test fullscreen throughout the building of the engine and I personally think all games should handle resizing of the screen correctly.
 
-Create a class called Fullscreen.
+### In CPyburnRTXEngine:
 
+Create a class called Fullscreen and put it in the Common filter
+
+Create a Shaders filter
+
+In fitler properties add hlsl;
+
+In pchlib.h at the very bottom add
+```
+using Microsoft::WRL::ComPtr;
+#include "StepTimer.h"
+#include "d3dcompiler.h"
+
+inline void GetAssetsPath(_Out_writes_(pathSize) WCHAR* path, UINT pathSize)
+{
+    if (path == nullptr)
+    {
+        throw std::exception();
+    }
+
+    DWORD size = GetModuleFileName(nullptr, path, pathSize);
+    if (size == 0 || size == pathSize)
+    {
+        // Method failed or path was truncated.
+        throw std::exception();
+    }
+
+    WCHAR* lastSlash = wcsrchr(path, L'\\');
+    if (lastSlash)
+    {
+        *(lastSlash + 1) = L'\0';
+    }
+}
+
+// Naming helper for ComPtr<T>.
+// Assigns the name of the variable as the name of the object.
+// The indexed variant will include the index in the name of the object.
+#define NAME_D3D12_OBJECT(x) SetName((x).Get(), L#x)
+#define NAME_D3D12_OBJECT_INDEXED(x, n) SetNameIndexed((x)[n].Get(), L#x, n)
+
+// Assign a name to the object to aid with debugging.
+#if defined(_DEBUG) || defined(DBG)
+inline void SetName(ID3D12Object* pObject, LPCWSTR name)
+{
+    pObject->SetName(name);
+}
+inline void SetNameIndexed(ID3D12Object* pObject, LPCWSTR name, UINT index)
+{
+    WCHAR fullName[50];
+    if (swprintf_s(fullName, L"%s[%u]", name, index) > 0)
+    {
+        pObject->SetName(fullName);
+    }
+}
+#else
+inline void SetName(ID3D12Object*, LPCWSTR)
+{
+}
+inline void SetNameIndexed(ID3D12Object*, LPCWSTR, UINT)
+{
+}
+#endif
+```
+Show all files for CPyburnRTXEngine and add postShaders.hlsl and sceneShaders.hlsl from the Microsoft Sample. The location should be something like this:
+
+DirectX-Graphics-Samples-master\DirectX-Graphics-Samples-master\Samples\Desktop\D3D12Fullscreen\src
+
+Select both files > right click > Properties > Item Type > Custome Build Tool > OK
+
+Right click CpyburnRTXEngine > Properties > Librarian > General > Additional Dependencies > Edit > Add d3dcompiler.lib > OK > OK
+
+
+### In TestGame:
+Game.h add
+```
+#include <Fullscreen.h>
+```
+and in private add
+```
+// fullscreen
+CPyburnRTXEngine::Fullscreen                  m_fullscreen;
+```
+and change 
+```
+// Device resources.
+std::unique_ptr<DX::DeviceResources>        m_deviceResources;
+```
+to
+```
+// Device resources.
+std::shared_ptr<DX::DeviceResources>        m_deviceResources;
+```
+In Game.cpp the following code to void Game::CreateDeviceDependentResources()
+```
+m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
+```

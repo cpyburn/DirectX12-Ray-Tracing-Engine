@@ -93,7 +93,16 @@ to
 // Device resources.
 std::shared_ptr<DX::DeviceResources>        m_deviceResources;
 ```
-In Game.cpp the following code to void Game::CreateDeviceDependentResources()
+In Game.cpp:
+change the following code in Game::Game() noexcept(false)
+```
+m_deviceResources = std::make_unique<DX::DeviceResources>();
+```
+to
+```
+m_deviceResources = std::make_shared<DX::DeviceResources>();
+```
+add the following code in void Game::CreateDeviceDependentResources()
 ```
 m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 ```

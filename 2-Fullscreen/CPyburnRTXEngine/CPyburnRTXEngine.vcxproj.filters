@@ -33,4 +33,7 @@
     </ClCompile>
     <ClCompile Include="Fullscreen.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

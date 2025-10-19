@@ -416,3 +416,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+/1-CreatingGameProject/CPyburnRTXEngine/GraphicsContexts.cpp
+/1-CreatingGameProject/CPyburnRTXEngine/GraphicsContexts.h

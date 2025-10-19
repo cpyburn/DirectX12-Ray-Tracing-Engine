@@ -64,14 +64,16 @@ inline void SetNameIndexed(ID3D12Object*, LPCWSTR, UINT)
 }
 #endif
 ```
-Show all files for CPyburnRTXEngine and add postShaders.hlsl and sceneShaders.hlsl from the Microsoft Sample. The location should be something like this:
+Copy postShaders.hlsl and sceneShaders.hlsl from the Microsoft Sample into the CPyburnRTXEngine and include in project. The location should be something like this:
 
 DirectX-Graphics-Samples-master\DirectX-Graphics-Samples-master\Samples\Desktop\D3D12Fullscreen\src
 
-Select both files > right click > Properties > Item Type > Custome Build Tool > OK
+You can do all three of these steps at once:
+- Select both files > right click > Properties > Item Type > Custome Build Tool 
+- Select both files > right click > Properties > General > Command Line > copy %(Identity) "$(OutDir)" > NUL 
+- Select both files > right click > Properties > General > Outputs > $(OutDir)\%(Identity) > OK
 
 Right click CpyburnRTXEngine > Properties > Librarian > General > Additional Dependencies > Edit > Add d3dcompiler.lib > OK > OK
-
 
 ### In TestGame:
 Game.h add

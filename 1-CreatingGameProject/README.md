@@ -93,6 +93,23 @@ to
 
 A little clean up. Delete farmework.h and CPyburnRTXEngine.cpp from CPyburnRTXEngine
 
+At the bottom of pchlib.h change
+```
+#include <pix.h>
+#endif
+```
+to
+```
+#include <pix3.h>
+#endif
+
+// ADDED FOR CPyburnRTXEngine
+#include <ppltasks.h>
+using namespace concurrency;
+#include "DeviceResources.h" // available to all libraries
+using namespace DX;
+```
+
 You should now be able to hit the play button and see the cornflower blue screen
 <img width="802" height="632" alt="image" src="https://github.com/user-attachments/assets/8e43012f-dc88-434d-bfc5-c4a651705302" />
 

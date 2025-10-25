@@ -1,4 +1,4 @@
-# DirectX12-Ray-Tracing-Engine
+# DirectX12 Ray Tracing Engine
 How to create a ray tracing engine from scratch in DirectX12 using Visual Studio Pro. If you are trying to make a Vulkan engine, all of these tutorial principals will apply to the Vulkan framework.
 
 Please post all issues in GitHub issues for the repo. If something isn't clear or is confusing, you can also post that in the issues and I will do my best to make it clear and less confusing.

@@ -17,7 +17,7 @@ Knowledge you should possess:
 
 Requirements:
 - Visual Studio 2022 or higher
-- Raytracing capable card
+- Raytracing capable card or willing to impliment RTX [fallback](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3D12RaytracingFallback) 
 - x64 project
 
 A good book to read:

@@ -2,6 +2,21 @@ This tutorial is going to add fullscreen capability to the library. For the most
 
 ### In CPyburnRTXEngine:
 
+In most of our engine classes we will want access to the back buffer count. Easiest way to accomplish this is to make a static variable.
+
+In DeviceResources.h add in public:
+```
+static constexpr unsigned int c_BackBufferCount = 2;
+```
+and change the DeviceResources constructor to use c_BackBufferCount. Also while we are here we should go ahead and set the constructor up to use ray tracing feature level. So change the minFeatureLevel to default to D3D_FEATURE_LEVEL_12_2. See: [Feature Levels](https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-feature-levels) for more information.
+```
+        DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
+                        DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
+                        UINT backBufferCount = c_BackBufferCount,
+                        D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_12_2,
+                        unsigned int flags = 0) noexcept(false);
+```
+
 Create a class called Fullscreen and put it in the Common filter
 
 Create a Shaders filter
@@ -64,14 +79,16 @@ inline void SetNameIndexed(ID3D12Object*, LPCWSTR, UINT)
 }
 #endif
 ```
-Show all files for CPyburnRTXEngine and add postShaders.hlsl and sceneShaders.hlsl from the Microsoft Sample. The location should be something like this:
+Copy postShaders.hlsl and sceneShaders.hlsl from the Microsoft Sample into the CPyburnRTXEngine and include in project. The location should be something like this:
 
 DirectX-Graphics-Samples-master\DirectX-Graphics-Samples-master\Samples\Desktop\D3D12Fullscreen\src
 
-Select both files > right click > Properties > Item Type > Custome Build Tool > OK
+You can do all three of these steps at once:
+- Select both files > right click > Properties > Item Type > Custome Build Tool 
+- Select both files > right click > Properties > General > Command Line > copy %(Identity) "$(OutDir)" > NUL 
+- Select both files > right click > Properties > General > Outputs > $(OutDir)\%(Identity) > OK
 
 Right click CpyburnRTXEngine > Properties > Librarian > General > Additional Dependencies > Edit > Add d3dcompiler.lib > OK > OK
-
 
 ### In TestGame:
 Game.h add

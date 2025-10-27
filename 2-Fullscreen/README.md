@@ -2,6 +2,21 @@ This tutorial is going to add fullscreen capability to the library. For the most
 
 ### In CPyburnRTXEngine:
 
+In most of our engine classes we will want access to the back buffer count. Easiest way to accomplish this is to make a static variable.
+
+In DeviceResources.h add in public:
+```
+static constexpr unsigned int c_BackBufferCount = 2;
+```
+and change the DeviceResources constructor to use c_BackBufferCount. Also while we are here we should go ahead and set the constructor up to use ray tracing feature level. So change the minFeatureLevel to default to D3D_FEATURE_LEVEL_12_2. See: [Feature Levels](https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-feature-levels) for more information.
+```
+        DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
+                        DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
+                        UINT backBufferCount = c_BackBufferCount,
+                        D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_12_2,
+                        unsigned int flags = 0) noexcept(false);
+```
+
 Create a class called Fullscreen and put it in the Common filter
 
 Create a Shaders filter

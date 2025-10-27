@@ -24,7 +24,7 @@ void CPyburnRTXEngine::Fullscreen::Render()
 
 void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
 {
-	m_device = deviceResource->GetD3DDevice();
+	m_deviceResource = deviceResource;
 
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
@@ -53,7 +53,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
         ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-        ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
+        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
         NAME_D3D12_OBJECT(m_sceneRootSignature);
     }
 
@@ -97,7 +97,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
         ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-        ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_postRootSignature)));
+        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_postRootSignature)));
         NAME_D3D12_OBJECT(m_postRootSignature);
     }
 
@@ -150,7 +150,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         psoDesc.SampleDesc.Count = 1;
 
-        ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
+        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
         NAME_D3D12_OBJECT(m_scenePipelineState);
 
         psoDesc.InputLayout = { scaleInputElementDescs, _countof(scaleInputElementDescs) };
@@ -158,8 +158,28 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         psoDesc.VS = CD3DX12_SHADER_BYTECODE(postVertexShader.Get());
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(postPixelShader.Get());
 
-        ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_postPipelineState)));
+        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_postPipelineState)));
         NAME_D3D12_OBJECT(m_postPipelineState);
+    }
+
+    // Single-use command allocator and command list for creating resources.
+    ComPtr<ID3D12CommandAllocator> commandAllocator;
+    ComPtr<ID3D12GraphicsCommandList> commandList;
+
+    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+
+    // Create the command lists.
+    {
+        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_sceneCommandAllocators[0].Get(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
+        NAME_D3D12_OBJECT(m_sceneCommandList);
+
+        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_postCommandAllocators[0].Get(), m_postPipelineState.Get(), IID_PPV_ARGS(&m_postCommandList)));
+        NAME_D3D12_OBJECT(m_postCommandList);
+
+        // Close the command lists.
+        ThrowIfFailed(m_sceneCommandList->Close());
+        ThrowIfFailed(m_postCommandList->Close());
     }
 }
 

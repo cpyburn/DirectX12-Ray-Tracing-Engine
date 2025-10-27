@@ -15,7 +15,7 @@ namespace CPyburnRTXEngine
 		void CreateWindowSizeDependentResources();
 
 	private:
-		ComPtr<ID3D12Device> m_device;
+		std::shared_ptr<DeviceResources> m_deviceResource;
 		ComPtr<ID3D12PipelineState> m_scenePipelineState;
 		ComPtr<ID3D12PipelineState> m_postPipelineState;
 		ComPtr<ID3D12RootSignature> m_sceneRootSignature;
@@ -24,5 +24,11 @@ namespace CPyburnRTXEngine
 		std::wstring GetAssetFullPath(LPCWSTR assetName);
 		// Root assets path.
 		std::wstring m_assetsPath;
+
+		ComPtr<ID3D12CommandAllocator> m_sceneCommandAllocators[DeviceResources::c_BackBufferCount];
+		ComPtr<ID3D12CommandAllocator> m_postCommandAllocators[DeviceResources::c_BackBufferCount];
+
+		ComPtr<ID3D12GraphicsCommandList> m_sceneCommandList;
+		ComPtr<ID3D12GraphicsCommandList> m_postCommandList;
 	};
 } // namespace CPyburnRTXEngine

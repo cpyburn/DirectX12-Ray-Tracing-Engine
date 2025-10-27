@@ -42,7 +42,6 @@ namespace
 DeviceResources::DeviceResources(
     DXGI_FORMAT backBufferFormat,
     DXGI_FORMAT depthBufferFormat,
-    UINT backBufferCount,
     D3D_FEATURE_LEVEL minFeatureLevel,
     unsigned int flags) noexcept(false) :
         m_backBufferIndex(0),
@@ -52,7 +51,6 @@ DeviceResources::DeviceResources(
         m_scissorRect{},
         m_backBufferFormat(backBufferFormat),
         m_depthBufferFormat(depthBufferFormat),
-        m_backBufferCount(backBufferCount),
         m_d3dMinFeatureLevel(minFeatureLevel),
         m_window(nullptr),
         m_d3dFeatureLevel(D3D_FEATURE_LEVEL_11_0),
@@ -62,7 +60,7 @@ DeviceResources::DeviceResources(
         m_options(flags),
         m_deviceNotify(nullptr)
 {
-    if (backBufferCount < 2 || backBufferCount > MAX_BACK_BUFFER_COUNT)
+    if (c_backBufferCount < 2 || c_backBufferCount > MAX_BACK_BUFFER_COUNT)
     {
         throw std::out_of_range("invalid backBufferCount");
     }
@@ -218,7 +216,7 @@ void DeviceResources::CreateDeviceResources()
 
     // Create descriptor heaps for render target views and depth stencil views.
     D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
-    rtvDescriptorHeapDesc.NumDescriptors = m_backBufferCount;
+    rtvDescriptorHeapDesc.NumDescriptors = c_backBufferCount;
     rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 
     ThrowIfFailed(m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
@@ -239,7 +237,7 @@ void DeviceResources::CreateDeviceResources()
     }
 
     // Create a command allocator for each back buffer that will be rendered to.
-    for (UINT n = 0; n < m_backBufferCount; n++)
+    for (UINT n = 0; n < c_backBufferCount; n++)
     {
         ThrowIfFailed(m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_commandAllocators[n].ReleaseAndGetAddressOf())));
 
@@ -279,7 +277,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
     WaitForGpu();
 
     // Release resources that are tied to the swap chain and update fence values.
-    for (UINT n = 0; n < m_backBufferCount; n++)
+    for (UINT n = 0; n < c_backBufferCount; n++)
     {
         m_renderTargets[n].Reset();
         m_fenceValues[n] = m_fenceValues[m_backBufferIndex];
@@ -295,7 +293,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
     {
         // If the swap chain already exists, resize it.
         HRESULT hr = m_swapChain->ResizeBuffers(
-            m_backBufferCount,
+            c_backBufferCount,
             backBufferWidth,
             backBufferHeight,
             backBufferFormat,
@@ -330,7 +328,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
         swapChainDesc.Height = backBufferHeight;
         swapChainDesc.Format = backBufferFormat;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swapChainDesc.BufferCount = m_backBufferCount;
+        swapChainDesc.BufferCount = c_backBufferCount;
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
@@ -363,7 +361,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 
     // Obtain the back buffers for this window which will be the final render targets
     // and create render target views for each of them.
-    for (UINT n = 0; n < m_backBufferCount; n++)
+    for (UINT n = 0; n < c_backBufferCount; n++)
     {
         ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(m_renderTargets[n].GetAddressOf())));
 
@@ -484,7 +482,7 @@ void DeviceResources::HandleDeviceLost()
         m_deviceNotify->OnDeviceLost();
     }
 
-    for (UINT n = 0; n < m_backBufferCount; n++)
+    for (UINT n = 0; n < c_backBufferCount; n++)
     {
         m_commandAllocators[n].Reset();
         m_renderTargets[n].Reset();

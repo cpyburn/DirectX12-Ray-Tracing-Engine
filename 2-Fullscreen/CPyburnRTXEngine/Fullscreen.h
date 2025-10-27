@@ -25,8 +25,8 @@ namespace CPyburnRTXEngine
 		// Root assets path.
 		std::wstring m_assetsPath;
 
-		ComPtr<ID3D12CommandAllocator> m_sceneCommandAllocators[DeviceResources::c_BackBufferCount];
-		ComPtr<ID3D12CommandAllocator> m_postCommandAllocators[DeviceResources::c_BackBufferCount];
+		ComPtr<ID3D12CommandAllocator> m_sceneCommandAllocators[DeviceResources::c_backBufferCount];
+		ComPtr<ID3D12CommandAllocator> m_postCommandAllocators[DeviceResources::c_backBufferCount];
 
 		ComPtr<ID3D12GraphicsCommandList> m_sceneCommandList;
 		ComPtr<ID3D12GraphicsCommandList> m_postCommandList;

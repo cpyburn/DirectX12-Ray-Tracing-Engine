@@ -170,17 +170,17 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
     // Create the command lists.
-    {
-        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_sceneCommandAllocators[0].Get(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
-        NAME_D3D12_OBJECT(m_sceneCommandList);
+    //{
+    //    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_sceneCommandAllocators[0].Get(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
+    //    NAME_D3D12_OBJECT(m_sceneCommandList);
 
-        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_postCommandAllocators[0].Get(), m_postPipelineState.Get(), IID_PPV_ARGS(&m_postCommandList)));
-        NAME_D3D12_OBJECT(m_postCommandList);
+    //    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_postCommandAllocators[0].Get(), m_postPipelineState.Get(), IID_PPV_ARGS(&m_postCommandList)));
+    //    NAME_D3D12_OBJECT(m_postCommandList);
 
-        // Close the command lists.
-        ThrowIfFailed(m_sceneCommandList->Close());
-        ThrowIfFailed(m_postCommandList->Close());
-    }
+    //    // Close the command lists.
+    //    ThrowIfFailed(m_sceneCommandList->Close());
+    //    ThrowIfFailed(m_postCommandList->Close());
+    //}
 }
 
 void CPyburnRTXEngine::Fullscreen::CreateWindowSizeDependentResources()

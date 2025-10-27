@@ -24,13 +24,12 @@ namespace DX
         static constexpr unsigned int c_EnableHDR    = 0x2;
         static constexpr unsigned int c_ReverseDepth = 0x4;
 
-        static constexpr unsigned int c_BackBufferCount = 3;
+        static constexpr unsigned int c_backBufferCount = 2;
 
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
                         DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
-                        UINT backBufferCount = c_BackBufferCount,
                         D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_12_2,
-                        unsigned int flags = 0) noexcept(false);
+                        unsigned int flags = c_AllowTearing | c_EnableHDR | c_ReverseDepth) noexcept(false);
         ~DeviceResources();
 
         DeviceResources(DeviceResources&&) = default;
@@ -70,7 +69,6 @@ namespace DX
         D3D12_VIEWPORT              GetScreenViewport() const noexcept     { return m_screenViewport; }
         D3D12_RECT                  GetScissorRect() const noexcept        { return m_scissorRect; }
         UINT                        GetCurrentFrameIndex() const noexcept  { return m_backBufferIndex; }
-        UINT                        GetBackBufferCount() const noexcept    { return m_backBufferCount; }
         DXGI_COLOR_SPACE_TYPE       GetColorSpace() const noexcept         { return m_colorSpace; }
         unsigned int                GetDeviceOptions() const noexcept      { return m_options; }
 
@@ -109,17 +107,17 @@ namespace DX
         Microsoft::WRL::ComPtr<ID3D12Device>                m_d3dDevice;
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>   m_commandList;
         Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_commandQueue;
-        Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[MAX_BACK_BUFFER_COUNT];
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[c_backBufferCount];
 
         // Swap chain objects.
         Microsoft::WRL::ComPtr<IDXGIFactory4>               m_dxgiFactory;
         Microsoft::WRL::ComPtr<IDXGISwapChain3>             m_swapChain;
-        Microsoft::WRL::ComPtr<ID3D12Resource>              m_renderTargets[MAX_BACK_BUFFER_COUNT];
+        Microsoft::WRL::ComPtr<ID3D12Resource>              m_renderTargets[c_backBufferCount];
         Microsoft::WRL::ComPtr<ID3D12Resource>              m_depthStencil;
 
         // Presentation fence objects.
         Microsoft::WRL::ComPtr<ID3D12Fence>                 m_fence;
-        UINT64                                              m_fenceValues[MAX_BACK_BUFFER_COUNT];
+        UINT64                                              m_fenceValues[c_backBufferCount];
         Microsoft::WRL::Wrappers::Event                     m_fenceEvent;
 
         // Direct3D rendering objects.
@@ -132,7 +130,6 @@ namespace DX
         // Direct3D properties.
         DXGI_FORMAT                                         m_backBufferFormat;
         DXGI_FORMAT                                         m_depthBufferFormat;
-        UINT                                                m_backBufferCount;
         D3D_FEATURE_LEVEL                                   m_d3dMinFeatureLevel;
 
         // Cached device properties.

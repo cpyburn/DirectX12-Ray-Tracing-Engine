@@ -8,20 +8,23 @@ In DeviceResources.h add in public:
 ```
 static constexpr unsigned int c_BackBufferCount = 2;
 ```
-and change the DeviceResources constructor to use c_BackBufferCount. Also while we are here we should go ahead and set the constructor up to use ray tracing feature level. So change the minFeatureLevel to default to D3D_FEATURE_LEVEL_12_2. See: [Feature Levels](https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-feature-levels) for more information.
+and change the DeviceResources constructor to use c_backBufferCount. Also while we are here we should go ahead and set the constructor up to use ray tracing feature level. So change the minFeatureLevel to default to D3D_FEATURE_LEVEL_12_2. See: [Feature Levels](https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-feature-levels) for more information.
 ```
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
                         DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
-                        UINT backBufferCount = c_BackBufferCount,
+                        UINT backBufferCount = c_backBufferCount,
                         D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_12_2,
                         unsigned int flags = 0) noexcept(false);
 ```
+Something extra I am going to do, is get completely rid of the backBufferCount and m_backBufferCount.  Because we have a public constant, we no longer need the m_backBufferCount. When you download the source code you can see the the removal and see how it is replaced with c_backBufferCount.
+
+
 
 Create a class called Fullscreen and put it in the Common filter
 
 Create a Shaders filter
 
-In fitler properties add hlsl;
+In filter properties add hlsl;
 
 In pchlib.h at the very bottom add
 ```

@@ -29,7 +29,7 @@ namespace DX
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
                         DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
                         D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_12_2,
-                        unsigned int flags = c_AllowTearing | c_EnableHDR | c_ReverseDepth) noexcept(false);
+                        unsigned int flags = c_AllowTearing | c_ReverseDepth) noexcept(false);
         ~DeviceResources();
 
         DeviceResources(DeviceResources&&) = default;

@@ -3,28 +3,47 @@
 
 using namespace CPyburnRTXEngine;
 
-CPyburnRTXEngine::Fullscreen::Fullscreen()
+const float Fullscreen::QuadWidth = 20.0f;
+const float Fullscreen::QuadHeight = 720.0f;
+const float Fullscreen::LetterboxColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+const Fullscreen::Resolution Fullscreen::m_resolutionOptions[] =
+{
+    { 800u, 600u },
+    { 1200u, 900u },
+    { 1280u, 720u },
+    { 1920u, 1080u },
+    { 1920u, 1200u },
+    { 2560u, 1440u },
+    { 3440u, 1440u },
+    { 3840u, 2160u }
+};
+const UINT Fullscreen::m_resolutionOptionsCount = _countof(m_resolutionOptions);
+UINT Fullscreen::m_resolutionIndex = 2;
+
+Fullscreen::Fullscreen()
 {
     WCHAR assetsPath[512];
     GetAssetsPath(assetsPath, _countof(assetsPath));
     m_assetsPath = assetsPath;
 }
 
-CPyburnRTXEngine::Fullscreen::~Fullscreen()
+Fullscreen::~Fullscreen()
 {
 }
 
-void CPyburnRTXEngine::Fullscreen::Update(DX::StepTimer const& timer)
+void Fullscreen::Update(DX::StepTimer const& timer)
 {
 }
 
-void CPyburnRTXEngine::Fullscreen::Render()
+void Fullscreen::Render()
 {
 }
 
 void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
 {
 	m_deviceResource = deviceResource;
+	m_device = deviceResource->GetD3DDevice();
 
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
@@ -53,7 +72,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
         ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
+        ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
         NAME_D3D12_OBJECT(m_sceneRootSignature);
     }
 
@@ -97,7 +116,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
         ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_postRootSignature)));
+        ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_postRootSignature)));
         NAME_D3D12_OBJECT(m_postRootSignature);
     }
 
@@ -150,7 +169,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
         psoDesc.SampleDesc.Count = 1;
 
-        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
+        ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
         NAME_D3D12_OBJECT(m_scenePipelineState);
 
         psoDesc.InputLayout = { scaleInputElementDescs, _countof(scaleInputElementDescs) };
@@ -158,7 +177,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         psoDesc.VS = CD3DX12_SHADER_BYTECODE(postVertexShader.Get());
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(postPixelShader.Get());
 
-        ThrowIfFailed(deviceResource->GetD3DDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_postPipelineState)));
+        ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_postPipelineState)));
         NAME_D3D12_OBJECT(m_postPipelineState);
     }
 
@@ -166,28 +185,209 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     ComPtr<ID3D12CommandAllocator> commandAllocator;
     ComPtr<ID3D12GraphicsCommandList> commandList;
 
-    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
-    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+    ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+    ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+
+    // Create command allocators for each frame.
+    for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+    {
+		// todo: create a frameResources class to hold these
+        //ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_sceneCommandAllocators[n])));
+        ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_postCommandAllocators[n])));
+    }
 
     // Create the command lists.
-    //{
-    //    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_sceneCommandAllocators[0].Get(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
-    //    NAME_D3D12_OBJECT(m_sceneCommandList);
+    {
+        //ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, deviceResource->GetCommandAllocator(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
+        //NAME_D3D12_OBJECT(m_sceneCommandList);
 
-    //    ThrowIfFailed(deviceResource->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_postCommandAllocators[0].Get(), m_postPipelineState.Get(), IID_PPV_ARGS(&m_postCommandList)));
-    //    NAME_D3D12_OBJECT(m_postCommandList);
+        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_postCommandAllocators[deviceResource->GetCurrentFrameIndex()].Get(), m_postPipelineState.Get(), IID_PPV_ARGS(&m_postCommandList)));
+        NAME_D3D12_OBJECT(m_postCommandList);
 
-    //    // Close the command lists.
-    //    ThrowIfFailed(m_sceneCommandList->Close());
-    //    ThrowIfFailed(m_postCommandList->Close());
-    //}
+        // Close the command lists.
+        //ThrowIfFailed(m_sceneCommandList->Close());
+        ThrowIfFailed(m_postCommandList->Close());
+    }
+
+    // Create/update the vertex buffer.
+    ComPtr<ID3D12Resource> sceneVertexBufferUpload;
+    {
+        // Define the geometry for a thin quad that will animate across the screen.
+        const float x = QuadWidth / 2.0f;
+        const float y = QuadHeight / 2.0f;
+        SceneVertex quadVertices[] =
+        {
+            { { -x, -y, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+            { { -x, y, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+            { { x, -y, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+            { { x, y, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } }
+        };
+
+        const UINT vertexBufferSize = sizeof(quadVertices);
+
+        ThrowIfFailed(m_device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            nullptr,
+            IID_PPV_ARGS(&m_sceneVertexBuffer)));
+
+        ThrowIfFailed(m_device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&sceneVertexBufferUpload)));
+
+        NAME_D3D12_OBJECT(m_sceneVertexBuffer);
+
+        // Copy data to the intermediate upload heap and then schedule a copy 
+        // from the upload heap to the vertex buffer.
+        UINT8* pVertexDataBegin;
+        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+        ThrowIfFailed(sceneVertexBufferUpload->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+        memcpy(pVertexDataBegin, quadVertices, sizeof(quadVertices));
+        sceneVertexBufferUpload->Unmap(0, nullptr);
+
+        commandList->CopyBufferRegion(m_sceneVertexBuffer.Get(), 0, sceneVertexBufferUpload.Get(), 0, vertexBufferSize);
+        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_sceneVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+
+        // Initialize the vertex buffer views.
+        m_sceneVertexBufferView.BufferLocation = m_sceneVertexBuffer->GetGPUVirtualAddress();
+        m_sceneVertexBufferView.StrideInBytes = sizeof(SceneVertex);
+        m_sceneVertexBufferView.SizeInBytes = vertexBufferSize;
+    }
+
+    // Create/update the fullscreen quad vertex buffer.
+    ComPtr<ID3D12Resource> postVertexBufferUpload;
+    {
+        // Define the geometry for a fullscreen quad.
+        PostVertex quadVertices[] =
+        {
+            { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },    // Bottom left.
+            { { -1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },    // Top left.
+            { { 1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },    // Bottom right.
+            { { 1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } }        // Top right.
+        };
+
+        const UINT vertexBufferSize = sizeof(quadVertices);
+
+        ThrowIfFailed(m_device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            nullptr,
+            IID_PPV_ARGS(&m_postVertexBuffer)));
+
+        ThrowIfFailed(m_device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&postVertexBufferUpload)));
+
+        NAME_D3D12_OBJECT(m_postVertexBuffer);
+
+        // Copy data to the intermediate upload heap and then schedule a copy 
+        // from the upload heap to the vertex buffer.
+        UINT8* pVertexDataBegin;
+        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+        ThrowIfFailed(postVertexBufferUpload->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+        memcpy(pVertexDataBegin, quadVertices, sizeof(quadVertices));
+        postVertexBufferUpload->Unmap(0, nullptr);
+
+        commandList->CopyBufferRegion(m_postVertexBuffer.Get(), 0, postVertexBufferUpload.Get(), 0, vertexBufferSize);
+        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_postVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+
+        // Initialize the vertex buffer views.
+        m_postVertexBufferView.BufferLocation = m_postVertexBuffer->GetGPUVirtualAddress();
+        m_postVertexBufferView.StrideInBytes = sizeof(PostVertex);
+        m_postVertexBufferView.SizeInBytes = vertexBufferSize;
+    }
+
+    // Create the constant buffer.
+    {
+        ThrowIfFailed(m_device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(sizeof(SceneConstantBuffer) * DeviceResources::c_backBufferCount),
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_sceneConstantBuffer)));
+
+        NAME_D3D12_OBJECT(m_sceneConstantBuffer);
+
+        // Describe and create constant buffer views.
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+        cbvDesc.BufferLocation = m_sceneConstantBuffer->GetGPUVirtualAddress();
+        cbvDesc.SizeInBytes = sizeof(SceneConstantBuffer);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_cbvSrvHeap->GetCPUDescriptorHandleForHeapStart(), 1, m_cbvSrvDescriptorSize);
+
+        for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+        {
+            m_device->CreateConstantBufferView(&cbvDesc, cpuHandle);
+
+            cbvDesc.BufferLocation += sizeof(SceneConstantBuffer);
+            cpuHandle.Offset(m_cbvSrvDescriptorSize);
+        }
+
+        // Map and initialize the constant buffer. We don't unmap this until the
+        // app closes. Keeping things mapped for the lifetime of the resource is okay.
+        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+        ThrowIfFailed(m_sceneConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
+        memcpy(m_pCbvDataBegin, &m_sceneConstantBufferData, sizeof(m_sceneConstantBufferData));
+    }
+
+    // Close the resource creation command list and execute it to begin the vertex buffer copy into
+    // the default heap.
+    ThrowIfFailed(commandList->Close());
+    ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 }
 
-void CPyburnRTXEngine::Fullscreen::CreateWindowSizeDependentResources()
+void Fullscreen::CreateWindowSizeDependentResources()
 {
+
 }
 
-std::wstring CPyburnRTXEngine::Fullscreen::GetAssetFullPath(LPCWSTR assetName)
+void CPyburnRTXEngine::Fullscreen::UpdatePostViewAndScissor()
+{
+    float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_deviceResource->GetScreenViewport().Width;
+    float viewHeightRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height) / m_deviceResource->GetScreenViewport().Height;
+
+    float x = 1.0f;
+    float y = 1.0f;
+
+    if (viewWidthRatio < viewHeightRatio)
+    {
+        // The scaled image's height will fit to the viewport's height and 
+        // its width will be smaller than the viewport's width.
+        x = viewWidthRatio / viewHeightRatio;
+    }
+    else
+    {
+        // The scaled image's width will fit to the viewport's width and 
+        // its height may be smaller than the viewport's height.
+        y = viewHeightRatio / viewWidthRatio;
+    }
+
+    m_postViewport.TopLeftX = m_deviceResource->GetScreenViewport().Width * (1.0f - x) / 2.0f;
+    m_postViewport.TopLeftY = m_deviceResource->GetScreenViewport().Height * (1.0f - y) / 2.0f;
+    m_postViewport.Width = x * m_deviceResource->GetScreenViewport().Width;
+    m_postViewport.Height = y * m_deviceResource->GetScreenViewport().Height;
+
+    m_postScissorRect.left = static_cast<LONG>(m_postViewport.TopLeftX);
+    m_postScissorRect.right = static_cast<LONG>(m_postViewport.TopLeftX + m_postViewport.Width);
+    m_postScissorRect.top = static_cast<LONG>(m_postViewport.TopLeftY);
+    m_postScissorRect.bottom = static_cast<LONG>(m_postViewport.TopLeftY + m_postViewport.Height);
+}
+
+std::wstring Fullscreen::GetAssetFullPath(LPCWSTR assetName)
 {
     return m_assetsPath + assetName;
 }

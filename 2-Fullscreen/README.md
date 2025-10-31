@@ -8,7 +8,7 @@ In DeviceResources.h add in public:
 ```
 static constexpr unsigned int c_BackBufferCount = 2;
 ```
-and change the DeviceResources constructor to use c_backBufferCount. Also while we are here we should go ahead and set the constructor up to use ray tracing feature level. So change the minFeatureLevel to default to D3D_FEATURE_LEVEL_12_2. See: [Feature Levels](https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-feature-levels) for more information.  Also want to allow tearing and reverse depth. You can google tearing and HDR. Reverse depth is so that our z-buffer/depth buffer has more precision. This is helpful for things like water planes, it stops the shimmering/jerky effects. This will change the clear value in Game.cpp to 0.0f for depth. We will make that change below.
+and change the DeviceResources constructor to use c_backBufferCount. Also while we are here we should go ahead and set the constructor up to use ray tracing feature level. So change the minFeatureLevel to default to D3D_FEATURE_LEVEL_12_2. See: [Feature Levels](https://learn.microsoft.com/en-us/windows/win32/direct3d12/hardware-feature-levels) for more information.  Also want to allow tearing and reverse depth. You can google tearing and HDR settings. Reverse depth is so that our z-buffer/depth buffer has more precision. This is helpful for things like water planes, it stops the shimmering/jerky effects. This will change the clear value in Game.cpp to 0.0f for depth. We will make that change below.
 ```
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
                         DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,

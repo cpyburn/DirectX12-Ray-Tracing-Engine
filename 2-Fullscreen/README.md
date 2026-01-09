@@ -19,11 +19,20 @@ Something extra I am going to do, is get completely rid of the m_backBufferCount
 
 
 
-Create a class called Fullscreen and put it in the Common filter
+Create a class called Fullscreen(.h and .cpp) and put them in the Common filter. I do not like separating headers(.h) and compile files(.cpp). So this is the design pattern I will use going forward. The Fullscreen class will hold most of the code from the example. Some of it will move to new classes that init all things like cbv and srv heaps, graphics root sigs, and graphics piplelines. This will be called GraphicsContexts
 
-Create a Shaders filter
+Create a class called GraphicsContexts and put the files in Common filter.  This class will need c++ vector, map, mutex, etc. For this to work across all classes we will add these references in the pchlib.h. Under #include "d3dcompiler.h" add the following.
+```
+#include <vector>
+#include <map>
+#include <mutex>
+#include <ppltasks.h>
+#include <fstream>
+#include <sstream> // istringstream
+```
 
-In filter properties add hlsl;
+
+Create a Shaders filter. Select the Shaders filter and in properties set Filter >  hlsl;
 
 In pchlib.h at the very bottom add
 ```

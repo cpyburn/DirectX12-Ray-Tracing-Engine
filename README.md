@@ -1,5 +1,3 @@
-Sorry for the long pause in work. My PC died. Mobo has been sent off for repair, no telling how long before returned.
-
 # DirectX12 Ray Tracing Engine
 How to create a ray tracing engine from scratch in DirectX12 using Visual Studio Pro. If you are trying to make a Vulkan engine, all of these tutorial principals will apply to the Vulkan framework.
 

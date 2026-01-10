@@ -19,11 +19,19 @@ Something extra I am going to do, is get completely rid of the m_backBufferCount
 
 
 
-Create a class called Fullscreen and put it in the Common filter
+Create a class called Fullscreen(.h and .cpp) and put them in the Common filter. I do not like separating headers(.h) and compile files(.cpp). So this is the design pattern I will use going forward. The Fullscreen class will hold most of the code from the example. Some of it will move to new classes that init all things like cbv and srv heaps, graphics root sigs, and graphics piplelines. This will be called GraphicsContexts
 
-Create a Shaders filter
+Create a class called GraphicsContexts and put the files in Common filter.  This class will need c++ vector, map, mutex, etc. For this to work across all classes we will add these references in the pchlib.h under the other #include <>
+```
+#include <vector>
+#include <map>
+#include <mutex>
+#include <ppltasks.h>
+#include <fstream>
+#include <sstream> // istringstream
+```
 
-In filter properties add hlsl;
+Create a Shaders filter. Select the Shaders filter and in properties set Filter >  hlsl;
 
 In pchlib.h at the very bottom add
 ```
@@ -80,6 +88,22 @@ inline void SetNameIndexed(ID3D12Object*, LPCWSTR, UINT)
 {
 }
 #endif
+
+// Helper for output debug tracing
+inline void DebugTrace(_In_z_ _Printf_format_string_ const char* format, ...) noexcept
+{
+#ifdef _DEBUG
+    va_list args;
+    va_start(args, format);
+
+    char buff[1024] = {};
+    vsprintf_s(buff, format, args);
+    OutputDebugStringA(buff);
+    va_end(args);
+#else
+    UNREFERENCED_PARAMETER(format);
+#endif
+}
 ```
 Copy postShaders.hlsl and sceneShaders.hlsl from the Microsoft Sample into the CPyburnRTXEngine and include in project. The location should be something like this:
 

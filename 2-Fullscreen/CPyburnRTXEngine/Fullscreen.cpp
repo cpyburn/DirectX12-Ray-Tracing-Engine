@@ -190,18 +190,17 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
     ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
-    // Create command allocators for each frame.
+    // Create command allocators for each frame. (done after the heap is created ~line 173 in the MS sample)
     for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
     {
-		// todo: create a frameResources class to hold these
-        //ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_sceneCommandAllocators[n])));
+        ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_sceneCommandAllocators[n])));
         ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_postCommandAllocators[n])));
     }
 
     // Create the command lists.
     {
-        //ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, deviceResource->GetCommandAllocator(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
-        //NAME_D3D12_OBJECT(m_sceneCommandList);
+        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, deviceResource->GetCommandAllocator(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
+        NAME_D3D12_OBJECT(m_sceneCommandList);
 
         ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_postCommandAllocators[deviceResource->GetCurrentFrameIndex()].Get(), m_postPipelineState.Get(), IID_PPV_ARGS(&m_postCommandList)));
         NAME_D3D12_OBJECT(m_postCommandList);

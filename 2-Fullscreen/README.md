@@ -2,6 +2,8 @@ This tutorial is going to add fullscreen capability to the library. For the most
 
 ### In CPyburnRTXEngine:
 
+Something we forgot to do in the last tutorial, but is fine to do here since this is where it would give us an issue is to change the Conformance mode to Default. This will make it where l-value parameters wont cause a compile issue.  Right click the project > properties > C/C++ > Language > Conformance mode > Change /permissive to Default
+
 In most of our engine classes we will want access to the back buffer count. Easiest way to accomplish this is to make a static variable.
 
 In DeviceResources.h add in public:
@@ -120,11 +122,13 @@ Right click CpyburnRTXEngine > Properties > Librarian > General > Additional Dep
 Game.h add
 ```
 #include <Fullscreen.h>
+#include <GraphicsContexts.h>
 ```
 and in private add
 ```
 // fullscreen
 CPyburnRTXEngine::Fullscreen                  m_fullscreen;
+CPyburnRTXEngine::GraphicsContexts          m_graphicsContexts;
 ```
 and change 
 ```
@@ -148,6 +152,7 @@ m_deviceResources = std::make_shared<DX::DeviceResources>();
 add the following code in void Game::CreateDeviceDependentResources()
 ```
 m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
+m_graphicsContexts.CreateDeviceDependentResources(m_deviceResources);
 ```
 change
 ```

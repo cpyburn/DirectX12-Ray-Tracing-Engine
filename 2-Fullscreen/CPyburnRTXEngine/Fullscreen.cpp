@@ -1,6 +1,8 @@
 #include "pchlib.h"
 #include "Fullscreen.h"
 
+#include "GraphicsContexts.h"
+
 using namespace CPyburnRTXEngine;
 
 const float Fullscreen::QuadWidth = 20.0f;
@@ -326,14 +328,15 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         cbvDesc.BufferLocation = m_sceneConstantBuffer->GetGPUVirtualAddress();
         cbvDesc.SizeInBytes = sizeof(SceneConstantBuffer);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_cbvSrvHeap->GetCPUDescriptorHandleForHeapStart(), 1, m_cbvSrvDescriptorSize);
+        m_cbcbvSrv = GraphicsContexts::GetAvailableHeapPosition();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::GetHeap()->GetCPUDescriptorHandleForHeapStart(), m_cbcbvSrv, GraphicsContexts::GetDescriptorSize());
 
         for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
         {
             m_device->CreateConstantBufferView(&cbvDesc, cpuHandle);
 
             cbvDesc.BufferLocation += sizeof(SceneConstantBuffer);
-            cpuHandle.Offset(m_cbvSrvDescriptorSize);
+            cpuHandle.Offset(GraphicsContexts::GetDescriptorSize());
         }
 
         // Map and initialize the constant buffer. We don't unmap this until the
@@ -347,7 +350,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     // the default heap.
     ThrowIfFailed(commandList->Close());
     ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-    m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+    deviceResource->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 }
 
 void Fullscreen::CreateWindowSizeDependentResources()

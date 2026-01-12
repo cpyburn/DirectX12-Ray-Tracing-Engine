@@ -7,6 +7,7 @@
 #include <DeviceResources.h>
 #include <StepTimer.h>
 #include <Fullscreen.h>
+#include <GraphicsContexts.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -62,6 +63,7 @@ private:
     DX::StepTimer                               m_timer;
 
 	CPyburnRTXEngine::Fullscreen                m_fullscreen;
+    CPyburnRTXEngine::GraphicsContexts          m_graphicsContexts;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:
     // std::unique_ptr<DirectX::GraphicsMemory> m_graphicsMemory;

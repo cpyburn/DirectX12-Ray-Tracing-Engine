@@ -39,6 +39,9 @@ namespace CPyburnRTXEngine
 		static const Resolution m_resolutionOptions[];
 		static const UINT m_resolutionOptionsCount;
 		static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
+
+		// cbv
+		UINT m_cbcbvSrv;
 	public:
 		Fullscreen();
 		~Fullscreen();

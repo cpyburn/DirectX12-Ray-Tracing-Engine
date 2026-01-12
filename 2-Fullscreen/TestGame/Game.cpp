@@ -205,6 +205,7 @@ void Game::CreateDeviceDependentResources()
 
     // TODO: Initialize device dependent objects here (independent of window size).
     m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
+    m_graphicsContexts.CreateDeviceDependentResources(m_deviceResources);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.

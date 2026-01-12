@@ -120,11 +120,13 @@ Right click CpyburnRTXEngine > Properties > Librarian > General > Additional Dep
 Game.h add
 ```
 #include <Fullscreen.h>
+#include <GraphicsContexts.h>
 ```
 and in private add
 ```
 // fullscreen
 CPyburnRTXEngine::Fullscreen                  m_fullscreen;
+CPyburnRTXEngine::GraphicsContexts          m_graphicsContexts;
 ```
 and change 
 ```
@@ -148,6 +150,7 @@ m_deviceResources = std::make_shared<DX::DeviceResources>();
 add the following code in void Game::CreateDeviceDependentResources()
 ```
 m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
+m_graphicsContexts.CreateDeviceDependentResources(m_deviceResources);
 ```
 change
 ```

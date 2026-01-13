@@ -17,7 +17,7 @@ Knowledge you should possess:
 - matrices and vectors
 - directx 12, or vulkan
 
-Things you will learn
+Things you will learn:
 - ray tracing in c++
 - A star pathfinding
 - all graphic engine concepts: 2d, 3d, audio, heightmaps, collision, billboards, etc.

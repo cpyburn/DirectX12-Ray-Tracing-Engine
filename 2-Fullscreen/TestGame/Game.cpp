@@ -88,7 +88,9 @@ void Game::Render()
     m_deviceResources->Prepare();
     Clear();
 
-    auto commandList = m_deviceResources->GetCommandList();
+    ;
+
+    auto commandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
     // TODO: Add your rendering code here.
@@ -108,7 +110,7 @@ void Game::Render()
 // Helper method to clear the back buffers.
 void Game::Clear()
 {
-    auto commandList = m_deviceResources->GetCommandList();
+    auto commandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.

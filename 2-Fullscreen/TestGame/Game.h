@@ -8,6 +8,7 @@
 #include <StepTimer.h>
 #include <Fullscreen.h>
 #include <GraphicsContexts.h>
+#include <FrameResource.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.

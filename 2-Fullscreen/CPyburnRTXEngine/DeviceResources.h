@@ -4,6 +4,13 @@
 
 #pragma once
 
+namespace CPyburnRTXEngine
+{
+    class FrameResource; // forward declaration
+}
+
+using namespace CPyburnRTXEngine;
+
 namespace DX
 {
     // Provides an interface for an application that owns DeviceResources to be notified of the device being lost or created.
@@ -62,8 +69,7 @@ namespace DX
         ID3D12Resource*             GetRenderTarget() const noexcept       { return m_renderTargets[m_backBufferIndex].Get(); }
         ID3D12Resource*             GetDepthStencil() const noexcept       { return m_depthStencil.Get(); }
         ID3D12CommandQueue*         GetCommandQueue() const noexcept       { return m_commandQueue.Get(); }
-        ID3D12CommandAllocator*     GetCommandAllocator() const noexcept   { return m_commandAllocators[m_backBufferIndex].Get(); }
-        auto                        GetCommandList() const noexcept        { return m_commandList.Get(); }
+        FrameResource*              GetCurrentFrameResource()              { return m_frameResource[m_backBufferIndex].get(); }
         DXGI_FORMAT                 GetBackBufferFormat() const noexcept   { return m_backBufferFormat; }
         DXGI_FORMAT                 GetDepthBufferFormat() const noexcept  { return m_depthBufferFormat; }
         D3D12_VIEWPORT              GetScreenViewport() const noexcept     { return m_screenViewport; }
@@ -105,9 +111,8 @@ namespace DX
 
         // Direct3D objects.
         Microsoft::WRL::ComPtr<ID3D12Device>                m_d3dDevice;
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>   m_commandList;
         Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_commandQueue;
-        Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[c_backBufferCount];
+        std::unique_ptr<FrameResource>						m_frameResource[c_backBufferCount];
 
         // Swap chain objects.
         Microsoft::WRL::ComPtr<IDXGIFactory4>               m_dxgiFactory;

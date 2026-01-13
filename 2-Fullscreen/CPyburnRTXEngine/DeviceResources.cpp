@@ -7,6 +7,9 @@
 
 using namespace DirectX;
 using namespace DX;
+using namespace CPyburnRTXEngine;
+
+#include "FrameResource.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -236,21 +239,12 @@ void DeviceResources::CreateDeviceResources()
         m_dsvDescriptorHeap->SetName(L"DeviceResources");
     }
 
-    // Create a command allocator for each back buffer that will be rendered to.
-    for (UINT n = 0; n < c_backBufferCount; n++)
+    // Create a command allocator for each back buffer that will be rendered to, is now moved to the FrameResource
+    for (size_t i = 0; i < _countof(m_frameResource); i++)
     {
-        ThrowIfFailed(m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_commandAllocators[n].ReleaseAndGetAddressOf())));
-
-        wchar_t name[25] = {};
-        swprintf_s(name, L"Render target %u", n);
-        m_commandAllocators[n]->SetName(name);
+        m_frameResource[i] = std::make_unique<FrameResource>();
+        m_frameResource[i]->Init(this);
     }
-
-    // Create a command list for recording graphics commands.
-    ThrowIfFailed(m_d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(m_commandList.ReleaseAndGetAddressOf())));
-    ThrowIfFailed(m_commandList->Close());
-
-    m_commandList->SetName(L"DeviceResources");
 
     // Create a fence for tracking GPU execution progress.
     ThrowIfFailed(m_d3dDevice->CreateFence(m_fenceValues[m_backBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
@@ -484,13 +478,12 @@ void DeviceResources::HandleDeviceLost()
 
     for (UINT n = 0; n < c_backBufferCount; n++)
     {
-        m_commandAllocators[n].Reset();
+        m_frameResource[n].reset();
         m_renderTargets[n].Reset();
     }
 
     m_depthStencil.Reset();
     m_commandQueue.Reset();
-    m_commandList.Reset();
     m_fence.Reset();
     m_rtvDescriptorHeap.Reset();
     m_dsvDescriptorHeap.Reset();
@@ -520,36 +513,19 @@ void DeviceResources::HandleDeviceLost()
 // Prepare the command list and render target for rendering.
 void DeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
-    // Reset command list and allocator.
-    ThrowIfFailed(m_commandAllocators[m_backBufferIndex]->Reset());
-    ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_backBufferIndex].Get(), nullptr));
-
-    if (beforeState != afterState)
+    if (beforeState != D3D12_RESOURCE_STATE_RENDER_TARGET)
     {
+        FrameResource& currentFrame = *m_frameResource[m_backBufferIndex];
+        currentFrame.ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0);
         // Transition the render target into the correct state to allow for drawing into it.
-        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-            m_renderTargets[m_backBufferIndex].Get(),
-            beforeState, afterState);
-        m_commandList->ResourceBarrier(1, &barrier);
+        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        currentFrame.GetCommandList(FrameResource::COMMAND_LIST_SCENE_0)->ResourceBarrier(1, &barrier);
     }
 }
 
 // Present the contents of the swap chain to the screen.
 void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
 {
-    if (beforeState != D3D12_RESOURCE_STATE_PRESENT)
-    {
-        // Transition the render target to the state that allows it to be presented to the display.
-        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-            m_renderTargets[m_backBufferIndex].Get(),
-            beforeState, D3D12_RESOURCE_STATE_PRESENT);
-        m_commandList->ResourceBarrier(1, &barrier);
-    }
-
-    // Send the command list off to the GPU for processing.
-    ThrowIfFailed(m_commandList->Close());
-    m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
-
     HRESULT hr;
     if (m_options & c_AllowTearing)
     {

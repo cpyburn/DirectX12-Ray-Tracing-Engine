@@ -190,25 +190,6 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
     ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
-    // Create command allocators for each frame. (done after the heap is created ~line 173 in the MS sample)
-    for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
-    {
-        ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_sceneCommandAllocators[n])));
-        ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_postCommandAllocators[n])));
-    }
-
-    // Create the command lists.
-    {
-        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, deviceResource->GetCommandAllocator(), m_scenePipelineState.Get(), IID_PPV_ARGS(&m_sceneCommandList)));
-        NAME_D3D12_OBJECT(m_sceneCommandList);
-
-        ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_postCommandAllocators[deviceResource->GetCurrentFrameIndex()].Get(), m_postPipelineState.Get(), IID_PPV_ARGS(&m_postCommandList)));
-        NAME_D3D12_OBJECT(m_postCommandList);
-
-        // Close the command lists.
-        //ThrowIfFailed(m_sceneCommandList->Close());
-        ThrowIfFailed(m_postCommandList->Close());
-    }
 
     // Create/update the vertex buffer.
     ComPtr<ID3D12Resource> sceneVertexBufferUpload;
@@ -349,7 +330,23 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     // the default heap.
     ThrowIfFailed(commandList->Close());
     ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-    deviceResource->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+    m_deviceResource->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+    // Create synchronization objects and wait until assets have been uploaded to the GPU.
+    //{
+    //    ThrowIfFailed(m_device->CreateFence(m_fenceValues[m_frameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+    //    m_fenceValues[m_frameIndex]++;
+
+    //    // Create an event handle to use for frame synchronization.
+    //    m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    //    if (m_fenceEvent == nullptr)
+    //    {
+    //        ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
+    //    }
+
+    //    // Wait for the command list to execute before continuing.
+    //    WaitForGpu();
+    //}
 }
 
 void Fullscreen::CreateWindowSizeDependentResources()

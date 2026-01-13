@@ -32,6 +32,9 @@
     <ClInclude Include="GraphicsContexts.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="FrameResource.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -44,6 +47,9 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsContexts.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameResource.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

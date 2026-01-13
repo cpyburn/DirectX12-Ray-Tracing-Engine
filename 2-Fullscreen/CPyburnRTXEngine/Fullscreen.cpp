@@ -36,6 +36,23 @@ Fullscreen::~Fullscreen()
 
 void Fullscreen::Update(DX::StepTimer const& timer)
 {
+    const float translationSpeed = 0.0001f;
+    const float offsetBounds = 1.0f;
+
+    m_sceneConstantBufferData.offset.x += translationSpeed;
+    if (m_sceneConstantBufferData.offset.x > offsetBounds)
+    {
+        m_sceneConstantBufferData.offset.x = -offsetBounds;
+    }
+
+    XMMATRIX transform = XMMatrixMultiply(
+        XMMatrixOrthographicLH(static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width), static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height), 0.0f, 100.0f),
+        XMMatrixTranslation(m_sceneConstantBufferData.offset.x, 0.0f, 0.0f));
+
+    XMStoreFloat4x4(&m_sceneConstantBufferData.transform, XMMatrixTranspose(transform));
+
+    UINT offset = m_deviceResource->GetCurrentFrameIndex() * sizeof(SceneConstantBuffer);
+    memcpy(m_pCbvDataBegin + offset, &m_sceneConstantBufferData, sizeof(m_sceneConstantBufferData));
 }
 
 void Fullscreen::Render()
@@ -331,22 +348,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     ThrowIfFailed(commandList->Close());
     ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
     m_deviceResource->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    // Create synchronization objects and wait until assets have been uploaded to the GPU.
-    //{
-    //    ThrowIfFailed(m_device->CreateFence(m_fenceValues[m_frameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-    //    m_fenceValues[m_frameIndex]++;
-
-    //    // Create an event handle to use for frame synchronization.
-    //    m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    //    if (m_fenceEvent == nullptr)
-    //    {
-    //        ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
-    //    }
-
-    //    // Wait for the command list to execute before continuing.
-    //    WaitForGpu();
-    //}
+    m_deviceResource->WaitForGpu();
 }
 
 void Fullscreen::CreateWindowSizeDependentResources()

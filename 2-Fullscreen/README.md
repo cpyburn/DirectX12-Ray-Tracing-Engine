@@ -20,9 +20,8 @@ and change the DeviceResources constructor to use c_backBufferCount. Also while 
 Something extra I am going to do, is get completely rid of the m_backBufferCount.  Because we have a public constant, we no longer need the m_backBufferCount. When you download the source code you can see the the removal and see how it is replaced with c_backBufferCount.
 
 
-
-Create a class called Fullscreen(.h and .cpp) and put them in the Common filter. I do not like separating headers(.h) and compile files(.cpp). So this is the design pattern I will use going forward. The Fullscreen class will hold most of the code from the example. Some of it will move to new classes that init all things like cbv and srv heaps, graphics root sigs, and graphics piplelines. This will be called GraphicsContexts
-
+Create a class called Fullscreen(.h and .cpp) and put them in the Common filter. I do not like separating headers(.h) and compile files(.cpp). So this is the design pattern I will use going forward. The Fullscreen class will hold most of the code from the example. Some of it will move to new classes that init all things like cbv and srv heaps, graphics root sigs, and graphics piplelines. This will be called GraphicsContexts.
+Create a class called FrameResource(.h and .cpp) and put them in the Common filter. This class will hold be the central location for all of our allocators and commandLists to use in the engine.
 Create a class called GraphicsContexts and put the files in Common filter.  This class will need c++ vector, map, mutex, etc. For this to work across all classes we will add these references in the pchlib.h under the other #include <>
 ```
 #include <vector>

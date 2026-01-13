@@ -17,6 +17,11 @@ Knowledge you should possess:
 - matrices and vectors
 - directx 12, or vulkan
 
+Things you will learn
+- ray tracing in c++
+- A star pathfinding
+- all graphic engine concepts: 2d, 3d, audio, heightmaps, collision, billboards, etc.
+
 Requirements:
 - Visual Studio 2022 or higher
 - Raytracing capable card or willing to impliment RTX [fallback](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3D12RaytracingFallback) 

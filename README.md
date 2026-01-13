@@ -3,9 +3,11 @@ How to create a ray tracing engine from scratch in DirectX12 using Visual Studio
 
 Please post all issues in GitHub issues for the repo. If something isn't clear or is confusing, you can also post that in the issues and I will do my best to make it clear and less confusing.
 
-I am also looking for a few people to join my team to create a ray tracing RTS similar to warcraft3 with heros, set up a kick starter, and a discord server. If you have any interest please send your resume and interests to cpyburn78@gmail.com.  There will be no money involved until the game is released on Steam, or the kick starter makes enough money to pay for your services.
+I am also looking for a few people to join my team to create a ray tracing RTS similar to warcraft3 with heros, set up a kick starter, and a discord server. 
 
-I am also working on a single player, possibly MMO, RPG.  I have put this on hold for this project, but if you have interest in creating a single player RPG like skyrim, or MMORPG like Everquest/World of Warcraft follow me or these repos to find out more in the future.
+If you have any interest please "Star" or "Watch" this project (so I can see public interest) and send your resume with your interests to cpyburn78@gmail.com.  There will be no money involved until the game is released on Steam, or the kick starter makes enough money to pay for your services.
+
+I am also working on a single player, possibly MMO, RPG.  I have put this on hold for this project, but if you have interest in creating a single player RPG like skyrim, or MMORPG like Everquest/World of Warcraft "Star" or "Watch" this project to find out more in the future.
 
 This project will be a work in progress, meaning that code could change at anytime. I may backtrack and fix something, or do something better, etc.
 
@@ -14,6 +16,11 @@ Knowledge you should possess:
 - rasterization
 - matrices and vectors
 - directx 12, or vulkan
+
+Things you will learn:
+- ray tracing in c++
+- A star pathfinding
+- all graphic engine concepts: 2d, 3d, audio, heightmaps, collision, billboards, etc.
 
 Requirements:
 - Visual Studio 2022 or higher

@@ -20,8 +20,9 @@ and change the DeviceResources constructor to use c_backBufferCount. Also while 
 Something extra I am going to do, is get completely rid of the m_backBufferCount.  Because we have a public constant, we no longer need the m_backBufferCount. When you download the source code you can see the the removal and see how it is replaced with c_backBufferCount.
 
 
+Create a class called Fullscreen(.h and .cpp) and put them in the Common filter. I do not like separating headers(.h) and compile files(.cpp). So this is the design pattern I will use going forward. The Fullscreen class will hold most of the code from the example. Some of it will move to new classes that init all things like cbv and srv heaps, graphics root sigs, and graphics piplelines. This will be called GraphicsContexts.
 
-Create a class called Fullscreen(.h and .cpp) and put them in the Common filter. I do not like separating headers(.h) and compile files(.cpp). So this is the design pattern I will use going forward. The Fullscreen class will hold most of the code from the example. Some of it will move to new classes that init all things like cbv and srv heaps, graphics root sigs, and graphics piplelines. This will be called GraphicsContexts
+Create a class called FrameResource(.h and .cpp) and put them in the Common filter. This class will hold be the central location for all of our allocators and commandLists to use in the engine.
 
 Create a class called GraphicsContexts and put the files in Common filter.  This class will need c++ vector, map, mutex, etc. For this to work across all classes we will add these references in the pchlib.h under the other #include <>
 ```
@@ -118,6 +119,116 @@ You can do all three of these steps at once:
 
 Right click CpyburnRTXEngine > Properties > Librarian > General > Additional Dependencies > Edit > Add d3dcompiler.lib > OK > OK
 
+## FrameResource.h
+Add the following code
+```
+#pragma once
+
+namespace CPyburnRTXEngine
+{
+	class FrameResource
+	{
+	public:
+		static const int COMMAND_LIST_COUNT = 2;
+
+		static const int COMMAND_LIST_SCENE_0 = 0;
+		static const int COMMAND_LIST_POST_1 = 1;
+
+		ID3D12CommandList* BatchSubmit[COMMAND_LIST_COUNT];
+	private:
+		ComPtr<ID3D12CommandAllocator> m_commandAllocators[COMMAND_LIST_COUNT];
+		ComPtr<ID3D12GraphicsCommandList> m_commandLists[COMMAND_LIST_COUNT];
+	public:
+		FrameResource();
+		~FrameResource();
+
+		void Init(DeviceResources* deviceResources);
+		ID3D12GraphicsCommandList* ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState = nullptr);
+		ComPtr<ID3D12GraphicsCommandList> GetCommandList(int commandList) { return m_commandLists[commandList]; }
+	};
+}
+```
+## FrameResource.cpp
+Add the following code
+```
+#include "pchlib.h"
+#include "FrameResource.h"
+
+using namespace CPyburnRTXEngine;
+
+FrameResource::FrameResource()
+{
+
+}
+
+FrameResource::~FrameResource()
+{
+    for (int i = 0; i < COMMAND_LIST_COUNT; i++)
+    {
+        m_commandAllocators[i].Reset();
+        m_commandAllocators[i] = nullptr;
+        m_commandLists[i].Reset();
+        m_commandLists[i] = nullptr;
+    }
+}
+
+void FrameResource::Init(DeviceResources* deviceResources)
+{
+    Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice = deviceResources->GetD3DDevice();
+
+    for (UINT i = 0; i < COMMAND_LIST_COUNT; i++)
+    {
+        ThrowIfFailed(d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i])));
+        ThrowIfFailed(d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[i].Get(), nullptr, IID_PPV_ARGS(&m_commandLists[i])));
+
+        NAME_D3D12_OBJECT_INDEXED(m_commandLists, i);
+
+        // Close these command lists; don't record into them for now.
+        ThrowIfFailed(m_commandLists[i]->Close());
+    }
+
+    // Batch up command lists for execution later.
+    BatchSubmit[0] = m_commandLists[COMMAND_LIST_SCENE_0].Get();
+    BatchSubmit[1] = m_commandLists[COMMAND_LIST_POST_1].Get();
+}
+
+ID3D12GraphicsCommandList* FrameResource::ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState)
+{
+    ThrowIfFailed(m_commandAllocators[commandList]->Reset());
+    ThrowIfFailed(m_commandLists[commandList]->Reset(m_commandAllocators[commandList].Get(), pInitialState));
+    return m_commandLists[commandList].Get();
+}
+```
+As you can see if you follow the code in FrameResource.cpp, we are going to replace the allocator and command lists in device recources with FrameResource. In DeviceResources.h add a forward delcaration for Frameresource. 
+## DeviceResources.h
+```
+namespace CPyburnRTXEngine
+{
+    class FrameResource; // forward declaration
+}
+
+```
+Now replace
+```
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>   m_commandList;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[c_backBufferCount];
+```
+with
+```
+std::unique_ptr<FrameResource>						m_frameResource[c_backBufferCount];
+```
+Replace
+```
+ID3D12CommandAllocator*     GetCommandAllocator() const noexcept   { return m_commandAllocators[m_backBufferIndex].Get(); }
+auto                        GetCommandList() const noexcept        { return m_commandList.Get(); }
+```
+with
+```
+FrameResource* GetCurrentFrameResource() { return m_frameResource[m_backBufferIndex].get(); }
+```
+## DeviceResources.cpp
+
+
 ### In TestGame:
 Game.h add
 ```
@@ -151,8 +262,8 @@ m_deviceResources = std::make_shared<DX::DeviceResources>();
 ```
 add the following code in void Game::CreateDeviceDependentResources()
 ```
-m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 m_graphicsContexts.CreateDeviceDependentResources(m_deviceResources);
+m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 ```
 change
 ```

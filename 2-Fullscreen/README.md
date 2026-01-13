@@ -199,6 +199,34 @@ ID3D12GraphicsCommandList* FrameResource::ResetCommandList(const int commandList
     return m_commandLists[commandList].Get();
 }
 ```
+As you can see if you follow the code in FrameResource.cpp, we are going to replace the allocator and command lists in device recources with FrameResource. In DeviceResources.h add a forward delcaration for Frameresource. 
+## DeviceResources.h
+```
+namespace CPyburnRTXEngine
+{
+    class FrameResource; // forward declaration
+}
+
+```
+Now replace
+```
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>   m_commandList;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[c_backBufferCount];
+```
+with
+```
+std::unique_ptr<FrameResource>						m_frameResource[c_backBufferCount];
+```
+Replace
+```
+ID3D12CommandAllocator*     GetCommandAllocator() const noexcept   { return m_commandAllocators[m_backBufferIndex].Get(); }
+auto                        GetCommandList() const noexcept        { return m_commandList.Get(); }
+```
+with
+```
+FrameResource* GetCurrentFrameResource() { return m_frameResource[m_backBufferIndex].get(); }
+```
+## DeviceResources.cpp
 
 
 ### In TestGame:

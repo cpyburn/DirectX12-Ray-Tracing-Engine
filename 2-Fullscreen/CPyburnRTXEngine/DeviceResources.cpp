@@ -340,7 +340,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
             m_window,
             &swapChainDesc,
             &fsSwapChainDesc,
-            nullptr, ;
+            nullptr,
             swapChain.GetAddressOf()
             ));
 

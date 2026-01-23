@@ -28,7 +28,6 @@ namespace CPyburnRTXEngine
 		{
 			XMFLOAT4X4 transform;
 			XMFLOAT4 offset;
-			UINT padding[44];
 		};
 
 		struct Resolution
@@ -40,9 +39,6 @@ namespace CPyburnRTXEngine
 		static const Resolution m_resolutionOptions[];
 		static const UINT m_resolutionOptionsCount;
 		static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
-
-		// cbv
-		UINT m_cbcbvSrv;
 	public:
 		Fullscreen();
 		~Fullscreen();
@@ -52,8 +48,6 @@ namespace CPyburnRTXEngine
 
 		void CreateDeviceDependentResources();
 		void CreateWindowSizeDependentResources(const std::shared_ptr<DeviceResources>& deviceResource);
-
-		
 
 	private:
 		std::shared_ptr<DeviceResources> m_deviceResource;
@@ -80,9 +74,13 @@ namespace CPyburnRTXEngine
 		D3D12_VERTEX_BUFFER_VIEW m_sceneVertexBufferView;
 		ComPtr<ID3D12Resource> m_postVertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_postVertexBufferView;
-		ComPtr<ID3D12Resource> m_sceneConstantBuffer;
 		SceneConstantBuffer m_sceneConstantBufferData;
-		UINT8* m_pCbvDataBegin;
+
+		static const UINT c_alignedSceneConstantBuffer = (sizeof(SceneConstantBuffer) + 255) & ~255;
+		UINT m_heapPositionSceneConstantBuffer[DeviceResources::c_backBufferCount];
+		CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandleSceneConstantBuffer[DeviceResources::c_backBufferCount];
+		ComPtr<ID3D12Resource> m_sceneConstantBuffer;
+		UINT8* m_pSceneConstantBufferDataBegin;
 
 		UINT m_width;
 		UINT m_height;

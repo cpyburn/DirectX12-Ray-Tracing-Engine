@@ -2,12 +2,14 @@
 #include "Fullscreen.h"
 
 #include "GraphicsContexts.h"
+#include "FrameResource.h"
 
 using namespace CPyburnRTXEngine;
 
 const float Fullscreen::QuadWidth = 20.0f;
 const float Fullscreen::QuadHeight = 720.0f;
 const float Fullscreen::LetterboxColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+const float Fullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 
 const Fullscreen::Resolution Fullscreen::m_resolutionOptions[] =
 {
@@ -57,12 +59,106 @@ void Fullscreen::Update(DX::StepTimer const& timer)
 
 void Fullscreen::Render()
 {
+    // Command list allocators can only be reset when the associated 
+    // command lists have finished execution on the GPU; apps should use 
+    // fences to determine GPU execution progress.
+    //ThrowIfFailed(m_sceneCommandAllocators[m_frameIndex]->Reset());
+    //ThrowIfFailed(m_postCommandAllocators[m_frameIndex]->Reset());
+
+    // However, when ExecuteCommandList() is called on a particular command 
+    // list, that command list can then be reset at any time and must be before 
+    // re-recording.
+    //ThrowIfFailed(m_sceneCommandList->Reset(m_sceneCommandAllocators[m_frameIndex].Get(), m_scenePipelineState.Get()));
+    //ThrowIfFailed(m_postCommandList->Reset(m_postCommandAllocators[m_frameIndex].Get(), m_postPipelineState.Get()));
+
+    ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResource->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, m_scenePipelineState.Get());
+    ID3D12GraphicsCommandList* m_postCommandList = m_deviceResource->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_POST_1, m_postPipelineState.Get());
+
+    // Populate m_sceneCommandList to render scene to intermediate render target.
+    {
+        // Set necessary state.
+        m_sceneCommandList->SetGraphicsRootSignature(m_sceneRootSignature.Get());
+
+        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get()};
+        m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_deviceResource->GetCurrentFrameIndex() + 1, GraphicsContexts::c_descriptorSize);
+        m_sceneCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+        m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_sceneCommandList->RSSetViewports(1, &m_sceneViewport);
+        m_sceneCommandList->RSSetScissorRects(1, &m_sceneScissorRect);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
+        m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+        // Record commands.
+        m_sceneCommandList->ClearRenderTargetView(rtvHandle, ClearColor, 0, nullptr);
+        m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        m_sceneCommandList->IASetVertexBuffers(0, 1, &m_sceneVertexBufferView);
+
+        PIXBeginEvent(m_sceneCommandList, 0, L"Draw a thin rectangle");
+        m_sceneCommandList->DrawInstanced(4, 1, 0, 0);
+        PIXEndEvent(m_sceneCommandList);
+    }
+
+    ThrowIfFailed(m_sceneCommandList->Close());
+
+    // Populate m_postCommandList to scale intermediate render target to screen.
+    {
+        // Set necessary state.
+        m_postCommandList->SetGraphicsRootSignature(m_postRootSignature.Get());
+
+        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+        m_postCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+        
+        // Indicate that the back buffer will be used as a render target and the
+        // intermediate render target will be used as a SRV.
+        D3D12_RESOURCE_BARRIER barriers[] = {
+            CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
+            CD3DX12_RESOURCE_BARRIER::Transition(m_intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+        };
+
+        m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+        m_postCommandList->SetGraphicsRootDescriptorTable(0, GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart());
+        m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_postCommandList->RSSetViewports(1, &m_postViewport);
+        m_postCommandList->RSSetScissorRects(1, &m_postScissorRect);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
+        m_postCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+        // Record commands.
+        m_postCommandList->ClearRenderTargetView(rtvHandle, LetterboxColor, 0, nullptr);
+        m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        m_postCommandList->IASetVertexBuffers(0, 1, &m_postVertexBufferView);
+
+        PIXBeginEvent(m_postCommandList, 0, L"Draw texture to screen.");
+        m_postCommandList->DrawInstanced(4, 1, 0, 0);
+        PIXEndEvent(m_postCommandList);
+
+        // Revert resource states back to original values.
+        barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+        barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+        barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+        m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
+    }
+
+    ThrowIfFailed(m_postCommandList->Close());
 }
 
-void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
+void Fullscreen::CreateDeviceDependentResources()
 {
-	m_deviceResource = deviceResource;
-	m_device = deviceResource->GetD3DDevice();
+
+}
+
+void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
+{
+    m_deviceResource = deviceResource;
+    m_device = deviceResource->GetD3DDevice();
 
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
@@ -185,7 +281,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         psoDesc.NumRenderTargets = 1;
-        psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        psoDesc.RTVFormats[0] = m_deviceResource->GetBackBufferFormat();
         psoDesc.SampleDesc.Count = 1;
 
         ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
@@ -207,6 +303,8 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
     ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
+    LoadSizeDependentResources();
+    LoadSceneResolutionDependentResources();
 
     // Create/update the vertex buffer.
     ComPtr<ID3D12Resource> sceneVertexBufferUpload;
@@ -326,14 +424,14 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
         cbvDesc.SizeInBytes = sizeof(SceneConstantBuffer);
 
         m_cbcbvSrv = GraphicsContexts::GetAvailableHeapPosition();
-        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::GetHeap()->GetCPUDescriptorHandleForHeapStart(), m_cbcbvSrv, GraphicsContexts::GetDescriptorSize());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbcbvSrv, GraphicsContexts::c_descriptorSize);
 
         for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
         {
             m_device->CreateConstantBufferView(&cbvDesc, cpuHandle);
 
             cbvDesc.BufferLocation += sizeof(SceneConstantBuffer);
-            cpuHandle.Offset(GraphicsContexts::GetDescriptorSize());
+            cpuHandle.Offset(GraphicsContexts::c_descriptorSize);
         }
 
         // Map and initialize the constant buffer. We don't unmap this until the
@@ -351,15 +449,16 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
     m_deviceResource->WaitForGpu();
 }
 
-void Fullscreen::CreateWindowSizeDependentResources()
+std::wstring Fullscreen::GetAssetFullPath(LPCWSTR assetName)
 {
-
+    return m_assetsPath + assetName;
 }
 
-void CPyburnRTXEngine::Fullscreen::UpdatePostViewAndScissor()
+
+void Fullscreen::UpdatePostViewAndScissor()
 {
-    float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_deviceResource->GetScreenViewport().Width;
-    float viewHeightRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height) / m_deviceResource->GetScreenViewport().Height;
+    float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_width;
+    float viewHeightRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height) / m_height;
 
     float x = 1.0f;
     float y = 1.0f;
@@ -377,10 +476,10 @@ void CPyburnRTXEngine::Fullscreen::UpdatePostViewAndScissor()
         y = viewHeightRatio / viewWidthRatio;
     }
 
-    m_postViewport.TopLeftX = m_deviceResource->GetScreenViewport().Width * (1.0f - x) / 2.0f;
-    m_postViewport.TopLeftY = m_deviceResource->GetScreenViewport().Height * (1.0f - y) / 2.0f;
-    m_postViewport.Width = x * m_deviceResource->GetScreenViewport().Width;
-    m_postViewport.Height = y * m_deviceResource->GetScreenViewport().Height;
+    m_postViewport.TopLeftX = m_width * (1.0f - x) / 2.0f;
+    m_postViewport.TopLeftY = m_height * (1.0f - y) / 2.0f;
+    m_postViewport.Width = x * m_width;
+    m_postViewport.Height = y * m_height;
 
     m_postScissorRect.left = static_cast<LONG>(m_postViewport.TopLeftX);
     m_postScissorRect.right = static_cast<LONG>(m_postViewport.TopLeftX + m_postViewport.Width);
@@ -388,7 +487,85 @@ void CPyburnRTXEngine::Fullscreen::UpdatePostViewAndScissor()
     m_postScissorRect.bottom = static_cast<LONG>(m_postViewport.TopLeftY + m_postViewport.Height);
 }
 
-std::wstring Fullscreen::GetAssetFullPath(LPCWSTR assetName)
+void Fullscreen::LoadSizeDependentResources()
 {
-    return m_assetsPath + assetName;
+    UpdatePostViewAndScissor();
+
+    // Create frame resources.
+    {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
+
+        // Create a RTV for each frame.
+        for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+        {
+            ID3D12Resource* renderTarget = m_deviceResource->GetRenderTarget();
+            ThrowIfFailed(m_deviceResource->GetSwapChain()->GetBuffer(n, IID_PPV_ARGS(&renderTarget)));
+            m_device->CreateRenderTargetView(renderTarget, nullptr, rtvHandle);
+            rtvHandle.Offset(1, m_deviceResource->GetRtvDescriptorSize());
+
+            SetName(renderTarget, L"Render Target:" + n);
+        }
+    }
+
+    // Update resolutions shown in app title.
+    UpdateTitle();
+
+    // This is where you would create/resize intermediate render targets, depth stencils, or other resources
+    // dependent on the window size.
+}
+
+void Fullscreen::LoadSceneResolutionDependentResources()
+{
+    // Update resolutions shown in app title.
+    UpdateTitle();
+
+    // Set up the scene viewport and scissor rect to match the current scene rendering resolution.
+    {
+        m_sceneViewport.Width = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width);
+        m_sceneViewport.Height = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height);
+
+        m_sceneScissorRect.right = static_cast<LONG>(m_resolutionOptions[m_resolutionIndex].Width);
+        m_sceneScissorRect.bottom = static_cast<LONG>(m_resolutionOptions[m_resolutionIndex].Height);
+    }
+
+    // Update post-process viewport and scissor rectangle.
+    UpdatePostViewAndScissor();
+
+    // Create RTV for the intermediate render target.
+    {
+        D3D12_RESOURCE_DESC swapChainDesc = m_deviceResource->GetRenderTarget()->GetDesc();
+        const CD3DX12_CLEAR_VALUE clearValue(swapChainDesc.Format, ClearColor);
+        const CD3DX12_RESOURCE_DESC renderTargetDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+            swapChainDesc.Format,
+            m_resolutionOptions[m_resolutionIndex].Width,
+            m_resolutionOptions[m_resolutionIndex].Height,
+            1u, 1u,
+            swapChainDesc.SampleDesc.Count,
+            swapChainDesc.SampleDesc.Quality,
+            D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
+        ThrowIfFailed(m_device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &renderTargetDesc,
+            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            &clearValue,
+            IID_PPV_ARGS(&m_intermediateRenderTarget)));
+        m_device->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
+        NAME_D3D12_OBJECT(m_intermediateRenderTarget);
+    }
+
+    // Create SRV for the intermediate render target.
+    m_device->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void Fullscreen::UpdateTitle()
+{
+    // Update resolutions shown in app title.
+    wchar_t updatedTitle[256];
+    swprintf_s(updatedTitle, L"( %u x %u ) scaled to ( %u x %u )", m_resolutionOptions[m_resolutionIndex].Width, m_resolutionOptions[m_resolutionIndex].Height, m_width, m_height);
+    char debug = (char)updatedTitle;
+    DebugTrace(&debug);
 }

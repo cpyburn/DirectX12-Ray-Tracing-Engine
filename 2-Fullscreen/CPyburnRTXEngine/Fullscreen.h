@@ -10,6 +10,7 @@ namespace CPyburnRTXEngine
 		static const float QuadWidth;
 		static const float QuadHeight;
 		static const float LetterboxColor[4];
+		static const float ClearColor[4];
 
 		struct SceneVertex
 		{
@@ -49,10 +50,10 @@ namespace CPyburnRTXEngine
 		void Update(DX::StepTimer const& timer);
 		void Render();
 
-		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource);
-		void CreateWindowSizeDependentResources();
+		void CreateDeviceDependentResources();
+		void CreateWindowSizeDependentResources(const std::shared_ptr<DeviceResources>& deviceResource);
 
-		void UpdatePostViewAndScissor();
+		
 
 	private:
 		std::shared_ptr<DeviceResources> m_deviceResource;
@@ -63,15 +64,16 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12RootSignature> m_sceneRootSignature;
 		ComPtr<ID3D12RootSignature> m_postRootSignature;
 
+		ComPtr<ID3D12Resource> m_intermediateRenderTarget;
+
+		CD3DX12_VIEWPORT m_sceneViewport;
+		CD3DX12_VIEWPORT m_postViewport;
+		CD3DX12_RECT m_sceneScissorRect;
+		CD3DX12_RECT m_postScissorRect;
+
 		std::wstring GetAssetFullPath(LPCWSTR assetName);
 		// Root assets path.
 		std::wstring m_assetsPath;
-
-		ComPtr<ID3D12GraphicsCommandList> m_sceneCommandList;
-		ComPtr<ID3D12GraphicsCommandList> m_postCommandList;
-
-		CD3DX12_VIEWPORT m_postViewport;
-		CD3DX12_RECT m_postScissorRect;
 
 		// App resources.
 		ComPtr<ID3D12Resource> m_sceneVertexBuffer;
@@ -81,5 +83,14 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> m_sceneConstantBuffer;
 		SceneConstantBuffer m_sceneConstantBufferData;
 		UINT8* m_pCbvDataBegin;
+
+		UINT m_width;
+		UINT m_height;
+		float m_aspectRatio;
+
+		void UpdatePostViewAndScissor();
+		void LoadSizeDependentResources();
+		void LoadSceneResolutionDependentResources();
+		void UpdateTitle();
 	};
 } // namespace CPyburnRTXEngine

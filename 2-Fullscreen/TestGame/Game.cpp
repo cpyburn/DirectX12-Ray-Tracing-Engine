@@ -84,50 +84,52 @@ void Game::Render()
         return;
     }
 
-    // Prepare the command list to render a new frame.
-    m_deviceResources->Prepare();
-    Clear();
+    m_fullscreen.Render();
 
-    ;
+    //// Prepare the command list to render a new frame.
+    //m_deviceResources->Prepare();
+    //Clear();
 
-    auto commandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
-    PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
+    //;
 
-    // TODO: Add your rendering code here.
+    //auto commandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
+    //PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    PIXEndEvent(commandList);
+    //// TODO: Add your rendering code here.
 
-    // Show the new frame.
-    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Present");
-    m_deviceResources->Present();
+    //PIXEndEvent(commandList);
 
-    // If using the DirectX Tool Kit for DX12, uncomment this line:
-    // m_graphicsMemory->Commit(m_deviceResources->GetCommandQueue());
+    //// Show the new frame.
+    //PIXBeginEvent(PIX_COLOR_DEFAULT, L"Present");
+    //m_deviceResources->Present();
 
-    PIXEndEvent();
+    //// If using the DirectX Tool Kit for DX12, uncomment this line:
+    //// m_graphicsMemory->Commit(m_deviceResources->GetCommandQueue());
+
+    //PIXEndEvent();
 }
 
 // Helper method to clear the back buffers.
 void Game::Clear()
 {
-    auto commandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
-    PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
+    //auto commandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
+    //PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
-    // Clear the views.
-    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
-    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    //// Clear the views.
+    //const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    //const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
-    commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
-    commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
+    //commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
+    //commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
+    //commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
 
-    // Set the viewport and scissor rect.
-    const auto viewport = m_deviceResources->GetScreenViewport();
-    const auto scissorRect = m_deviceResources->GetScissorRect();
-    commandList->RSSetViewports(1, &viewport);
-    commandList->RSSetScissorRects(1, &scissorRect);
+    //// Set the viewport and scissor rect.
+    //const auto viewport = m_deviceResources->GetScreenViewport();
+    //const auto scissorRect = m_deviceResources->GetScissorRect();
+    //commandList->RSSetViewports(1, &viewport);
+    //commandList->RSSetScissorRects(1, &scissorRect);
 
-    PIXEndEvent(commandList);
+    //PIXEndEvent(commandList);
 }
 #pragma endregion
 
@@ -207,13 +209,13 @@ void Game::CreateDeviceDependentResources()
 
     // TODO: Initialize device dependent objects here (independent of window size).
     m_graphicsContexts.CreateDeviceDependentResources(m_deviceResources);
-    m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
     // TODO: Initialize windows-size dependent objects here.
+    m_fullscreen.CreateWindowSizeDependentResources(m_deviceResources);
 }
 
 void Game::OnDeviceLost()

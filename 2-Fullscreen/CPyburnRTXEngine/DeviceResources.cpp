@@ -219,7 +219,7 @@ void DeviceResources::CreateDeviceResources()
 
     // Create descriptor heaps for render target views and depth stencil views.
     D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
-    rtvDescriptorHeapDesc.NumDescriptors = c_backBufferCount;
+    rtvDescriptorHeapDesc.NumDescriptors = c_backBufferCount + 1; // + 1 for the intermediate render target.
     rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 
     ThrowIfFailed(m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
@@ -340,7 +340,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
             m_window,
             &swapChainDesc,
             &fsSwapChainDesc,
-            nullptr,
+            nullptr, ;
             swapChain.GetAddressOf()
             ));
 

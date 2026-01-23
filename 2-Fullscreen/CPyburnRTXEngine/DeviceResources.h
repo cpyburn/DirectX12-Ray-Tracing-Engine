@@ -77,6 +77,10 @@ namespace DX
         UINT                        GetCurrentFrameIndex() const noexcept  { return m_backBufferIndex; }
         DXGI_COLOR_SPACE_TYPE       GetColorSpace() const noexcept         { return m_colorSpace; }
         unsigned int                GetDeviceOptions() const noexcept      { return m_options; }
+        UINT                        GetRtvDescriptorSize() const noexcept  { return m_rtvDescriptorSize; }
+
+        // todo: remove these after every is working
+        ID3D12DescriptorHeap*       GetRtvHeap() const noexcept            { return m_rtvDescriptorHeap.Get(); }
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetRenderTargetView() const noexcept
         {

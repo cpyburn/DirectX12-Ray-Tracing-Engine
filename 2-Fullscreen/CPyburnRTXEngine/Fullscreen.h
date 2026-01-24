@@ -82,13 +82,11 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> m_sceneConstantBuffer;
 		UINT8* m_pSceneConstantBufferDataBegin;
 
-		UINT m_heapPositionPost;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE m_cpuHandlePost;
-		CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandlePost;
+		UINT m_rtvHeapPositionPostSrv;
+		UINT m_cbvHeapPositionPostSrv;
 
-		UINT m_width;
-		UINT m_height;
-		float m_aspectRatio;
+		UINT m_width = 1280;
+		UINT m_height = 720;
 
 		void UpdatePostViewAndScissor();
 		void LoadSizeDependentResources();

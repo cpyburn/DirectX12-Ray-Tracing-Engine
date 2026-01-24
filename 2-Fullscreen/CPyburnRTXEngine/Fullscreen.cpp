@@ -82,7 +82,7 @@ void Fullscreen::Render()
         ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get()};
         m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(m_gpuHandleSceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()]);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_gpuHandleSceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()]);
         m_sceneCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
         m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_sceneCommandList->RSSetViewports(1, &m_sceneViewport);
@@ -121,7 +121,8 @@ void Fullscreen::Render()
 
         m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-        m_postCommandList->SetGraphicsRootDescriptorTable(0, m_gpuHandlePost); // srv location GPU handle
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_cbvHeapPositionPostSrv, GraphicsContexts::c_descriptorSize);
+        m_postCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle); // srv location GPU handle
         m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_postCommandList->RSSetViewports(1, &m_postViewport);
         m_postCommandList->RSSetScissorRects(1, &m_postScissorRect);
@@ -305,9 +306,8 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
 
     // Reserve heap position for the post-process SRV.
     {
-        m_heapPositionPost = GraphicsContexts::GetAvailableHeapPosition();
-        m_cpuHandlePost = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_heapPositionPost, GraphicsContexts::c_descriptorSize);
-        m_gpuHandlePost = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_heapPositionPost, GraphicsContexts::c_descriptorSize);
+        m_rtvHeapPositionPostSrv = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
+        m_cbvHeapPositionPostSrv = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
     }
 
     LoadSizeDependentResources();
@@ -554,7 +554,7 @@ void Fullscreen::LoadSceneResolutionDependentResources()
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
         ThrowIfFailed(m_device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
@@ -567,7 +567,8 @@ void Fullscreen::LoadSceneResolutionDependentResources()
     }
 
     // Create SRV for the intermediate render target.
-    m_device->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, m_cpuHandlePost);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvHeapPositionPostSrv, GraphicsContexts::c_descriptorSize);
+    m_device->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
 }
 
 void Fullscreen::UpdateTitle()

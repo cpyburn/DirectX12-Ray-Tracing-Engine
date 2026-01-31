@@ -28,7 +28,8 @@ UINT Fullscreen::m_resolutionIndex = 2;
 Fullscreen::Fullscreen() :
     m_sceneConstantBufferData{},
     m_sceneViewport(0.0f, 0.0f, 0.0f, 0.0f),
-    m_sceneScissorRect(0, 0, 0, 0)
+    m_sceneScissorRect(0, 0, 0, 0),
+    m_postViewport(0.0f, 0.0f, 0.0f, 0.0f)
 {
     WCHAR assetsPath[512];
     GetAssetsPath(assetsPath, _countof(assetsPath));
@@ -85,10 +86,10 @@ void Fullscreen::Render()
         ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get()};
         m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-        D3D12_RESOURCE_BARRIER barriers[] = {
-        CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET) };
+        //D3D12_RESOURCE_BARRIER barriers[] = {
+        //CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET) };
 
-        m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
+        //m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
 
         CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_gpuHandleSceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()]);
         m_sceneCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
@@ -96,8 +97,8 @@ void Fullscreen::Render()
         m_sceneCommandList->RSSetViewports(1, &m_sceneViewport);
         m_sceneCommandList->RSSetScissorRects(1, &m_sceneScissorRect);
 
-        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
+        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
         m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
         // Record commands.
@@ -108,9 +109,8 @@ void Fullscreen::Render()
         PIXBeginEvent(m_sceneCommandList, 0, L"Draw a thin rectangle");
         m_sceneCommandList->DrawInstanced(4, 1, 0, 0);
 
-        barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-        m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
+        //barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        //m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
 
         PIXEndEvent(m_sceneCommandList);
     }
@@ -118,52 +118,52 @@ void Fullscreen::Render()
     ThrowIfFailed(m_sceneCommandList->Close());
 
     // Populate m_postCommandList to scale intermediate render target to screen.
-    //{
-    //    // Set necessary state.
-    //    m_postCommandList->SetGraphicsRootSignature(m_postRootSignature.Get());
+    {
+        // Set necessary state.
+        m_postCommandList->SetGraphicsRootSignature(m_postRootSignature.Get());
 
-    //    ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
-    //    m_postCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+        m_postCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-    //    
-    //    // Indicate that the back buffer will be used as a render target and the
-    //    // intermediate render target will be used as a SRV.
-    //    D3D12_RESOURCE_BARRIER barriers[] = {
-    //        CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
-    //        CD3DX12_RESOURCE_BARRIER::Transition(m_intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
-    //    };
+        
+        // Indicate that the back buffer will be used as a render target and the
+        // intermediate render target will be used as a SRV.
+        D3D12_RESOURCE_BARRIER barriers[] = {
+            CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
+            CD3DX12_RESOURCE_BARRIER::Transition(m_intermediateRenderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+        };
 
-    //    m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
+        m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-    //    CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_cbvHeapPositionPostSrv, GraphicsContexts::c_descriptorSize);
-    //    m_postCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle); // srv location GPU handle
-    //    m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    //    m_postCommandList->RSSetViewports(1, &m_postViewport);
-    //    m_postCommandList->RSSetScissorRects(1, &m_postScissorRect);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_cbvSrvHeapPositionPost, GraphicsContexts::c_descriptorSize);
+        m_postCommandList->SetGraphicsRootDescriptorTable(0, cbvSrvHandle); // srv location GPU handle
+        m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_postCommandList->RSSetViewports(1, &m_postViewport);
+        m_postCommandList->RSSetScissorRects(1, &m_postScissorRect);
 
-    //    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
-    //    m_postCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
+        m_postCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
-    //    // Record commands.
-    //    m_postCommandList->ClearRenderTargetView(rtvHandle, LetterboxColor, 0, nullptr);
-    //    m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    //    m_postCommandList->IASetVertexBuffers(0, 1, &m_postVertexBufferView);
+        // Record commands.
+        m_postCommandList->ClearRenderTargetView(rtvHandle, LetterboxColor, 0, nullptr);
+        m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        m_postCommandList->IASetVertexBuffers(0, 1, &m_postVertexBufferView);
 
-    //    PIXBeginEvent(m_postCommandList, 0, L"Draw texture to screen.");
-    //    m_postCommandList->DrawInstanced(4, 1, 0, 0);
-    //    PIXEndEvent(m_postCommandList);
+        PIXBeginEvent(m_postCommandList, 0, L"Draw texture to screen.");
+        m_postCommandList->DrawInstanced(4, 1, 0, 0);
+        PIXEndEvent(m_postCommandList);
 
-    //    // Revert resource states back to original values.
-    //    barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    //    barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    //    barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-    //    barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        // Revert resource states back to original values.
+        barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+        barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+        barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
-    //    m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
-    //}
+        m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
+    }
 
     ThrowIfFailed(m_postCommandList->Close());
-    ID3D12CommandList* ppCommandLists[] = { m_sceneCommandList };
+    ID3D12CommandList* ppCommandLists[] = { m_sceneCommandList, m_postCommandList };
     m_deviceResource->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
     m_deviceResource->Present();
@@ -325,7 +325,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
     // Reserve heap position for the post-process SRV.
     {
         m_rtvHeapPositionPostSrv = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
-        m_cbvHeapPositionPostSrv = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
+        m_cbvSrvHeapPositionPost = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
     }
 
     LoadSizeDependentResources();
@@ -585,7 +585,7 @@ void Fullscreen::LoadSceneResolutionDependentResources()
     }
 
     // Create SRV for the intermediate render target.
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvHeapPositionPostSrv, GraphicsContexts::c_descriptorSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvSrvHeapPositionPost, GraphicsContexts::c_descriptorSize);
     m_device->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
 }
 

@@ -177,7 +177,7 @@ void Fullscreen::CreateDeviceDependentResources()
 void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
 {
     m_deviceResource = deviceResource;
-    m_device = deviceResource->GetD3DDevice();
+    ComPtr<ID3D12Device> device = deviceResource->GetD3DDevice();
 
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
@@ -206,7 +206,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
         ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-        ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
+        ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
         NAME_D3D12_OBJECT(m_sceneRootSignature);
     }
 
@@ -250,7 +250,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
         ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-        ThrowIfFailed(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_postRootSignature)));
+        ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_postRootSignature)));
         NAME_D3D12_OBJECT(m_postRootSignature);
     }
 
@@ -303,7 +303,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         psoDesc.RTVFormats[0] = m_deviceResource->GetBackBufferFormat();
         psoDesc.SampleDesc.Count = 1;
 
-        ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
+        ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
         NAME_D3D12_OBJECT(m_scenePipelineState);
 
         psoDesc.InputLayout = { scaleInputElementDescs, _countof(scaleInputElementDescs) };
@@ -311,7 +311,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         psoDesc.VS = CD3DX12_SHADER_BYTECODE(postVertexShader.Get());
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(postPixelShader.Get());
 
-        ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_postPipelineState)));
+        ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_postPipelineState)));
         NAME_D3D12_OBJECT(m_postPipelineState);
     }
 
@@ -319,8 +319,8 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
     ComPtr<ID3D12CommandAllocator> commandAllocator;
     ComPtr<ID3D12GraphicsCommandList> commandList;
 
-    ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
-    ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+    ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+    ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
     // Reserve heap position for the post-process SRV.
     {
@@ -347,7 +347,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
 
         const UINT vertexBufferSize = sizeof(quadVertices);
 
-        ThrowIfFailed(m_device->CreateCommittedResource(
+        ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
@@ -355,7 +355,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
             nullptr,
             IID_PPV_ARGS(&m_sceneVertexBuffer)));
 
-        ThrowIfFailed(m_device->CreateCommittedResource(
+        ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
@@ -396,7 +396,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
 
         const UINT vertexBufferSize = sizeof(quadVertices);
 
-        ThrowIfFailed(m_device->CreateCommittedResource(
+        ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
@@ -404,7 +404,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
             nullptr,
             IID_PPV_ARGS(&m_postVertexBuffer)));
 
-        ThrowIfFailed(m_device->CreateCommittedResource(
+        ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
@@ -433,7 +433,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
 
     // Create the constant buffer.
     {
-        ThrowIfFailed(m_device->CreateCommittedResource(
+        ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(c_alignedSceneConstantBuffer* DeviceResources::c_backBufferCount),
@@ -455,7 +455,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
             D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
             cbvDesc.BufferLocation = cbvGpuAddress;
             cbvDesc.SizeInBytes = c_alignedSceneConstantBuffer;
-            m_device->CreateConstantBufferView(&cbvDesc, cpuHandle);
+            device->CreateConstantBufferView(&cbvDesc, cpuHandle);
 
             cbvDesc.BufferLocation += c_alignedSceneConstantBuffer;
             m_gpuHandleSceneConstantBuffer[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_heapPositionSceneConstantBuffer[n], GraphicsContexts::c_descriptorSize);
@@ -527,7 +527,7 @@ void Fullscreen::LoadSizeDependentResources()
         {
             ID3D12Resource* renderTarget = m_deviceResource->GetRenderTarget();
             ThrowIfFailed(m_deviceResource->GetSwapChain()->GetBuffer(n, IID_PPV_ARGS(&renderTarget)));
-            m_device->CreateRenderTargetView(renderTarget, nullptr, rtvHandle);
+            m_deviceResource->GetD3DDevice()->CreateRenderTargetView(renderTarget, nullptr, rtvHandle);
             rtvHandle.Offset(1, m_deviceResource->GetRtvDescriptorSize());
 
             SetName(renderTarget, L"Render Target:" + n);
@@ -573,20 +573,20 @@ void Fullscreen::LoadSceneResolutionDependentResources()
             D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
-        ThrowIfFailed(m_device->CreateCommittedResource(
+        ThrowIfFailed(m_deviceResource->GetD3DDevice()->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
             &renderTargetDesc,
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             &clearValue,
             IID_PPV_ARGS(&m_intermediateRenderTarget)));
-        m_device->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
+        m_deviceResource->GetD3DDevice()->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
         NAME_D3D12_OBJECT(m_intermediateRenderTarget);
     }
 
     // Create SRV for the intermediate render target.
     CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvSrvHeapPositionPost, GraphicsContexts::c_descriptorSize);
-    m_device->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
+    m_deviceResource->GetD3DDevice()->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
 }
 
 void Fullscreen::UpdateTitle()

@@ -51,7 +51,6 @@ namespace CPyburnRTXEngine
 
 	private:
 		std::shared_ptr<DeviceResources> m_deviceResource;
-		ComPtr<ID3D12Device> m_device;
 
 		ComPtr<ID3D12PipelineState> m_scenePipelineState;
 		ComPtr<ID3D12PipelineState> m_postPipelineState;

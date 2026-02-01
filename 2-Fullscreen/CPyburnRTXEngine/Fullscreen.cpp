@@ -594,6 +594,5 @@ void Fullscreen::UpdateTitle()
     // Update resolutions shown in app title.
     wchar_t updatedTitle[256];
     swprintf_s(updatedTitle, L"( %u x %u ) scaled to ( %u x %u )", m_resolutionOptions[m_resolutionIndex].Width, m_resolutionOptions[m_resolutionIndex].Height, m_width, m_height);
-    char debug = (char)updatedTitle;
-    DebugTrace(&debug);
+    DebugTrace(updatedTitle);
 }

@@ -25,9 +25,7 @@ const UINT Fullscreen::m_resolutionOptionsCount = _countof(m_resolutionOptions);
 UINT Fullscreen::m_resolutionIndex = 2;
 
 Fullscreen::Fullscreen() :
-    m_sceneConstantBufferData{},
-    m_sceneViewport(0.0f, 0.0f, 0.0f, 0.0f),
-    m_sceneScissorRect(0, 0, 0, 0)
+    m_sceneConstantBufferData{}
 {
 
 }
@@ -89,8 +87,8 @@ void Fullscreen::Render()
         CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_gpuHandleSceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()]);
         m_sceneCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
         m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        m_sceneCommandList->RSSetViewports(1, &m_sceneViewport);
-        m_sceneCommandList->RSSetScissorRects(1, &m_sceneScissorRect);
+        m_sceneCommandList->RSSetViewports(1, &m_deviceResource->GetScreenViewport());
+        m_sceneCommandList->RSSetScissorRects(1, &m_deviceResource->GetScissorRect());
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DeviceResources::c_backBufferCount, m_deviceResource->GetRtvDescriptorSize());
         //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
@@ -298,9 +296,4 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
     ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
     m_deviceResource->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
     m_deviceResource->WaitForGpu();
-}
-
-std::wstring Fullscreen::GetAssetFullPath(LPCWSTR assetName)
-{
-    return m_assetsPath + assetName;
 }

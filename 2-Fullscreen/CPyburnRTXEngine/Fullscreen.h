@@ -48,13 +48,6 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12PipelineState> m_scenePipelineState;
 		ComPtr<ID3D12RootSignature> m_sceneRootSignature;
 
-		CD3DX12_VIEWPORT m_sceneViewport;
-		CD3DX12_RECT m_sceneScissorRect;
-
-		std::wstring GetAssetFullPath(LPCWSTR assetName);
-		// Root assets path.
-		std::wstring m_assetsPath;
-
 		// App resources.
 		ComPtr<ID3D12Resource> m_sceneVertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_sceneVertexBufferView;

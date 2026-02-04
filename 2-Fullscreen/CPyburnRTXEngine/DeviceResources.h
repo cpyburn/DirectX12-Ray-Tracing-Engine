@@ -109,6 +109,7 @@ namespace DX
             return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandle);
         }
 
+        void Render();
     private:
 #pragma region Fullscreen Post-Processing
         struct Resolution
@@ -138,6 +139,7 @@ namespace DX
         Microsoft::WRL::ComPtr<ID3D12Resource> m_postVertexBuffer;
         D3D12_VERTEX_BUFFER_VIEW m_postVertexBufferView;
 
+        static const float LetterboxColor[4];
         static const Resolution m_resolutionOptions[];
         static const UINT m_resolutionOptionsCount;
         static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.

@@ -9,19 +9,12 @@ namespace CPyburnRTXEngine
 	private:
 		static const float QuadWidth;
 		static const float QuadHeight;
-		static const float LetterboxColor[4];
 		static const float ClearColor[4];
 
 		struct SceneVertex
 		{
 			XMFLOAT3 position;
 			XMFLOAT4 color;
-		};
-
-		struct PostVertex
-		{
-			XMFLOAT4 position;
-			XMFLOAT2 uv;
 		};
 
 		struct SceneConstantBuffer
@@ -55,16 +48,8 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12PipelineState> m_scenePipelineState;
 		ComPtr<ID3D12RootSignature> m_sceneRootSignature;
 
-		ComPtr<ID3D12PipelineState> m_postPipelineState;
-		ComPtr<ID3D12RootSignature> m_postRootSignature;
-
-		ComPtr<ID3D12Resource> m_intermediateRenderTarget;
-
 		CD3DX12_VIEWPORT m_sceneViewport;
 		CD3DX12_RECT m_sceneScissorRect;
-
-		CD3DX12_VIEWPORT m_postViewport;
-		CD3DX12_RECT m_postScissorRect;
 
 		std::wstring GetAssetFullPath(LPCWSTR assetName);
 		// Root assets path.
@@ -73,8 +58,6 @@ namespace CPyburnRTXEngine
 		// App resources.
 		ComPtr<ID3D12Resource> m_sceneVertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_sceneVertexBufferView;
-		ComPtr<ID3D12Resource> m_postVertexBuffer;
-		D3D12_VERTEX_BUFFER_VIEW m_postVertexBufferView;
 		SceneConstantBuffer m_sceneConstantBufferData;
 
 		static const UINT c_alignedSceneConstantBuffer = (sizeof(SceneConstantBuffer) + 255) & ~255;
@@ -83,16 +66,7 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> m_sceneConstantBuffer;
 		UINT8* m_pSceneConstantBufferDataBegin;
 
-		UINT m_rtvHeapIntermediateRenderTargetPosition;
-		UINT m_cbvHeapIntermediateRenderTargetPosition;
-
 		UINT m_width = 1280;
 		UINT m_height = 720;
-
-		void UpdatePostViewAndScissor();
-		void LoadSizeDependentResources();
-		void LoadSceneResolutionDependentResources();
-		void UpdateTitle();
-		void OnSizeChanged(UINT width, UINT height, bool minimized);
 	};
 } // namespace CPyburnRTXEngine

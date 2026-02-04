@@ -31,9 +31,7 @@ Fullscreen::Fullscreen() :
     m_sceneScissorRect(0, 0, 0, 0),
     m_postViewport(0.0f, 0.0f, 0.0f, 0.0f)
 {
-    WCHAR assetsPath[512];
-    GetAssetsPath(assetsPath, _countof(assetsPath));
-    m_assetsPath = assetsPath;
+
 }
 
 Fullscreen::~Fullscreen()

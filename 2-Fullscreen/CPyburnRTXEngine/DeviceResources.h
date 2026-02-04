@@ -11,6 +11,7 @@ namespace CPyburnRTXEngine
 }
 
 using namespace CPyburnRTXEngine;
+using namespace DirectX;
 
 namespace DX
 {
@@ -116,6 +117,12 @@ namespace DX
             UINT Height;
         };
 
+        struct PostVertex
+        {
+            DirectX::XMFLOAT4 position;
+            DirectX::XMFLOAT2 uv;
+        };
+
         UINT m_width; // todo: can this be replaced with m_outputSize.right - m_outputSize.bottom ?
         UINT m_height;
         CD3DX12_VIEWPORT m_postViewport;
@@ -126,6 +133,11 @@ namespace DX
         UINT m_cbvHeapIntermediateRenderTargetPosition;
         std::unique_ptr<CPyburnRTXEngine::GraphicsContexts> m_graphicsContexts;
 
+        Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> m_postRootSignature;
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_postVertexBuffer;
+        D3D12_VERTEX_BUFFER_VIEW m_postVertexBufferView;
+
         static const Resolution m_resolutionOptions[];
         static const UINT m_resolutionOptionsCount;
         static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
@@ -134,6 +146,7 @@ namespace DX
         void LoadSizeDependentResources();
         void LoadSceneResolutionDependentResources();
         void UpdateTitle();
+        void CreateFullscreenPostProcessingResources();
 #pragma endregion
 
         void MoveToNextFrame();

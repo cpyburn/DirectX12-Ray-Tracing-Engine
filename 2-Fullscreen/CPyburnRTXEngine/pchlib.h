@@ -194,6 +194,17 @@ inline void GetAssetsPath(_Out_writes_(pathSize) WCHAR* path, UINT pathSize)
     }
 }
 
+inline std::wstring GetAssetFullPath(LPCWSTR assetName)
+{
+    WCHAR assetsPath[512];
+    GetAssetsPath(assetsPath, _countof(assetsPath));
+
+    std::wstring fullPath = assetsPath;
+    fullPath += assetName;
+
+    return fullPath;
+}
+
 // Naming helper for ComPtr<T>.
 // Assigns the name of the variable as the name of the object.
 // The indexed variant will include the index in the name of the object.

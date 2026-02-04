@@ -111,6 +111,7 @@ namespace DX
         CD3DX12_VIEWPORT m_postViewport;
         CD3DX12_RECT m_postScissorRect;
         ComPtr<ID3D12Resource> m_intermediateRenderTarget;
+        static const float ClearColor[4];
 
         struct Resolution
         {

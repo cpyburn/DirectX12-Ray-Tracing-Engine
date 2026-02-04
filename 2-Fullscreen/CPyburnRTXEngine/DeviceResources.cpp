@@ -54,6 +54,7 @@ const DeviceResources::Resolution DeviceResources::m_resolutionOptions[] =
 };
 const UINT DeviceResources::m_resolutionOptionsCount = _countof(m_resolutionOptions);
 UINT DeviceResources::m_resolutionIndex = 2;
+const float DeviceResources::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 
 // Constructor for DeviceResources.
 DeviceResources::DeviceResources(
@@ -808,7 +809,7 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_rtvDescriptorSize);
         ThrowIfFailed(m_deviceResource->GetD3DDevice()->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,

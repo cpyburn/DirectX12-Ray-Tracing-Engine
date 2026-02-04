@@ -596,3 +596,8 @@ void Fullscreen::UpdateTitle()
     swprintf_s(updatedTitle, L"( %u x %u ) scaled to ( %u x %u )", m_resolutionOptions[m_resolutionIndex].Width, m_resolutionOptions[m_resolutionIndex].Height, m_width, m_height);
     DebugTrace(updatedTitle);
 }
+
+void CPyburnRTXEngine::Fullscreen::OnSizeChanged(UINT width, UINT height, bool minimized)
+{
+
+}

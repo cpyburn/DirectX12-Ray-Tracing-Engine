@@ -60,8 +60,9 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> m_intermediateRenderTarget;
 
 		CD3DX12_VIEWPORT m_sceneViewport;
-		CD3DX12_VIEWPORT m_postViewport;
 		CD3DX12_RECT m_sceneScissorRect;
+
+		CD3DX12_VIEWPORT m_postViewport;
 		CD3DX12_RECT m_postScissorRect;
 
 		std::wstring GetAssetFullPath(LPCWSTR assetName);
@@ -91,5 +92,6 @@ namespace CPyburnRTXEngine
 		void LoadSizeDependentResources();
 		void LoadSceneResolutionDependentResources();
 		void UpdateTitle();
+		void OnSizeChanged(UINT width, UINT height, bool minimized);
 	};
 } // namespace CPyburnRTXEngine

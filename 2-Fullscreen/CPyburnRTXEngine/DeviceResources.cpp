@@ -41,6 +41,20 @@ namespace
     }
 }
 
+const DeviceResources::Resolution DeviceResources::m_resolutionOptions[] =
+{
+    { 800u, 600u },
+    { 1200u, 900u },
+    { 1280u, 720u },
+    { 1920u, 1080u },
+    { 1920u, 1200u },
+    { 2560u, 1440u },
+    { 3440u, 1440u },
+    { 3840u, 2160u }
+};
+const UINT DeviceResources::m_resolutionOptionsCount = _countof(m_resolutionOptions);
+UINT DeviceResources::m_resolutionIndex = 2;
+
 // Constructor for DeviceResources.
 DeviceResources::DeviceResources(
     DXGI_FORMAT backBufferFormat,
@@ -219,7 +233,8 @@ void DeviceResources::CreateDeviceResources()
 
     // Create descriptor heaps for render target views and depth stencil views.
     D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
-    rtvDescriptorHeapDesc.NumDescriptors = c_backBufferCount + 1; // + 1 for the intermediate render target.
+	rtvDescriptorHeapDesc.NumDescriptors = c_backBufferCount // for the swap chain render targets
+        + 1; // + 1 for the intermediate render target.
     rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 
     ThrowIfFailed(m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
@@ -443,6 +458,11 @@ void DeviceResources::SetWindow(HWND window, int width, int height) noexcept
     m_outputSize.left = m_outputSize.top = 0;
     m_outputSize.right = static_cast<long>(width);
     m_outputSize.bottom = static_cast<long>(height);
+
+	// todo: can this be replaced with m_outputSize.right - m_outputSize.bottom ?
+	m_width = width;
+	m_height = height;
+    UpdateTitle();
 }
 
 // This method is called when the Win32 window changes size.
@@ -697,6 +717,120 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
     }
 
     *ppAdapter = adapter.Detach();
+}
+
+void DeviceResources::UpdatePostViewAndScissor()
+{
+    float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_width;
+    float viewHeightRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height) / m_height;
+
+    float x = 1.0f;
+    float y = 1.0f;
+
+    if (viewWidthRatio < viewHeightRatio)
+    {
+        // The scaled image's height will fit to the viewport's height and 
+        // its width will be smaller than the viewport's width.
+        x = viewWidthRatio / viewHeightRatio;
+    }
+    else
+    {
+        // The scaled image's width will fit to the viewport's width and 
+        // its height may be smaller than the viewport's height.
+        y = viewHeightRatio / viewWidthRatio;
+    }
+
+    m_postViewport.TopLeftX = m_width * (1.0f - x) / 2.0f;
+    m_postViewport.TopLeftY = m_height * (1.0f - y) / 2.0f;
+    m_postViewport.Width = x * m_width;
+    m_postViewport.Height = y * m_height;
+
+    m_postScissorRect.left = static_cast<LONG>(m_postViewport.TopLeftX);
+    m_postScissorRect.right = static_cast<LONG>(m_postViewport.TopLeftX + m_postViewport.Width);
+    m_postScissorRect.top = static_cast<LONG>(m_postViewport.TopLeftY);
+    m_postScissorRect.bottom = static_cast<LONG>(m_postViewport.TopLeftY + m_postViewport.Height);
+}
+
+void DeviceResources::LoadSizeDependentResources()
+{
+    UpdatePostViewAndScissor();
+
+    // Create frame resources.
+    {
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRenderTargetView();
+
+        // Create a RTV for each frame.
+        for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+        {
+            ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
+            m_d3dDevice->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
+            rtvHandle.Offset(1, m_rtvDescriptorSize);
+
+            NAME_D3D12_OBJECT_INDEXED(m_renderTargets, n);
+        }
+    }
+
+    // Update resolutions shown in app title.
+    UpdateTitle();
+
+    // todo: This is where you would create/resize intermediate render targets, depth stencils, or other resources
+    // dependent on the window size.
+}
+
+void DeviceResources::LoadSceneResolutionDependentResources()
+{
+    // Update resolutions shown in app title.
+    UpdateTitle();
+
+    // Set up the scene viewport and scissor rect to match the current scene rendering resolution.
+    {
+        m_screenViewport.Width = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width);
+        m_screenViewport.Height = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height);
+
+        m_scissorRect.right = static_cast<LONG>(m_resolutionOptions[m_resolutionIndex].Width);
+        m_scissorRect.bottom = static_cast<LONG>(m_resolutionOptions[m_resolutionIndex].Height);
+    }
+
+    // Update post-process viewport and scissor rectangle.
+    UpdatePostViewAndScissor();
+
+    // Create RTV for the intermediate render target.
+    {
+        D3D12_RESOURCE_DESC swapChainDesc = m_renderTargets[m_backBufferIndex]->GetDesc();
+        const CD3DX12_CLEAR_VALUE clearValue(swapChainDesc.Format, ClearColor);
+        const CD3DX12_RESOURCE_DESC renderTargetDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+            swapChainDesc.Format,
+            m_resolutionOptions[m_resolutionIndex].Width,
+            m_resolutionOptions[m_resolutionIndex].Height,
+            1u, 1u,
+            swapChainDesc.SampleDesc.Count,
+            swapChainDesc.SampleDesc.Quality,
+            D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+            D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
+        ThrowIfFailed(m_deviceResource->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &renderTargetDesc,
+            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            &clearValue,
+            IID_PPV_ARGS(&m_intermediateRenderTarget)));
+        m_deviceResource->GetD3DDevice()->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
+        NAME_D3D12_OBJECT(m_intermediateRenderTarget);
+    }
+
+    // Create SRV for the intermediate render target.
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvSrvHeapPositionPost, GraphicsContexts::c_descriptorSize);
+    m_deviceResource->GetD3DDevice()->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
+}
+
+void DeviceResources::UpdateTitle()
+{
+    // Update resolutions shown in app title.
+    wchar_t updatedTitle[256];
+    swprintf_s(updatedTitle, L"( %u x %u ) scaled to ( %u x %u )\n", m_resolutionOptions[m_resolutionIndex].Width, m_resolutionOptions[m_resolutionIndex].Height, m_width, m_height);
+    DebugTrace(updatedTitle);
 }
 
 // Sets the color space for the swap chain in order to handle HDR output.

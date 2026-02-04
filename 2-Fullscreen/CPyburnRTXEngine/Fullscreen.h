@@ -82,8 +82,8 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> m_sceneConstantBuffer;
 		UINT8* m_pSceneConstantBufferDataBegin;
 
-		UINT m_rtvHeapPositionPostSrv;
-		UINT m_cbvSrvHeapPositionPost;
+		UINT m_rtvHeapIntermediateRenderTargetPosition;
+		UINT m_cbvHeapIntermediateRenderTargetPosition;
 
 		UINT m_width = 1280;
 		UINT m_height = 720;

@@ -97,7 +97,7 @@ void Fullscreen::Render()
         m_sceneCommandList->RSSetViewports(1, &m_sceneViewport);
         m_sceneCommandList->RSSetScissorRects(1, &m_sceneScissorRect);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapIntermediateRenderTargetPosition, m_deviceResource->GetRtvDescriptorSize());
         //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
         m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
@@ -135,7 +135,7 @@ void Fullscreen::Render()
 
         m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_cbvSrvHeapPositionPost, GraphicsContexts::c_descriptorSize);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
         m_postCommandList->SetGraphicsRootDescriptorTable(0, cbvSrvHandle); // srv location GPU handle
         m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_postCommandList->RSSetViewports(1, &m_postViewport);
@@ -210,6 +210,49 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         NAME_D3D12_OBJECT(m_sceneRootSignature);
     }
 
+    // Create the pipeline state, which includes compiling and loading shaders.
+    {
+        ComPtr<ID3DBlob> sceneVertexShader;
+        ComPtr<ID3DBlob> scenePixelShader;
+        ComPtr<ID3DBlob> error;
+
+#if defined(_DEBUG)
+        // Enable better shader debugging with the graphics debugging tools.
+        UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+        UINT compileFlags = 0;
+#endif
+        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &sceneVertexShader, &error));
+        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &scenePixelShader, &error));
+
+        // Des
+        //         // Define the vertex input layouts.
+        D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+        {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        };
+
+        // cribe and create the graphics pipeline state objects (PSOs).
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+        psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+        psoDesc.pRootSignature = m_sceneRootSignature.Get();
+        psoDesc.VS = CD3DX12_SHADER_BYTECODE(sceneVertexShader.Get());
+        psoDesc.PS = CD3DX12_SHADER_BYTECODE(scenePixelShader.Get());
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        psoDesc.DepthStencilState.DepthEnable = FALSE;
+        psoDesc.DepthStencilState.StencilEnable = FALSE;
+        psoDesc.SampleMask = UINT_MAX;
+        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        psoDesc.NumRenderTargets = 1;
+        psoDesc.RTVFormats[0] = m_deviceResource->GetBackBufferFormat();
+        psoDesc.SampleDesc.Count = 1;
+
+        ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
+        NAME_D3D12_OBJECT(m_scenePipelineState);
+    }
+
     // Create a root signature consisting of a descriptor table with a SRV and a sampler.
     {
         CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
@@ -256,8 +299,6 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
 
     // Create the pipeline state, which includes compiling and loading shaders.
     {
-        ComPtr<ID3DBlob> sceneVertexShader;
-        ComPtr<ID3DBlob> scenePixelShader;
         ComPtr<ID3DBlob> postVertexShader;
         ComPtr<ID3DBlob> postPixelShader;
         ComPtr<ID3DBlob> error;
@@ -269,18 +310,10 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         UINT compileFlags = 0;
 #endif
 
-        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &sceneVertexShader, &error));
-        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &scenePixelShader, &error));
-
         ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"postShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &postVertexShader, &error));
         ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"postShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &postPixelShader, &error));
 
         // Define the vertex input layouts.
-        D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-        {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-        };
         D3D12_INPUT_ELEMENT_DESC scaleInputElementDescs[] =
         {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -289,10 +322,10 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
 
         // Describe and create the graphics pipeline state objects (PSOs).
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
-        psoDesc.pRootSignature = m_sceneRootSignature.Get();
-        psoDesc.VS = CD3DX12_SHADER_BYTECODE(sceneVertexShader.Get());
-        psoDesc.PS = CD3DX12_SHADER_BYTECODE(scenePixelShader.Get());
+        psoDesc.InputLayout = { scaleInputElementDescs, _countof(scaleInputElementDescs) };
+        psoDesc.pRootSignature = m_postRootSignature.Get();
+        psoDesc.VS = CD3DX12_SHADER_BYTECODE(postVertexShader.Get());
+        psoDesc.PS = CD3DX12_SHADER_BYTECODE(postPixelShader.Get());
         psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
         psoDesc.DepthStencilState.DepthEnable = FALSE;
@@ -302,14 +335,6 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         psoDesc.NumRenderTargets = 1;
         psoDesc.RTVFormats[0] = m_deviceResource->GetBackBufferFormat();
         psoDesc.SampleDesc.Count = 1;
-
-        ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
-        NAME_D3D12_OBJECT(m_scenePipelineState);
-
-        psoDesc.InputLayout = { scaleInputElementDescs, _countof(scaleInputElementDescs) };
-        psoDesc.pRootSignature = m_postRootSignature.Get();
-        psoDesc.VS = CD3DX12_SHADER_BYTECODE(postVertexShader.Get());
-        psoDesc.PS = CD3DX12_SHADER_BYTECODE(postPixelShader.Get());
 
         ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_postPipelineState)));
         NAME_D3D12_OBJECT(m_postPipelineState);
@@ -324,8 +349,8 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
 
     // Reserve heap position for the post-process SRV.
     {
-        m_rtvHeapPositionPostSrv = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
-        m_cbvSrvHeapPositionPost = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
+        m_rtvHeapIntermediateRenderTargetPosition = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
+        m_cbvHeapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
     }
 
     LoadSizeDependentResources();
@@ -572,7 +597,7 @@ void Fullscreen::LoadSceneResolutionDependentResources()
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_deviceResource->GetRtvDescriptorSize());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapIntermediateRenderTargetPosition, m_deviceResource->GetRtvDescriptorSize());
         ThrowIfFailed(m_deviceResource->GetD3DDevice()->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
@@ -585,7 +610,7 @@ void Fullscreen::LoadSceneResolutionDependentResources()
     }
 
     // Create SRV for the intermediate render target.
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvSrvHeapPositionPost, GraphicsContexts::c_descriptorSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
     m_deviceResource->GetD3DDevice()->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
 }
 

@@ -7,12 +7,15 @@
 namespace CPyburnRTXEngine
 {
     class FrameResource; // forward declaration
+    class GraphicsContexts; // forward declaration
 }
 
 using namespace CPyburnRTXEngine;
 
 namespace DX
 {
+    class CPyburnRTXEngine::GraphicsContexts;
+
     // Provides an interface for an application that owns DeviceResources to be notified of the device being lost or created.
     interface IDeviceNotify
     {
@@ -106,30 +109,35 @@ namespace DX
         }
 
     private:
-		UINT m_width; // todo: can this be replaced with m_outputSize.right - m_outputSize.bottom ?
-        UINT m_height;
-        CD3DX12_VIEWPORT m_postViewport;
-        CD3DX12_RECT m_postScissorRect;
-        ComPtr<ID3D12Resource> m_intermediateRenderTarget;
-        static const float ClearColor[4];
-
+#pragma region Fullscreen Post-Processing
         struct Resolution
         {
             UINT Width;
             UINT Height;
         };
 
+        UINT m_width; // todo: can this be replaced with m_outputSize.right - m_outputSize.bottom ?
+        UINT m_height;
+        CD3DX12_VIEWPORT m_postViewport;
+        CD3DX12_RECT m_postScissorRect;
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateRenderTarget;
+        static const float ClearColor[4];
+        UINT m_rtvHeapIntermediateRenderTargetPosition;
+        UINT m_cbvHeapIntermediateRenderTargetPosition;
+        std::unique_ptr<CPyburnRTXEngine::GraphicsContexts> m_graphicsContexts;
+
         static const Resolution m_resolutionOptions[];
         static const UINT m_resolutionOptionsCount;
         static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
-
-        void MoveToNextFrame();
-        void GetAdapter(IDXGIAdapter1** ppAdapter);
 
         void UpdatePostViewAndScissor();
         void LoadSizeDependentResources();
         void LoadSceneResolutionDependentResources();
         void UpdateTitle();
+#pragma endregion
+
+        void MoveToNextFrame();
+        void GetAdapter(IDXGIAdapter1** ppAdapter);
 
         static constexpr size_t MAX_BACK_BUFFER_COUNT = 3;
 

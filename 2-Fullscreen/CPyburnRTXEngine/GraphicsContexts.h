@@ -24,8 +24,7 @@ namespace CPyburnRTXEngine
 		static bool RemoveHeapPosition(UINT heapPosition);
 		static UINT GetAvailableHeapPosition();
 
-		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources);
-		task<void> CreatePipelines(const std::shared_ptr<DeviceResources>& deviceResources);
+		void CreateDeviceDependentResources(ID3D12Device* d3dDevice);
 	};
 }
 

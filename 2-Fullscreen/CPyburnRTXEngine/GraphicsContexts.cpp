@@ -87,9 +87,9 @@ UINT GraphicsContexts::GetAvailableHeapPosition()
 	return value;
 }
 
-void GraphicsContexts::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources)
+void GraphicsContexts::CreateDeviceDependentResources(ID3D12Device* d3dDevice)
 {
-	c_descriptorSize = deviceResources->GetD3DDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	c_descriptorSize = d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
 	heapDesc.NumDescriptors = DeviceResources::c_backBufferCount // Vertex constant buffers per frame 
@@ -98,7 +98,7 @@ void GraphicsContexts::CreateDeviceDependentResources(const std::shared_ptr<Devi
 	// This flag indicates that this descriptor heap can be bound to the pipeline and that descriptors contained in it can be referenced by a root table.
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	ThrowIfFailed(deviceResources->GetD3DDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&c_heap)));
+	ThrowIfFailed(d3dDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&c_heap)));
 	c_heap->SetName(L"Descriptor Heap from GraphicsContexts");
 }
 

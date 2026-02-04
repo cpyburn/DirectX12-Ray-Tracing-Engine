@@ -10,6 +10,7 @@ using namespace DX;
 using namespace CPyburnRTXEngine;
 
 #include "FrameResource.h"
+#include "GraphicsContexts.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -62,21 +63,22 @@ DeviceResources::DeviceResources(
     DXGI_FORMAT depthBufferFormat,
     D3D_FEATURE_LEVEL minFeatureLevel,
     unsigned int flags) noexcept(false) :
-        m_backBufferIndex(0),
-        m_fenceValues{},
-        m_rtvDescriptorSize(0),
-        m_screenViewport{},
-        m_scissorRect{},
-        m_backBufferFormat(backBufferFormat),
-        m_depthBufferFormat(depthBufferFormat),
-        m_d3dMinFeatureLevel(minFeatureLevel),
-        m_window(nullptr),
-        m_d3dFeatureLevel(D3D_FEATURE_LEVEL_11_0),
-        m_dxgiFactoryFlags(0),
-        m_outputSize{0, 0, 1, 1},
-        m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
-        m_options(flags),
-        m_deviceNotify(nullptr)
+    m_backBufferIndex(0),
+    m_fenceValues{},
+    m_rtvDescriptorSize(0),
+    m_screenViewport{},
+    m_scissorRect{},
+    m_backBufferFormat(backBufferFormat),
+    m_depthBufferFormat(depthBufferFormat),
+    m_d3dMinFeatureLevel(minFeatureLevel),
+    m_window(nullptr),
+    m_d3dFeatureLevel(D3D_FEATURE_LEVEL_11_0),
+    m_dxgiFactoryFlags(0),
+    m_outputSize{ 0, 0, 1, 1 },
+    m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
+    m_options(flags),
+    m_deviceNotify(nullptr),
+    m_graphicsContexts(std::make_unique<GraphicsContexts>())
 {
     if (c_backBufferCount < 2 || c_backBufferCount > MAX_BACK_BUFFER_COUNT)
     {
@@ -273,6 +275,8 @@ void DeviceResources::CreateDeviceResources()
     {
         throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
     }
+
+    m_graphicsContexts->CreateDeviceDependentResources(m_d3dDevice.Get());
 }
 
 // These resources need to be recreated every time the window size is changed.
@@ -449,6 +453,58 @@ void DeviceResources::CreateWindowSizeDependentResources()
     m_scissorRect.left = m_scissorRect.top = 0;
     m_scissorRect.right = static_cast<LONG>(backBufferWidth);
     m_scissorRect.bottom = static_cast<LONG>(backBufferHeight);
+
+#pragma region Fullscreen
+    //D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+
+    //// This is the highest version the sample supports. If CheckFeatureSupport succeeds, the HighestVersion returned will not be greater than this.
+    //featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+    //// Create a root signature consisting of a descriptor table with a SRV and a sampler.
+    //{
+    //    CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+    //    CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+
+    //    // We don't modify the SRV in the post-processing command list after
+    //    // SetGraphicsRootDescriptorTable is executed on the GPU so we can use the default
+    //    // range behavior: D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE
+    //    ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+    //    rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+
+    //    // Allow input layout and pixel shader access and deny uneccessary access to certain pipeline stages.
+    //    D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+    //        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+    //        D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+    //        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+    //        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+    //    // Create a sampler.
+    //    D3D12_STATIC_SAMPLER_DESC sampler = {};
+    //    sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    //    sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    //    sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    //    sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    //    sampler.MipLODBias = 0;
+    //    sampler.MaxAnisotropy = 0;
+    //    sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    //    sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    //    sampler.MinLOD = 0.0f;
+    //    sampler.MaxLOD = D3D12_FLOAT32_MAX;
+    //    sampler.ShaderRegister = 0;
+    //    sampler.RegisterSpace = 0;
+    //    sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    //    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+    //    rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 1, &sampler, rootSignatureFlags);
+
+    //    ComPtr<ID3DBlob> signature;
+    //    ComPtr<ID3DBlob> error;
+    //    ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
+    //    ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_postRootSignature)));
+    //    NAME_D3D12_OBJECT(m_postRootSignature);
+    //}
+#pragma endregion
+
 }
 
 // This method is called when the Win32 window is created (or re-created).
@@ -809,21 +865,21 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapPositionPostSrv, m_rtvDescriptorSize);
-        ThrowIfFailed(m_deviceResource->GetD3DDevice()->CreateCommittedResource(
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapIntermediateRenderTargetPosition, m_rtvDescriptorSize);
+        ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
             &renderTargetDesc,
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             &clearValue,
             IID_PPV_ARGS(&m_intermediateRenderTarget)));
-        m_deviceResource->GetD3DDevice()->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
+        m_d3dDevice->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
         NAME_D3D12_OBJECT(m_intermediateRenderTarget);
     }
 
     // Create SRV for the intermediate render target.
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvSrvHeapPositionPost, GraphicsContexts::c_descriptorSize);
-    m_deviceResource->GetD3DDevice()->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
+    m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
 }
 
 void DeviceResources::UpdateTitle()

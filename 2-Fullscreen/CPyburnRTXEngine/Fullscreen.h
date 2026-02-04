@@ -22,16 +22,6 @@ namespace CPyburnRTXEngine
 			XMFLOAT4X4 transform;
 			XMFLOAT4 offset;
 		};
-
-		struct Resolution
-		{
-			UINT Width;
-			UINT Height;
-		};
-
-		static const Resolution m_resolutionOptions[];
-		static const UINT m_resolutionOptionsCount;
-		static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
 	public:
 		Fullscreen();
 		~Fullscreen();
@@ -39,8 +29,7 @@ namespace CPyburnRTXEngine
 		void Update(DX::StepTimer const& timer);
 		void Render();
 
-		void CreateDeviceDependentResources();
-		void CreateWindowSizeDependentResources(const std::shared_ptr<DeviceResources>& deviceResource);
+		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource);
 
 	private:
 		std::shared_ptr<DeviceResources> m_deviceResource;

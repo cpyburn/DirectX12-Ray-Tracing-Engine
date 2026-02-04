@@ -10,20 +10,6 @@ const float Fullscreen::QuadWidth = 20.0f;
 const float Fullscreen::QuadHeight = 720.0f;
 const float Fullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 
-const Fullscreen::Resolution Fullscreen::m_resolutionOptions[] =
-{
-    { 800u, 600u },
-    { 1200u, 900u },
-    { 1280u, 720u },
-    { 1920u, 1080u },
-    { 1920u, 1200u },
-    { 2560u, 1440u },
-    { 3440u, 1440u },
-    { 3840u, 2160u }
-};
-const UINT Fullscreen::m_resolutionOptionsCount = _countof(m_resolutionOptions);
-UINT Fullscreen::m_resolutionIndex = 2;
-
 Fullscreen::Fullscreen() :
     m_sceneConstantBufferData{}
 {
@@ -46,7 +32,7 @@ void Fullscreen::Update(DX::StepTimer const& timer)
     }
 
     XMMATRIX transform = XMMatrixMultiply(
-        XMMatrixOrthographicLH(static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width), static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height), 0.0f, 100.0f),
+        XMMatrixOrthographicLH(static_cast<float>(m_deviceResource->GetResolution().Width), static_cast<float>(m_deviceResource->GetResolution().Height), 0.0f, 100.0f),
         XMMatrixTranslation(m_sceneConstantBufferData.offset.x, 0.0f, 0.0f));
 
     XMStoreFloat4x4(&m_sceneConstantBufferData.transform, XMMatrixTranspose(transform));
@@ -111,12 +97,7 @@ void Fullscreen::Render()
     ThrowIfFailed(m_sceneCommandList->Close());
 }
 
-void Fullscreen::CreateDeviceDependentResources()
-{
-
-}
-
-void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
+void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
 {
     m_deviceResource = deviceResource;
     ComPtr<ID3D12Device> device = deviceResource->GetD3DDevice();
@@ -258,7 +239,7 @@ void Fullscreen::CreateWindowSizeDependentResources(const std::shared_ptr<Device
         ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
             D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(c_alignedSceneConstantBuffer* DeviceResources::c_backBufferCount),
+            &CD3DX12_RESOURCE_DESC::Buffer(c_alignedSceneConstantBuffer * DeviceResources::c_backBufferCount),
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(&m_sceneConstantBuffer)));

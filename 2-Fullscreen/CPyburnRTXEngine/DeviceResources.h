@@ -109,15 +109,20 @@ namespace DX
             return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandle);
         }
 
-        void Render();
-    private:
 #pragma region Fullscreen Post-Processing
+    private:
         struct Resolution
         {
             UINT Width;
             UINT Height;
         };
-
+    public:
+        void Render();
+		Resolution GetResolution() const noexcept
+		{
+			return m_resolutionOptions[m_resolutionIndex];
+		}
+    private:
         struct PostVertex
         {
             DirectX::XMFLOAT4 position;

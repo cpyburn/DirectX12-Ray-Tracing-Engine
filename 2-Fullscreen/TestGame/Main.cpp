@@ -127,6 +127,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     switch (message)
     {
+		// todo: remove this region when input is added
+#pragma region Remove when input is added
+    case WM_KEYDOWN:
+        if (game)
+        {
+            game->OnKeyDown(static_cast<UINT8>(wParam));
+        }
+        return 0;
+#pragma endregion
     case WM_CREATE:
         if (lParam)
         {

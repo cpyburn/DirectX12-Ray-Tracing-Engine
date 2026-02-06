@@ -122,6 +122,8 @@ namespace DX
 		{
 			return m_resolutionOptions[m_resolutionIndex];
 		}
+		void IncreaseResolutionIndex();
+		void DecreaseResolutionIndex();
     private:
         struct PostVertex
         {

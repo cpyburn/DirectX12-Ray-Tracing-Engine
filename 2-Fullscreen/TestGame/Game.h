@@ -43,6 +43,9 @@ public:
     void OnDisplayChange();
     void OnWindowSizeChanged(int width, int height);
 
+    // todo: replace when input is added
+    void OnKeyDown(UINT8 key);
+
     // Properties
     void GetDefaultSize( int& width, int& height ) const noexcept;
 

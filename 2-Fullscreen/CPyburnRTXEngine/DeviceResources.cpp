@@ -951,6 +951,35 @@ void DX::DeviceResources::Render()
     ThrowIfFailed(m_postCommandList->Close());
 }
 
+void DX::DeviceResources::IncreaseResolutionIndex()
+{
+    m_resolutionIndex = (m_resolutionIndex + 1) % m_resolutionOptionsCount;
+
+    // Wait for the GPU to finish with the resources we're about to free.
+    WaitForGpu();
+
+    // Update resources dependent on the scene rendering resolution.
+    LoadSceneResolutionDependentResources();
+}
+
+void DX::DeviceResources::DecreaseResolutionIndex()
+{
+    if (m_resolutionIndex == 0)
+    {
+        m_resolutionIndex = m_resolutionOptionsCount - 1;
+    }
+    else
+    {
+        m_resolutionIndex--;
+    }
+
+    // Wait for the GPU to finish with the resources we're about to free.
+    WaitForGpu();
+
+    // Update resources dependent on the scene rendering resolution.
+    LoadSceneResolutionDependentResources();
+}
+
 void DeviceResources::UpdatePostViewAndScissor()
 {
     float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_width;

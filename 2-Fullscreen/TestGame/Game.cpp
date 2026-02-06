@@ -187,6 +187,64 @@ void Game::OnWindowSizeChanged(int width, int height)
     // TODO: Game window is being resized.
 }
 
+void Game::OnKeyDown(UINT8 key)
+{
+	switch (key)
+	{
+    // Instrument the Space Bar to toggle between fullscreen states.
+    // The window message loop callback will receive a WM_SIZE message once the
+    // window is in the fullscreen state. At that point, the IDXGISwapChain should
+    // be resized to match the new window size.
+    //
+    // NOTE: ALT+Enter will perform a similar operation; the code below is not
+    // required to enable that key combination.
+    //case VK_SPACE:
+    //{
+    //    if (m_tearingSupport)
+    //    {
+    //        Win32Application::ToggleFullscreenWindow();
+    //    }
+    //    else
+    //    {
+    //        BOOL fullscreenState;
+    //        ThrowIfFailed(m_swapChain->GetFullscreenState(&fullscreenState, nullptr));
+    //        if (FAILED(m_swapChain->SetFullscreenState(!fullscreenState, nullptr)))
+    //        {
+    //            // Transitions to fullscreen mode can fail when running apps over
+    //            // terminal services or for some other unexpected reason.  Consider
+    //            // notifying the user in some way when this happens.
+    //            OutputDebugString(L"Fullscreen transition failed");
+    //            assert(false);
+    //        }
+    //    }
+    //    break;
+    //}
+
+    // Instrument the Right Arrow key to change the scene rendering resolution 
+    // to the next resolution option. 
+    case VK_RIGHT:
+    {
+        m_deviceResources->IncreaseResolutionIndex();
+    }
+    break;
+
+    // Instrument the Left Arrow key to change the scene rendering resolution 
+    // to the previous resolution option.
+    case VK_LEFT:
+    {
+		m_deviceResources->DecreaseResolutionIndex();
+    }
+    break;
+    
+	case VK_ESCAPE:
+		ExitGame();
+		break;
+
+	default:
+		break;
+	}
+}
+
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const noexcept
 {

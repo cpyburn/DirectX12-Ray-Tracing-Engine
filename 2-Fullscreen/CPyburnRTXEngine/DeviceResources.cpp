@@ -908,8 +908,7 @@ void DX::DeviceResources::Render()
         // Set necessary state.
         m_postCommandList->SetGraphicsRootSignature(m_postRootSignature.Get());
 
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> heap = GetCurrentCbvSrvUavHeap();
-        ID3D12DescriptorHeap* ppHeaps[] = { heap.Get()};
+        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
         m_postCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 
@@ -922,7 +921,7 @@ void DX::DeviceResources::Render()
 
         m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(heap->GetGPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
         m_postCommandList->SetGraphicsRootDescriptorTable(0, cbvSrvHandle); // srv location GPU handle
         m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_postCommandList->RSSetViewports(1, &m_postViewport);
@@ -1082,12 +1081,9 @@ void DeviceResources::LoadSceneResolutionDependentResources()
         NAME_D3D12_OBJECT(m_intermediateRenderTarget);
     }
 
-	// Create SRV for the intermediate render target. The heap position was reserved earlier.
-    for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
-    {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap[i]->GetCPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
-        m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
-    }
+    // Create SRV for the intermediate render target.
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
+    m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
 }
 
 void DeviceResources::UpdateTitle()
@@ -1210,9 +1206,4 @@ void DeviceResources::UpdateColorSpace()
     {
         ThrowIfFailed(m_swapChain->SetColorSpace1(colorSpace));
     }
-}
-
-Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DX::DeviceResources::GetCurrentCbvSrvUavHeap() const noexcept
-{
-    return GraphicsContexts::c_heap[m_backBufferIndex];
 }

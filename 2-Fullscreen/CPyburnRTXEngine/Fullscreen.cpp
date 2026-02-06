@@ -10,7 +10,8 @@ const float Fullscreen::QuadWidth = 20.0f;
 const float Fullscreen::QuadHeight = 720.0f;
 const float Fullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 
-Fullscreen::Fullscreen()
+Fullscreen::Fullscreen() :
+    m_sceneConstantBufferData{}
 {
 
 }
@@ -24,22 +25,20 @@ void Fullscreen::Update(DX::StepTimer const& timer)
     const float translationSpeed = 0.0001f;
     const float offsetBounds = 1.0f;
 
-    GraphicsContexts::ConstantBuffer<SceneConstantBuffer>& constantBuffer = m_sceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()];
-
-    constantBuffer.Data.offset.x += translationSpeed;
-    if (constantBuffer.Data.offset.x > offsetBounds)
+    m_sceneConstantBufferData.offset.x += translationSpeed;
+    if (m_sceneConstantBufferData.offset.x > offsetBounds)
     {
-        constantBuffer.Data.offset.x = -offsetBounds;
+        m_sceneConstantBufferData.offset.x = -offsetBounds;
     }
 
     XMMATRIX transform = XMMatrixMultiply(
         XMMatrixOrthographicLH(static_cast<float>(m_deviceResource->GetResolution().Width), static_cast<float>(m_deviceResource->GetResolution().Height), 0.0f, 100.0f),
-        XMMatrixTranslation(constantBuffer.Data.offset.x, 0.0f, 0.0f));
+        XMMatrixTranslation(m_sceneConstantBufferData.offset.x, 0.0f, 0.0f));
 
-    XMStoreFloat4x4(&constantBuffer.Data.transform, XMMatrixTranspose(transform));
+    XMStoreFloat4x4(&m_sceneConstantBufferData.transform, XMMatrixTranspose(transform));
 
-    UINT offset = m_deviceResource->GetCurrentFrameIndex() * constantBuffer.AlignedSize;
-    memcpy(constantBuffer.MappedData + offset, &constantBuffer.Data, sizeof(constantBuffer.Data));
+    UINT offset = m_deviceResource->GetCurrentFrameIndex() * c_alignedSceneConstantBuffer;
+    memcpy(m_pSceneConstantBufferDataBegin + offset, &m_sceneConstantBufferData, sizeof(m_sceneConstantBufferData));
 }
 
 void Fullscreen::Render()
@@ -63,15 +62,15 @@ void Fullscreen::Render()
         // Set necessary state.
         m_sceneCommandList->SetGraphicsRootSignature(m_sceneRootSignature.Get());
 
-        ID3D12DescriptorHeap* ppHeaps[] = { m_deviceResource->GetCurrentCbvSrvUavHeap().Get()};
+        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get()};
         m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
         //D3D12_RESOURCE_BARRIER barriers[] = {
         //CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResource->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET) };
 
         //m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
-        GraphicsContexts::ConstantBuffer<SceneConstantBuffer> constantBuffer = m_sceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()];
-        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(constantBuffer.GpuHandle[m_deviceResource->GetCurrentFrameIndex()]);
+
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_gpuHandleSceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()]);
         m_sceneCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
         m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_sceneCommandList->RSSetViewports(1, &m_deviceResource->GetScreenViewport());
@@ -237,50 +236,39 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
 
     // Create the constant buffer.
     {
-		// get available heap positions only 1 time since these will be the same for each frame resource and we just need to know where to create the CBV in the heap, the GPU handle is then calculated based on the heap position and the CBV descriptor size
-        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        ThrowIfFailed(device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &CD3DX12_RESOURCE_DESC::Buffer(c_alignedSceneConstantBuffer * DeviceResources::c_backBufferCount),
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_sceneConstantBuffer)));
+
+        NAME_D3D12_OBJECT(m_sceneConstantBuffer);
+
+        // Create constant buffer views to access the upload buffer.
+        D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = m_sceneConstantBuffer->GetGPUVirtualAddress();
+
+        for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
         {
-            m_heapPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
+            m_heapPositionSceneConstantBuffer[n] = GraphicsContexts::GetAvailableHeapPosition();
+            CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_heapPositionSceneConstantBuffer[n], GraphicsContexts::c_descriptorSize);
+
+            // Describe and create constant buffer views.
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+            cbvDesc.BufferLocation = cbvGpuAddress;
+            cbvDesc.SizeInBytes = c_alignedSceneConstantBuffer;
+            device->CreateConstantBufferView(&cbvDesc, cpuHandle);
+
+            cbvDesc.BufferLocation += c_alignedSceneConstantBuffer;
+            m_gpuHandleSceneConstantBuffer[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_heapPositionSceneConstantBuffer[n], GraphicsContexts::c_descriptorSize);
         }
 
-        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
-        {
-            GraphicsContexts::ConstantBuffer<SceneConstantBuffer>& constantBuffer = m_sceneConstantBuffer[i];
-
-            ThrowIfFailed(device->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(constantBuffer.AlignedSize * DeviceResources::c_backBufferCount),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&constantBuffer.Resource)));
-
-            NAME_D3D12_OBJECT(constantBuffer.Resource);
-
-            // Create constant buffer views to access the upload buffer.
-            D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = constantBuffer.Resource->GetGPUVirtualAddress();
-            
-
-            for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
-            {               
-                CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap[i]->GetCPUDescriptorHandleForHeapStart(), m_heapPosition[i], GraphicsContexts::c_descriptorSize);
-
-                // Describe and create constant buffer views.
-                D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-                cbvDesc.BufferLocation = cbvGpuAddress;
-                cbvDesc.SizeInBytes = constantBuffer.AlignedSize;
-                device->CreateConstantBufferView(&cbvDesc, cpuHandle);
-
-                cbvDesc.BufferLocation += constantBuffer.AlignedSize;
-                constantBuffer.GpuHandle[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap[i]->GetGPUDescriptorHandleForHeapStart(), m_heapPosition[i], GraphicsContexts::c_descriptorSize);
-            }
-
-            // Map and initialize the constant buffer. We don't unmap this until the
-            // app closes. Keeping things mapped for the lifetime of the resource is okay.
-            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-            ThrowIfFailed(constantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&constantBuffer.MappedData)));
-            memcpy(constantBuffer.MappedData, &constantBuffer.Data, sizeof(constantBuffer.Data));
-        }
+        // Map and initialize the constant buffer. We don't unmap this until the
+        // app closes. Keeping things mapped for the lifetime of the resource is okay.
+        CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+        ThrowIfFailed(m_sceneConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pSceneConstantBufferDataBegin)));
+        memcpy(m_pSceneConstantBufferDataBegin, &m_sceneConstantBufferData, sizeof(m_sceneConstantBufferData));
     }
 
     // Close the resource creation command list and execute it to begin the vertex buffer copy into

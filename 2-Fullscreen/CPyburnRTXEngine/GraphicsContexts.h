@@ -14,19 +14,7 @@ namespace CPyburnRTXEngine
 		static mutex m_mutexMultiUseHeapPositions;
 
 	public:
-		template<typename T>
-		struct ConstantBuffer
-		{
-		public:
-			static constexpr UINT AlignedSize = (sizeof(T) + 255) & ~255;
-
-			T										Data{};
-			CD3DX12_GPU_DESCRIPTOR_HANDLE			GpuHandle[DeviceResources::c_backBufferCount]{};
-			Microsoft::WRL::ComPtr<ID3D12Resource>	Resource;
-			UINT8*									MappedData = nullptr;
-		};
-
-		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> c_heap[DeviceResources::c_backBufferCount];
+		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> c_heap;
 		static UINT c_descriptorSize;
 
 		GraphicsContexts();

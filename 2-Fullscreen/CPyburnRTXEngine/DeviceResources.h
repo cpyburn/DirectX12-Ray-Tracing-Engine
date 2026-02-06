@@ -82,6 +82,7 @@ namespace DX
         DXGI_COLOR_SPACE_TYPE       GetColorSpace() const noexcept         { return m_colorSpace; }
         unsigned int                GetDeviceOptions() const noexcept      { return m_options; }
         UINT                        GetRtvDescriptorSize() const noexcept  { return m_rtvDescriptorSize; }
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> GetCurrentCbvSrvUavHeap() const noexcept;
 
         // todo: remove these after every is working
         ID3D12DescriptorHeap*       GetRtvHeap() const noexcept            { return m_rtvDescriptorHeap.Get(); }

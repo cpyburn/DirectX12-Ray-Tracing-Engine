@@ -4,7 +4,7 @@
 using namespace CPyburnRTXEngine;
 
 UINT GraphicsContexts::c_descriptorSize;
-Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> GraphicsContexts::c_heap;
+Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> GraphicsContexts::c_heap[];
 
 UINT GraphicsContexts::m_heapPositionCounter;
 vector<UINT> GraphicsContexts::m_availableHeapPositions;
@@ -98,8 +98,12 @@ void GraphicsContexts::CreateDeviceDependentResources(ID3D12Device* d3dDevice)
 	// This flag indicates that this descriptor heap can be bound to the pipeline and that descriptors contained in it can be referenced by a root table.
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	ThrowIfFailed(d3dDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&c_heap)));
-	c_heap->SetName(L"Descriptor Heap from GraphicsContexts");
+	for (size_t i = 0; i < DeviceResources::c_backBufferCount; i++)
+	{
+		ThrowIfFailed(d3dDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&c_heap[i])));
+		c_heap[i]->SetName(L"Descriptor Heap from GraphicsContexts:" + i );
+	}
+	
 }
 
 

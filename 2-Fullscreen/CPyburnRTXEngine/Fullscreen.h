@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GraphicsContexts.h"
+
 using namespace DirectX;
 
 namespace CPyburnRTXEngine
@@ -40,15 +42,8 @@ namespace CPyburnRTXEngine
 		// App resources.
 		ComPtr<ID3D12Resource> m_sceneVertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_sceneVertexBufferView;
-		SceneConstantBuffer m_sceneConstantBufferData;
 
-		static const UINT c_alignedSceneConstantBuffer = (sizeof(SceneConstantBuffer) + 255) & ~255;
-		UINT m_heapPositionSceneConstantBuffer[DeviceResources::c_backBufferCount];
-		CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuHandleSceneConstantBuffer[DeviceResources::c_backBufferCount];
-		ComPtr<ID3D12Resource> m_sceneConstantBuffer;
-		UINT8* m_pSceneConstantBufferDataBegin;
-
-		UINT m_width = 1280;
-		UINT m_height = 720;
+		UINT m_heapPosition[DeviceResources::c_backBufferCount]{};
+		GraphicsContexts::ConstantBuffer<SceneConstantBuffer> m_sceneConstantBuffer[DeviceResources::c_backBufferCount];
 	};
 } // namespace CPyburnRTXEngine

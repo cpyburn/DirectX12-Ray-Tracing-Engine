@@ -10,8 +10,7 @@ const float TestFullscreen::QuadWidth = 20.0f;
 const float TestFullscreen::QuadHeight = 720.0f;
 const float TestFullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 
-TestFullscreen::TestFullscreen() :
-    m_sceneConstantBufferData{}
+TestFullscreen::TestFullscreen()
 {
 
 }
@@ -25,20 +24,19 @@ void TestFullscreen::Update(DX::StepTimer const& timer)
     const float translationSpeed = 0.0001f;
     const float offsetBounds = 1.0f;
 
-    m_sceneConstantBufferData.offset.x += translationSpeed;
-    if (m_sceneConstantBufferData.offset.x > offsetBounds)
+    m_sceneConstantBuffer.CpuData.offset.x += translationSpeed;
+    if (m_sceneConstantBuffer.CpuData.offset.x > offsetBounds)
     {
-        m_sceneConstantBufferData.offset.x = -offsetBounds;
+        m_sceneConstantBuffer.CpuData.offset.x = -offsetBounds;
     }
 
     XMMATRIX transform = XMMatrixMultiply(
         XMMatrixOrthographicLH(static_cast<float>(m_deviceResource->GetResolution().Width), static_cast<float>(m_deviceResource->GetResolution().Height), 0.0f, 100.0f),
-        XMMatrixTranslation(m_sceneConstantBufferData.offset.x, 0.0f, 0.0f));
+        XMMatrixTranslation(m_sceneConstantBuffer.CpuData.offset.x, 0.0f, 0.0f));
 
-    XMStoreFloat4x4(&m_sceneConstantBufferData.transform, XMMatrixTranspose(transform));
+    XMStoreFloat4x4(&m_sceneConstantBuffer.CpuData.transform, XMMatrixTranspose(transform));
 
-    UINT offset = m_deviceResource->GetCurrentFrameIndex() * c_alignedSceneConstantBuffer;
-    memcpy(m_pSceneConstantBufferDataBegin + offset, &m_sceneConstantBufferData, sizeof(m_sceneConstantBufferData));
+	m_sceneConstantBuffer.CopyToGpu(m_deviceResource->GetCurrentFrameIndex());
 }
 
 void TestFullscreen::Render()
@@ -70,7 +68,7 @@ void TestFullscreen::Render()
 
         //m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_gpuHandleSceneConstantBuffer[m_deviceResource->GetCurrentFrameIndex()]);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_sceneConstantBuffer.GpuHandle[m_deviceResource->GetCurrentFrameIndex()]);
         m_sceneCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
         m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_sceneCommandList->RSSetViewports(1, &m_deviceResource->GetScreenViewport());
@@ -239,36 +237,36 @@ void TestFullscreen::CreateDeviceDependentResources(const std::shared_ptr<Device
         ThrowIfFailed(device->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
             D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(c_alignedSceneConstantBuffer * DeviceResources::c_backBufferCount),
+            &CD3DX12_RESOURCE_DESC::Buffer(m_sceneConstantBuffer.AlignedSize * DeviceResources::c_backBufferCount),
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
-            IID_PPV_ARGS(&m_sceneConstantBuffer)));
+            IID_PPV_ARGS(&m_sceneConstantBuffer.Resource)));
 
-        NAME_D3D12_OBJECT(m_sceneConstantBuffer);
+        NAME_D3D12_OBJECT(m_sceneConstantBuffer.Resource);
 
         // Create constant buffer views to access the upload buffer.
-        D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = m_sceneConstantBuffer->GetGPUVirtualAddress();
+        D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = m_sceneConstantBuffer.Resource->GetGPUVirtualAddress();
 
         for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
         {
-            m_heapPositionSceneConstantBuffer[n] = GraphicsContexts::GetAvailableHeapPosition();
-            CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_heapPositionSceneConstantBuffer[n], GraphicsContexts::c_descriptorSize);
+            m_sceneConstantBuffer.HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
+            CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_sceneConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
 
             // Describe and create constant buffer views.
             D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
             cbvDesc.BufferLocation = cbvGpuAddress;
-            cbvDesc.SizeInBytes = c_alignedSceneConstantBuffer;
+            cbvDesc.SizeInBytes = m_sceneConstantBuffer.AlignedSize;
             device->CreateConstantBufferView(&cbvDesc, cpuHandle);
 
-            cbvGpuAddress += c_alignedSceneConstantBuffer;
-            m_gpuHandleSceneConstantBuffer[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_heapPositionSceneConstantBuffer[n], GraphicsContexts::c_descriptorSize);
+            cbvGpuAddress += m_sceneConstantBuffer.AlignedSize;
+            m_sceneConstantBuffer.GpuHandle[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_sceneConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
         }
 
         // Map and initialize the constant buffer. We don't unmap this until the
         // app closes. Keeping things mapped for the lifetime of the resource is okay.
         CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-        ThrowIfFailed(m_sceneConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pSceneConstantBufferDataBegin)));
-        memcpy(m_pSceneConstantBufferDataBegin, &m_sceneConstantBufferData, sizeof(m_sceneConstantBufferData));
+        ThrowIfFailed(m_sceneConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&m_sceneConstantBuffer.MappedData)));
+        memcpy(m_sceneConstantBuffer.MappedData, &m_sceneConstantBuffer.CpuData, sizeof(m_sceneConstantBuffer.CpuData));
     }
 
     // Close the resource creation command list and execute it to begin the vertex buffer copy into

@@ -32,7 +32,7 @@ namespace CPyburnRTXEngine
         // Convenience: write CPU data into mapped memory
         void CopyToGpu(UINT frameIndex)
         {
-            memcpy(MappedData, &CpuData, sizeof(T));
+            memcpy(MappedData + AlignedSize * frameIndex, &CpuData, sizeof(T));
         }
     };
 }

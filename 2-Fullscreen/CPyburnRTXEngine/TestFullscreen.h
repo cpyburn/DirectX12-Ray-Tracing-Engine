@@ -4,7 +4,7 @@ using namespace DirectX;
 
 namespace CPyburnRTXEngine
 {
-	class Fullscreen
+	class TestFullscreen
 	{
 	private:
 		static const float QuadWidth;
@@ -23,8 +23,8 @@ namespace CPyburnRTXEngine
 			XMFLOAT4 offset;
 		};
 	public:
-		Fullscreen();
-		~Fullscreen();
+		TestFullscreen();
+		~TestFullscreen();
 
 		void Update(DX::StepTimer const& timer);
 		void Render();

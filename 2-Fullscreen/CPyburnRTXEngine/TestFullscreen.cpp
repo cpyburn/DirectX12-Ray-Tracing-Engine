@@ -1,26 +1,26 @@
 #include "pchlib.h"
-#include "Fullscreen.h"
+#include "TestFullscreen.h"
 
 #include "GraphicsContexts.h"
 #include "FrameResource.h"
 
 using namespace CPyburnRTXEngine;
 
-const float Fullscreen::QuadWidth = 20.0f;
-const float Fullscreen::QuadHeight = 720.0f;
-const float Fullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
+const float TestFullscreen::QuadWidth = 20.0f;
+const float TestFullscreen::QuadHeight = 720.0f;
+const float TestFullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 
-Fullscreen::Fullscreen() :
+TestFullscreen::TestFullscreen() :
     m_sceneConstantBufferData{}
 {
 
 }
 
-Fullscreen::~Fullscreen()
+TestFullscreen::~TestFullscreen()
 {
 }
 
-void Fullscreen::Update(DX::StepTimer const& timer)
+void TestFullscreen::Update(DX::StepTimer const& timer)
 {
     const float translationSpeed = 0.0001f;
     const float offsetBounds = 1.0f;
@@ -41,7 +41,7 @@ void Fullscreen::Update(DX::StepTimer const& timer)
     memcpy(m_pSceneConstantBufferDataBegin + offset, &m_sceneConstantBufferData, sizeof(m_sceneConstantBufferData));
 }
 
-void Fullscreen::Render()
+void TestFullscreen::Render()
 {
     // Command list allocators can only be reset when the associated 
     // command lists have finished execution on the GPU; apps should use 
@@ -97,7 +97,7 @@ void Fullscreen::Render()
     ThrowIfFailed(m_sceneCommandList->Close());
 }
 
-void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
+void TestFullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
 {
     m_deviceResource = deviceResource;
     ComPtr<ID3D12Device> device = deviceResource->GetD3DDevice();
@@ -203,7 +203,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
             &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
-            D3D12_RESOURCE_STATE_COPY_DEST,
+            D3D12_RESOURCE_STATE_COMMON,
             nullptr,
             IID_PPV_ARGS(&m_sceneVertexBuffer)));
 
@@ -260,7 +260,7 @@ void Fullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceReso
             cbvDesc.SizeInBytes = c_alignedSceneConstantBuffer;
             device->CreateConstantBufferView(&cbvDesc, cpuHandle);
 
-            cbvDesc.BufferLocation += c_alignedSceneConstantBuffer;
+            cbvGpuAddress += c_alignedSceneConstantBuffer;
             m_gpuHandleSceneConstantBuffer[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_heapPositionSceneConstantBuffer[n], GraphicsContexts::c_descriptorSize);
         }
 

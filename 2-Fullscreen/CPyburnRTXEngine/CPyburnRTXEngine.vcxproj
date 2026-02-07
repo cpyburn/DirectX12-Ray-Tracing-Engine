@@ -143,10 +143,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DeviceResources.h" />
     <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="Fullscreen.h" />
+    <ClInclude Include="TestFullscreen.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
     <ClInclude Include="StepTimer.h" />
@@ -154,7 +155,7 @@
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="Fullscreen.cpp" />
+    <ClCompile Include="TestFullscreen.cpp" />
     <ClCompile Include="GraphicsContexts.cpp" />
     <ClCompile Include="pchlib.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

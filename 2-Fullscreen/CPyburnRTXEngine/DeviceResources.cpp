@@ -640,6 +640,7 @@ void DeviceResources::SetWindow(HWND window, int width, int height) noexcept
     m_outputSize.bottom = static_cast<long>(height);
 
 	// todo: can this be replaced with m_outputSize.right - m_outputSize.bottom ?
+    // todo: aspect ratio?
 	m_width = width;
 	m_height = height;
     UpdateTitle();

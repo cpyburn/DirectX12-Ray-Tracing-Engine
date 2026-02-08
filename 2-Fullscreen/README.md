@@ -302,14 +302,13 @@ uint8_t* MappedData = nullptr;
 ```cpp
 void CopyToGpu(UINT frameIndex)
 {
-    memcpy(MappedData, &CpuData, sizeof(T));
+    memcpy(MappedData + AlignedSize * frameIndex, &CpuData, sizeof(T));
 }
 ```
 
 * Copies the CPU-side struct into mapped GPU memory
 * Intended to be called once per frame after updating `CpuData`
-* `frameIndex` is included for API symmetry, even though the current implementation assumes per-frame offsetting is handled externally
-
+* 
 > ⚠️ Offset management for `frameIndex` must be handled when creating the resource or computing `MappedData`.
 
 ---
@@ -537,45 +536,49 @@ DirectX 12 requires:
 This class is a foundational building block for a scalable, multi-frame D3D12 renderer.
 
 
-# TestFullscreen.cpp — Fullscreen-Style Quad Rendering Test
+Absolutely — here’s the **updated `README.md` content** reflecting the refactor to your new `ConstantBuffer<T, FrameCount>` abstraction and the cleaned-up per-frame update path.
 
-This file implements `TestFullscreen`, a simple DirectX 12 test scene that renders a **thin animated quad** across the screen using an **orthographic projection**.
+You can copy-paste this directly into GitHub.
 
-It serves as a compact example of:
+---
 
-* Per-frame constant buffer updates
-* Descriptor heap usage
-* Root signatures and pipeline state setup
-* Vertex buffer creation via upload + default heaps
-* Integration with `FrameResource` and `GraphicsContexts`
+# TestFullscreen.cpp — Animated Fullscreen Quad Using Templated Constant Buffers
+
+This file implements `TestFullscreen`, a DirectX 12 test scene that renders a **thin animated quad** across the screen using an **orthographic projection**.
+
+This version has been refactored to use the engine’s templated
+`ConstantBuffer<T, FrameCount>` helper, greatly simplifying constant buffer
+management and per-frame updates.
 
 ---
 
 ## High-Level Overview
 
-`TestFullscreen` renders a vertically oriented rectangle that smoothly moves across the screen.
-The rendering pipeline uses:
+`TestFullscreen` demonstrates a complete render path built on engine
+infrastructure:
 
-* A **vertex + pixel shader pair**
-* A **single constant buffer** updated every frame
-* A **triangle strip quad**
-* A **shader-visible CBV descriptor heap**
+* Per-frame command lists via `FrameResource`
+* Descriptor allocation via `GraphicsContexts`
+* A **templated constant buffer** with one CBV per frame
+* A minimal root signature and graphics PSO
+* Upload → default heap resource initialization
 
-This class is structured like a real engine feature rather than a minimal sample.
+The quad continuously scrolls across the screen, making this a useful visual
+sanity check and foundation for fullscreen or overlay-style rendering.
 
 ---
 
 ## Static Configuration
 
 ```cpp
-const float TestFullscreen::QuadWidth  = 20.0f;
-const float TestFullscreen::QuadHeight = 720.0f;
-const float TestFullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
+const float QuadWidth  = 20.0f;
+const float QuadHeight = 720.0f;
+const float ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 ```
 
-* Defines the quad’s dimensions in world space
-* Uses a fixed clear color for visual contrast
-* Quad height matches screen height for a “fullscreen slice” effect
+* The quad is a tall, thin rectangle
+* Height roughly matches screen height
+* A fixed clear color provides contrast
 
 ---
 
@@ -589,24 +592,24 @@ void TestFullscreen::Update(DX::StepTimer const& timer)
 
 Responsibilities:
 
-* Animates the quad horizontally
-* Builds an orthographic projection matrix
-* Writes per-frame constant buffer data
+* Animate the quad’s horizontal offset
+* Build an orthographic transform
+* Write updated data into the per-frame constant buffer
 
 ---
 
-### Animation Logic
+### Animation
 
 ```cpp
-m_sceneConstantBufferData.offset.x += translationSpeed;
-if (m_sceneConstantBufferData.offset.x > offsetBounds)
+m_sceneConstantBuffer.CpuData.offset.x += translationSpeed;
+if (m_sceneConstantBuffer.CpuData.offset.x > offsetBounds)
 {
-    m_sceneConstantBufferData.offset.x = -offsetBounds;
+    m_sceneConstantBuffer.CpuData.offset.x = -offsetBounds;
 }
 ```
 
 * Moves the quad slowly along the X axis
-* Wraps around once it exits the visible range
+* Wraps once it exits the visible bounds
 
 ---
 
@@ -614,32 +617,26 @@ if (m_sceneConstantBufferData.offset.x > offsetBounds)
 
 ```cpp
 XMMATRIX transform = XMMatrixMultiply(
-    XMMatrixOrthographicLH(
-        screenWidth,
-        screenHeight,
-        0.0f,
-        100.0f
-    ),
+    XMMatrixOrthographicLH(screenWidth, screenHeight, 0.0f, 100.0f),
     XMMatrixTranslation(offset.x, 0.0f, 0.0f)
 );
 ```
 
 * Uses an **orthographic projection**
 * Applies a translation to animate the quad
-* Transposes before upload (HLSL expects column-major matrices)
+* Transposed before upload for HLSL consumption
 
 ---
 
-### Constant Buffer Update
+### GPU Upload
 
 ```cpp
-UINT offset = frameIndex * c_alignedSceneConstantBuffer;
-memcpy(mappedData + offset, &m_sceneConstantBufferData, sizeof(...));
+m_sceneConstantBuffer.CopyToGpu(currentFrameIndex);
 ```
 
+* Copies CPU data into persistently mapped upload memory
 * One constant buffer slice per frame
-* Prevents overwriting data still in use by the GPU
-* Matches the `FrameResource` multi-buffering model
+* Eliminates manual pointer arithmetic and memcpy logic
 
 ---
 
@@ -651,7 +648,7 @@ memcpy(mappedData + offset, &m_sceneConstantBufferData, sizeof(...));
 void TestFullscreen::Render()
 ```
 
-Uses a **per-frame command list** retrieved from `FrameResource`.
+Rendering uses a **per-frame command list** provided by `FrameResource`.
 
 ---
 
@@ -666,21 +663,21 @@ auto* cmdList =
         );
 ```
 
-* Ensures the command allocator is safe to reuse
-* Binds the correct pipeline state
-* Keeps frame ownership explicit
+* Ensures allocator safety
+* Binds the correct PSO
+* Keeps command ownership frame-scoped
 
 ---
 
-### Root Signature & Descriptor Heaps
+### Root Signature & Descriptor Heap
 
 ```cpp
 cmdList->SetGraphicsRootSignature(m_sceneRootSignature.Get());
 cmdList->SetDescriptorHeaps(1, &GraphicsContexts::c_heap);
 ```
 
-* Uses a root signature with **one CBV descriptor table**
-* Binds the global shader-visible descriptor heap
+* Root signature contains a single CBV descriptor table
+* Uses the global shader-visible descriptor heap
 
 ---
 
@@ -689,11 +686,11 @@ cmdList->SetDescriptorHeaps(1, &GraphicsContexts::c_heap);
 ```cpp
 cmdList->SetGraphicsRootDescriptorTable(
     0,
-    m_gpuHandleSceneConstantBuffer[frameIndex]
+    m_sceneConstantBuffer.GpuHandle[currentFrameIndex]
 );
 ```
 
-* Selects the CBV for the current frame
+* Selects the CBV corresponding to the active frame
 * Descriptor indices are allocated via `GraphicsContexts`
 
 ---
@@ -706,9 +703,9 @@ cmdList->IASetVertexBuffers(0, 1, &m_sceneVertexBufferView);
 cmdList->DrawInstanced(4, 1, 0, 0);
 ```
 
-* Triangle strip minimizes vertex count
-* Quad is drawn with a single instanced draw call
-* PIX markers are used for GPU debugging
+* Uses a triangle strip to minimize vertex count
+* Single draw call
+* PIX markers are included for GPU debugging
 
 ---
 
@@ -716,21 +713,16 @@ cmdList->DrawInstanced(4, 1, 0, 0);
 
 ### CreateDeviceDependentResources()
 
-This method sets up **all GPU-side state**.
+This method initializes all GPU objects.
 
 ---
 
 ## Root Signature
 
-```cpp
-ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
-rootParameters[0].InitAsDescriptorTable(1, &ranges[0]);
-```
-
 * One descriptor table
 * One CBV
 * Vertex shader visibility only
-* Pixel shader explicitly denied access
+* Pixel shader access explicitly denied
 
 This keeps the root signature minimal and efficient.
 
@@ -740,16 +732,11 @@ This keeps the root signature minimal and efficient.
 
 Includes:
 
-* Input layout (position + color)
-* Compiled vertex and pixel shaders
-* Default rasterizer & blend states
+* Vertex + pixel shaders from `sceneShaders.hlsl`
+* Position + color input layout
+* Default rasterizer and blend states
 * No depth/stencil
 * Back buffer render target format
-
-```cpp
-psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-psoDesc.NumRenderTargets = 1;
-```
 
 ---
 
@@ -759,39 +746,52 @@ Uses the standard **upload → default heap** pattern:
 
 1. Create default heap vertex buffer
 2. Create upload heap staging buffer
-3. Copy vertex data
+3. Copy CPU data into upload buffer
 4. Issue GPU copy
-5. Transition resource to `VERTEX_AND_CONSTANT_BUFFER`
-
-```cpp
-commandList->CopyBufferRegion(...);
-commandList->ResourceBarrier(...);
-```
+5. Transition to `VERTEX_AND_CONSTANT_BUFFER`
 
 ---
 
-## Constant Buffer Creation
+## Constant Buffer Creation (Refactored)
 
 ```cpp
-BufferSize = AlignedSize * BackBufferCount;
+ConstantBuffer<SceneConstants, FrameCount> m_sceneConstantBuffer;
 ```
 
-* Single upload buffer
-* One slice per frame
-* Persistently mapped for the lifetime of the app
+Key characteristics:
+
+* Single upload heap resource
+* 256-byte aligned per frame
+* One CBV per back buffer
+* Persistently mapped for lifetime
 
 ---
 
-### CBV Creation Per Frame
+### CBV Allocation
 
 ```cpp
-m_heapPositionSceneConstantBuffer[n] =
+m_sceneConstantBuffer.HeapIndex[n] =
     GraphicsContexts::GetAvailableHeapPosition();
 ```
 
 * Descriptor indices allocated from the global heap
-* One CBV per frame
-* GPU handles cached for fast binding
+* GPU handles cached per frame
+* Matches `FrameResource` buffering model
+
+---
+
+### Persistent Mapping
+
+```cpp
+m_sceneConstantBuffer.Resource->Map(
+    0, nullptr,
+    reinterpret_cast<void**>(&m_sceneConstantBuffer.MappedData)
+);
+```
+
+* Upload buffer remains mapped for the lifetime of the app
+* Safe and recommended for constant buffers
+* Simplifies per-frame updates
 
 ---
 
@@ -803,28 +803,24 @@ queue->ExecuteCommandLists(...);
 deviceResources->WaitForGpu();
 ```
 
-* Executes setup commands immediately
-* Ensures vertex buffer data is ready before rendering
-* Simplifies resource lifetime guarantees
+* Executes initialization commands immediately
+* Guarantees vertex data and CBVs are ready before rendering
 
 ---
 
 ## Summary
 
-`TestFullscreen.cpp` demonstrates a **complete, engine-style D3D12 render path**:
+This updated version of `TestFullscreen.cpp` demonstrates:
 
-* Per-frame constant buffers
+* Clean per-frame animation logic
+* A modern, reusable constant buffer abstraction
 * Descriptor heap–based CBV binding
-* Clean command list usage via `FrameResource`
-* Explicit GPU resource creation and synchronization
-* Orthographic rendering with animated transforms
+* Frame-safe command list management
+* Minimal but production-correct D3D12 patterns
 
-This file is a strong foundation for:
+This file now serves as a strong reference for:
 
-* Fullscreen effects
+* Fullscreen passes
 * Debug overlays
-* Post-processing passes
-* UI or visualization layers
-
-
-
+* UI rendering
+* Post-processing groundwork

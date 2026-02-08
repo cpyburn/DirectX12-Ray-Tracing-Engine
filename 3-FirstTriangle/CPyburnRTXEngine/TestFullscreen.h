@@ -31,10 +31,10 @@ namespace CPyburnRTXEngine
 		void Update(DX::StepTimer const& timer);
 		void Render();
 
-		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource);
+		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources);
 		void Release();
 	private:
-		std::shared_ptr<DeviceResources> m_deviceResource;
+		std::shared_ptr<DeviceResources> m_deviceResources;
 
 		ComPtr<ID3D12PipelineState> m_scenePipelineState;
 		ComPtr<ID3D12RootSignature> m_sceneRootSignature;

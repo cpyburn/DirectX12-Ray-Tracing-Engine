@@ -33,12 +33,12 @@ namespace CPyburnRTXEngine
         }
 
         XMMATRIX transform = XMMatrixMultiply(
-            XMMatrixOrthographicLH(static_cast<float>(m_deviceResource->GetResolution().Width), static_cast<float>(m_deviceResource->GetResolution().Height), 0.0f, 100.0f),
+            XMMatrixOrthographicLH(static_cast<float>(m_deviceResources->GetResolution().Width), static_cast<float>(m_deviceResources->GetResolution().Height), 0.0f, 100.0f),
             XMMatrixTranslation(m_sceneConstantBuffer.CpuData.offset.x, 0.0f, 0.0f));
 
         XMStoreFloat4x4(&m_sceneConstantBuffer.CpuData.transform, XMMatrixTranspose(transform));
 
-        m_sceneConstantBuffer.CopyToGpu(m_deviceResource->GetCurrentFrameIndex());
+        m_sceneConstantBuffer.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
     }
 
     void TestFullscreen::Render()
@@ -55,7 +55,7 @@ namespace CPyburnRTXEngine
         //ThrowIfFailed(m_sceneCommandList->Reset(m_sceneCommandAllocators[m_frameIndex].Get(), m_scenePipelineState.Get()));
         //ThrowIfFailed(m_postCommandList->Reset(m_postCommandAllocators[m_frameIndex].Get(), m_postPipelineState.Get()));
 
-        ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResource->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, m_scenePipelineState.Get());
+        ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, m_scenePipelineState.Get());
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {
@@ -70,13 +70,13 @@ namespace CPyburnRTXEngine
 
             //m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-            CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_sceneConstantBuffer.GpuHandle[m_deviceResource->GetCurrentFrameIndex()]);
+            CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_sceneConstantBuffer.GpuHandle[m_deviceResources->GetCurrentFrameIndex()]);
             m_sceneCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
             m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            m_sceneCommandList->RSSetViewports(1, &m_deviceResource->GetScreenViewport());
-            m_sceneCommandList->RSSetScissorRects(1, &m_deviceResource->GetScissorRect());
+            m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
+            m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResource->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DeviceResources::c_backBufferCount, m_deviceResource->GetRtvDescriptorSize());
+            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
             //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
             m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
@@ -99,7 +99,7 @@ namespace CPyburnRTXEngine
 
     void TestFullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
     {
-        m_deviceResource = deviceResource;
+        m_deviceResources = deviceResource;
         ComPtr<ID3D12Device> device = deviceResource->GetD3DDevice();
 
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
@@ -169,7 +169,7 @@ namespace CPyburnRTXEngine
             psoDesc.SampleMask = UINT_MAX;
             psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
             psoDesc.NumRenderTargets = 1;
-            psoDesc.RTVFormats[0] = m_deviceResource->GetBackBufferFormat();
+            psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
             psoDesc.SampleDesc.Count = 1;
 
             ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
@@ -275,8 +275,8 @@ namespace CPyburnRTXEngine
         // the default heap.
         ThrowIfFailed(commandList->Close());
         ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-        m_deviceResource->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-        m_deviceResource->WaitForGpu();
+        m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+        m_deviceResources->WaitForGpu();
     }
 
     void TestFullscreen::Release()

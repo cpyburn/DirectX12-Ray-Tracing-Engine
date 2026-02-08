@@ -21,5 +21,6 @@ namespace CPyburnRTXEngine
 		void Init(DeviceResources* deviceResources);
 		ID3D12GraphicsCommandList* ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState = nullptr);
 		ComPtr<ID3D12GraphicsCommandList> GetCommandList(int commandList) { return m_commandLists[commandList]; }
+		void Release();
 	};
 }

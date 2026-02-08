@@ -34,6 +34,16 @@ namespace CPyburnRTXEngine
         {
             memcpy(MappedData + AlignedSize * frameIndex, &CpuData, sizeof(T));
         }
+
+        void Release()
+        {
+            for (UINT n = 0; n < FrameCount; n++)
+            {
+                GraphicsContexts::RemoveHeapPosition(HeapIndex[n]);
+            }
+            Resource.Reset();
+            MappedData = nullptr;
+		}
     };
 }
 

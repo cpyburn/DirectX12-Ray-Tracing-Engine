@@ -32,7 +32,7 @@ namespace CPyburnRTXEngine
 		void Render();
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource);
-
+		void Release();
 	private:
 		std::shared_ptr<DeviceResources> m_deviceResource;
 

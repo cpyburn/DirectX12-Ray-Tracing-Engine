@@ -12,6 +12,9 @@
       <UniqueIdentifier>{5b6709a1-e15e-47bc-8df5-a294ed3bd377}</UniqueIdentifier>
       <Extensions>hlsl;</Extensions>
     </Filter>
+    <Filter Include="Testing">
+      <UniqueIdentifier>{851eadcb-7951-49c4-aa4e-6156ee98ce8a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StepTimer.h">
@@ -26,9 +29,6 @@
     <ClInclude Include="pchlib.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="TestFullscreen.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsContexts.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -38,6 +38,12 @@
     <ClInclude Include="ConstantBuffer.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="TestFullscreen.h">
+      <Filter>Testing</Filter>
+    </ClInclude>
+    <ClInclude Include="TestTriangle.h">
+      <Filter>Testing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -46,14 +52,17 @@
     <ClCompile Include="pchlib.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="TestFullscreen.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsContexts.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="FrameResource.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="TestFullscreen.cpp">
+      <Filter>Testing</Filter>
+    </ClCompile>
+    <ClCompile Include="TestTriangle.cpp">
+      <Filter>Testing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

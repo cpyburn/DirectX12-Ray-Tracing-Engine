@@ -25,6 +25,7 @@ namespace CPyburnRTXEngine
 		static UINT GetAvailableHeapPosition();
 
 		void CreateDeviceDependentResources(ID3D12Device* d3dDevice);
+		void Release();
 	};
 }
 

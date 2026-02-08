@@ -36,32 +36,27 @@ namespace CPyburnRTXEngine
         bufDesc.SampleDesc.Quality = 0;
         bufDesc.Width = sizeof(vertices);
 
-        ComPtr<ID3D12Resource> pBuffer;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&pBuffer)));
+        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpVertexBuffer)));
 
-        //// For simplicity, we create the vertex buffer on the upload heap, but that's not required
-        //ID3D12ResourcePtr pBuffer = createBuffer(pDevice, sizeof(vertices), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-        //uint8_t* pData;
-        //pBuffer->Map(0, nullptr, (void**)&pData);
-        //memcpy(pData, vertices, sizeof(vertices));
-        //pBuffer->Unmap(0, nullptr);
-        //return pBuffer;
+        // For simplicity, we create the vertex buffer on the upload heap, but that's not required
+        uint8_t* pData;
+        mpVertexBuffer->Map(0, nullptr, (void**)&pData);
+        memcpy(pData, vertices, sizeof(vertices));
+        mpVertexBuffer->Unmap(0, nullptr);
 
+        AccelerationStructureBuffers bottomLevelBuffers = createBottomLevelAS(mpDevice, mpCmdList, mpVertexBuffer);
+        AccelerationStructureBuffers topLevelBuffers = createTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers.pResult, mTlasSize);
 
-        //mpVertexBuffer = createTriangleVB(mpDevice);
-        //AccelerationStructureBuffers bottomLevelBuffers = createBottomLevelAS(mpDevice, mpCmdList, mpVertexBuffer);
-        //AccelerationStructureBuffers topLevelBuffers = createTopLevelAS(mpDevice, mpCmdList, bottomLevelBuffers.pResult, mTlasSize);
-
-        //// The tutorial doesn't have any resource lifetime management, so we flush and sync here. This is not required by the DXR spec - you can submit the list whenever you like as long as you take care of the resources lifetime.
+        // The tutorial doesn't have any resource lifetime management, so we flush and sync here. This is not required by the DXR spec - you can submit the list whenever you like as long as you take care of the resources lifetime.
         //mFenceValue = submitCommandList(mpCmdList, mpCmdQueue, mpFence, mFenceValue);
         //mpFence->SetEventOnCompletion(mFenceValue, mFenceEvent);
         //WaitForSingleObject(mFenceEvent, INFINITE);
         //uint32_t bufferIndex = mpSwapChain->GetCurrentBackBufferIndex();
         //mpCmdList->Reset(mFrameObjects[0].pCmdAllocator, nullptr);
 
-        //// Store the AS buffers. The rest of the buffers will be released once we exit the function
-        //mpTopLevelAS = topLevelBuffers.pResult;
-        //mpBottomLevelAS = bottomLevelBuffers.pResult;
+        // Store the AS buffers. The rest of the buffers will be released once we exit the function
+        mpTopLevelAS = topLevelBuffers.pResult;
+        mpBottomLevelAS = bottomLevelBuffers.pResult;
 	}
 
     void TestTriangle::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources)

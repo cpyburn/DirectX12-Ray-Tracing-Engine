@@ -302,14 +302,13 @@ uint8_t* MappedData = nullptr;
 ```cpp
 void CopyToGpu(UINT frameIndex)
 {
-    memcpy(MappedData, &CpuData, sizeof(T));
+    memcpy(MappedData + AlignedSize * frameIndex, &CpuData, sizeof(T));
 }
 ```
 
 * Copies the CPU-side struct into mapped GPU memory
 * Intended to be called once per frame after updating `CpuData`
-* `frameIndex` is included for API symmetry, even though the current implementation assumes per-frame offsetting is handled externally
-
+* 
 > ⚠️ Offset management for `frameIndex` must be handled when creating the resource or computing `MappedData`.
 
 ---

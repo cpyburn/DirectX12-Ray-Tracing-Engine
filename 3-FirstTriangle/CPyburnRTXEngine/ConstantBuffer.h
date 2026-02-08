@@ -8,6 +8,16 @@ namespace CPyburnRTXEngine
     class ConstantBuffer
     {
     public:
+        ConstantBuffer()
+        {
+             
+        }
+
+        ~ConstantBuffer()
+        {
+            Release();
+        }
+
         using ConstantType = T;
 
         // CPU-side data (what you write to)

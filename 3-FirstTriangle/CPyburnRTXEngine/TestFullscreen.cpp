@@ -268,7 +268,7 @@ namespace CPyburnRTXEngine
             // app closes. Keeping things mapped for the lifetime of the resource is okay.
             CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
             ThrowIfFailed(m_sceneConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&m_sceneConstantBuffer.MappedData)));
-            memcpy(m_sceneConstantBuffer.MappedData, &m_sceneConstantBuffer.CpuData, sizeof(m_sceneConstantBuffer.CpuData));
+            m_sceneConstantBuffer.CopyToGpu(0);
         }
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
@@ -285,6 +285,5 @@ namespace CPyburnRTXEngine
         m_sceneRootSignature.Reset();
         m_sceneVertexBuffer.Reset();
         m_sceneConstantBuffer.Release();
-
     }
 }

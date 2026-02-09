@@ -192,6 +192,51 @@ namespace CPyburnRTXEngine
         }
 	}
 
+    void TestTriangle::createRtPipelineState()
+    {
+        ComPtr<ID3DBlob> scenePixelShader;
+        ComPtr<ID3DBlob> error;
+
+#if defined(_DEBUG)
+        // Enable better shader debugging with the graphics debugging tools.
+        UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+        UINT compileFlags = 0;
+#endif
+        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"04-Shaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "lib_6_3", compileFlags, 0, &scenePixelShader, &error));
+        
+        static const WCHAR* kRayGenShader = L"rayGen";
+        static const WCHAR* kMissShader = L"miss";
+        static const WCHAR* kClosestHitShader = L"chs";
+        static const WCHAR* kHitGroup = L"HitGroup";
+        const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader };
+
+        std::vector<D3D12_EXPORT_DESC> exportDesc;
+        std::vector<std::wstring> exportName;
+		uint32_t entryPointCount = _countof(entryPoints);
+
+        D3D12_STATE_SUBOBJECT stateSubobject{};
+        D3D12_DXIL_LIBRARY_DESC dxilLibDesc = {};
+        dxilLibDesc.DXILLibrary.pShaderBytecode = scenePixelShader->GetBufferPointer();
+        dxilLibDesc.DXILLibrary.BytecodeLength = scenePixelShader->GetBufferSize();
+        dxilLibDesc.NumExports = entryPointCount;
+        dxilLibDesc.pExports = exportDesc.data();
+
+		exportName.resize(entryPointCount);
+        exportDesc.resize(entryPointCount);
+
+        for (uint32_t i = 0; i < entryPointCount; i++)
+        {
+            exportName[i] = entryPoints[i];
+            exportDesc[i].Name = exportName[i].c_str();
+            exportDesc[i].Flags = D3D12_EXPORT_FLAG_NONE;
+            exportDesc[i].ExportToRename = nullptr;
+        }
+
+		stateSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+        stateSubobject.pDesc = &dxilLibDesc;
+    }
+
     TestTriangle::TestTriangle()
     {
     }
@@ -204,6 +249,7 @@ namespace CPyburnRTXEngine
 	{
 		m_deviceResources = deviceResources;
 		createAccelerationStructures();
+		createRtPipelineState();
     }
 
     void TestTriangle::Release()

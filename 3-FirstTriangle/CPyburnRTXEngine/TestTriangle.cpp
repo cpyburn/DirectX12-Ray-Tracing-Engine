@@ -60,7 +60,7 @@ namespace CPyburnRTXEngine
         ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
         ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
-#pragma region Bottom Level AS
+        // Bottom Level AS
         {
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
             geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
@@ -117,12 +117,10 @@ namespace CPyburnRTXEngine
             mpBottomLevelAS = pResult;
         }
 
-#pragma endregion
-
         ThrowIfFailed(commandAllocator->Reset());
         ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
-#pragma region Top Level AS
+        // Top Level AS
         {
             // First, get the size of the TLAS buffers and create them
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -192,9 +190,6 @@ namespace CPyburnRTXEngine
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             mpTopLevelAS = pResult;
         }
-          
-#pragma endregion
-
 	}
 
     TestTriangle::TestTriangle()

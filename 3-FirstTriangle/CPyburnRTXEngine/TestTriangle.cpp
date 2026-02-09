@@ -3,6 +3,11 @@
 
 namespace CPyburnRTXEngine
 {
+    static const WCHAR* kRayGenShader = L"rayGen";
+    static const WCHAR* kMissShader = L"miss";
+    static const WCHAR* kClosestHitShader = L"chs";
+    static const WCHAR* kHitGroup = L"HitGroup";
+
 	void TestTriangle::createAccelerationStructures()
 	{
         // create createTriangleVB
@@ -192,6 +197,110 @@ namespace CPyburnRTXEngine
         }
 	}
 
+    void TestTriangle::createRtPipelineState()
+    {
+        // Need 10 subobjects:
+        //  1 for the DXIL library
+        //  1 for hit-group
+        //  2 for RayGen root-signature (root-signature and the subobject association)
+        //  2 for the root-signature shared between miss and hit shaders (signature and association)
+        //  2 for shader config (shared between all programs. 1 for the config, 1 for association)
+        //  1 for pipeline config
+        //  1 for the global root signature
+
+        D3D12_STATE_SUBOBJECT subobjects[10];
+        uint32_t index = 0;
+
+        //0
+        {
+            subobjects[index++] = CreateDxilSubobject();
+        }
+		
+        //1
+        {
+            // Hit group
+            D3D12_HIT_GROUP_DESC hitGroupDesc = {};
+            hitGroupDesc.ClosestHitShaderImport = kClosestHitShader;
+            hitGroupDesc.HitGroupExport = kHitGroup;
+            //hitGroupDesc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
+
+            D3D12_STATE_SUBOBJECT hitGroupSubobject = {};
+            hitGroupSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+            hitGroupSubobject.pDesc = &hitGroupDesc;
+            subobjects[index++] = hitGroupSubobject;
+        }
+
+        //2
+        {
+            // Create the root-signature
+            D3D12_ROOT_SIGNATURE_DESC desc{};
+            std::vector<D3D12_DESCRIPTOR_RANGE> range;
+            std::vector<D3D12_ROOT_PARAMETER> rootParams;
+
+            range.resize(2);
+            // gOutput
+            range[0].BaseShaderRegister = 0;
+            range[0].NumDescriptors = 1;
+            range[0].RegisterSpace = 0;
+            range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+            range[0].OffsetInDescriptorsFromTableStart = 0;
+
+            // gRtScene
+            range[1].BaseShaderRegister = 0;
+            range[1].NumDescriptors = 1;
+            range[1].RegisterSpace = 0;
+            range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+            range[1].OffsetInDescriptorsFromTableStart = 1;
+
+            rootParams.resize(1);
+            rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+            rootParams[0].DescriptorTable.NumDescriptorRanges = 2;
+            rootParams[0].DescriptorTable.pDescriptorRanges = range.data();
+
+            // Create the desc
+            desc.NumParameters = 1;
+            desc.pParameters = rootParams.data();
+            desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
+            // create ray-gen root-signature and associate it with the ray-gen shader
+            ComPtr<ID3DBlob> pSigBlob;
+            ComPtr<ID3DBlob> pErrorBlob;
+            HRESULT hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlob, &pErrorBlob);
+            if (FAILED(hr))
+            {
+                if (pErrorBlob)
+                {
+                    OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+                }
+                throw std::runtime_error("Failed to serialize root signature");
+            }
+
+            ComPtr<ID3D12RootSignature> pRootSig;
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlob->GetBufferPointer(), pSigBlob->GetBufferSize(), IID_PPV_ARGS(&pRootSig)));
+
+            D3D12_STATE_SUBOBJECT subobject = {};
+            subobject.pDesc = pRootSig.Get();
+            subobject.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
+
+			subobjects[index] = subobject;
+        }
+		//3
+        {
+            // Associate the ray-gen root signature with the ray-gen shader
+            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION association = {};
+            association.NumExports = 1;
+            association.pExports = &kRayGenShader;
+            association.pSubobjectToAssociate = &subobjects[index];
+            subobjects[++index] = {};
+            subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+            subobjects[index].pDesc = &association;
+        }
+        //4
+        {
+            
+        }
+    }
+
     std::vector<uint8_t> TestTriangle::LoadBinaryFile(const wchar_t* path)
     {
         std::ifstream file(path, std::ios::binary | std::ios::ate);
@@ -208,22 +317,15 @@ namespace CPyburnRTXEngine
 
     ComPtr<IDxcBlob> TestTriangle::CompileDXRLibrary(const wchar_t* filename)
     {
-        ComPtr<IDxcBlob> dxil;
-
         auto sourceData = LoadBinaryFile(filename);
 
         ComPtr<IDxcUtils> utils;
         ComPtr<IDxcCompiler3> compiler;
         ComPtr<IDxcIncludeHandler> includeHandler;
 
-        HRESULT hr;
-        hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
-        if (FAILED(hr)) throw std::runtime_error("DxcUtils failed");
-
-        hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
-        if (FAILED(hr)) throw std::runtime_error("DxcCompiler failed");
-
-        utils->CreateDefaultIncludeHandler(&includeHandler);
+        ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
+        ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
+        ThrowIfFailed(utils->CreateDefaultIncludeHandler(&includeHandler));
 
         DxcBuffer source = {};
         source.Ptr = sourceData.data();
@@ -242,17 +344,7 @@ namespace CPyburnRTXEngine
         };
 
         ComPtr<IDxcResult> result;
-
-        hr = compiler->Compile(
-            &source,
-            arguments,
-            _countof(arguments),
-            includeHandler.Get(),
-            IID_PPV_ARGS(&result)
-        );
-
-        if (FAILED(hr))
-            throw std::runtime_error("Compile() failed");
+        ThrowIfFailed(compiler->Compile(&source, arguments, _countof(arguments), includeHandler.Get(), IID_PPV_ARGS(&result)));
 
         // Check compile status
         HRESULT status;
@@ -268,12 +360,8 @@ namespace CPyburnRTXEngine
         }
 
         // Get DXIL object
-        HRESULT hr = result->GetOutput(
-            DXC_OUT_OBJECT,
-            IID_PPV_ARGS(&dxil),
-            nullptr
-        );
-
+        ComPtr<IDxcBlob> dxil;
+        HRESULT hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&dxil), nullptr);
         if (FAILED(hr) || !dxil || dxil->GetBufferSize() == 0)
         {
             throw std::runtime_error("Failed to retrieve DXIL object");
@@ -282,15 +370,11 @@ namespace CPyburnRTXEngine
         return dxil;
     }
 
-    void TestTriangle::createRtPipelineState()
+    D3D12_STATE_SUBOBJECT TestTriangle::CreateDxilSubobject()
     {
         std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
 		ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
         
-        static const WCHAR* kRayGenShader = L"rayGen";
-        static const WCHAR* kMissShader = L"miss";
-        static const WCHAR* kClosestHitShader = L"chs";
-        static const WCHAR* kHitGroup = L"HitGroup";
         const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader };
 
         std::vector<D3D12_EXPORT_DESC> exportDesc;
@@ -317,6 +401,7 @@ namespace CPyburnRTXEngine
 
 		stateSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
         stateSubobject.pDesc = &dxilLibDesc;
+		return stateSubobject;
     }
 
     TestTriangle::TestTriangle()

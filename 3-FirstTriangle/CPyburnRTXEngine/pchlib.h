@@ -80,6 +80,39 @@
 // If using the DirectX Tool Kit for DX12, uncomment this line:
 //#include "GraphicsMemory.h"
 
+// Helper for output debug tracing
+inline void DebugTrace(_In_z_ _Printf_format_string_ const char* format, ...) noexcept
+{
+#ifdef _DEBUG
+    va_list args;
+    va_start(args, format);
+
+    char buff[1024] = {};
+    vsprintf_s(buff, format, args);
+    OutputDebugStringA(buff);
+    va_end(args);
+#else
+    UNREFERENCED_PARAMETER(format);
+#endif
+}
+
+// Helper for output debug tracing (wide-char)
+inline void DebugTrace(_In_z_ _Printf_format_string_ const wchar_t* format, ...) noexcept
+{
+#ifdef _DEBUG
+    va_list args;
+    va_start(args, format);
+
+    wchar_t buff[1024] = {};
+    vswprintf_s(buff, _countof(buff), format, args);
+    OutputDebugStringW(buff);
+
+    va_end(args);
+#else
+    UNREFERENCED_PARAMETER(format);
+#endif
+}
+
 namespace DX
 {
     // Helper class for COM exceptions
@@ -239,36 +272,3 @@ inline void SetNameIndexed(ID3D12Object*, LPCWSTR, UINT)
 {
 }
 #endif
-
-// Helper for output debug tracing
-inline void DebugTrace(_In_z_ _Printf_format_string_ const char* format, ...) noexcept
-{
-#ifdef _DEBUG
-    va_list args;
-    va_start(args, format);
-
-    char buff[1024] = {};
-    vsprintf_s(buff, format, args);
-    OutputDebugStringA(buff);
-    va_end(args);
-#else
-    UNREFERENCED_PARAMETER(format);
-#endif
-}
-
-// Helper for output debug tracing (wide-char)
-inline void DebugTrace(_In_z_ _Printf_format_string_ const wchar_t* format, ...) noexcept
-{
-#ifdef _DEBUG
-    va_list args;
-    va_start(args, format);
-
-    wchar_t buff[1024] = {};
-    vswprintf_s(buff, _countof(buff), format, args);
-    OutputDebugStringW(buff);
-
-    va_end(args);
-#else
-    UNREFERENCED_PARAMETER(format);
-#endif
-}

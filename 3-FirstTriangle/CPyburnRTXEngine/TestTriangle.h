@@ -17,11 +17,13 @@ namespace CPyburnRTXEngine
 		UINT mTlasSize;
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();
+		
 		ComPtr<ID3D12StateObject> mpPipelineState;
 		ComPtr<ID3D12RootSignature> mpEmptyRootSig;
 
 		std::vector<uint8_t> LoadBinaryFile(const wchar_t* path);
 		ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
+		D3D12_STATE_SUBOBJECT CreateDxilSubobject();
 	public:
 		TestTriangle();
 		~TestTriangle();

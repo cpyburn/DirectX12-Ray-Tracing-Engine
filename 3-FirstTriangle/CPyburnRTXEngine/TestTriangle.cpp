@@ -144,7 +144,7 @@ namespace CPyburnRTXEngine
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             ComPtr<ID3D12Resource> pResult;
             ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
-            UINT64 tlasSize = info.ResultDataMaxSizeInBytes;
+            mTlasSize = info.ResultDataMaxSizeInBytes;
 
             // The instance desc should be inside a buffer, create and map the buffer
             bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;

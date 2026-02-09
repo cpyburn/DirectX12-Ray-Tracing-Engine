@@ -166,7 +166,7 @@ namespace DX
         UINT                                                m_backBufferIndex;
 
         // Direct3D objects.
-        Microsoft::WRL::ComPtr<ID3D12Device>                m_d3dDevice;
+        Microsoft::WRL::ComPtr<ID3D12Device5>               m_d3dDevice;
         Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_commandQueue;
         std::unique_ptr<FrameResource>						m_frameResource[c_backBufferCount];
 

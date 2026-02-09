@@ -8,6 +8,7 @@
 #include <StepTimer.h>
 #include <TestFullscreen.h>
 #include <FrameResource.h>
+#include <TestTriangle.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -65,7 +66,8 @@ private:
     // Rendering loop timer.
     DX::StepTimer                               m_timer;
 
-	CPyburnRTXEngine::TestFullscreen                m_fullscreen;
+	CPyburnRTXEngine::TestFullscreen            m_fullscreen;
+	CPyburnRTXEngine::TestTriangle              m_triangle;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:
     // std::unique_ptr<DirectX::GraphicsMemory> m_graphicsMemory;

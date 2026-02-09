@@ -15,8 +15,8 @@ namespace CPyburnRTXEngine
 		TestTriangle();
 		~TestTriangle();
 		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources);
-		void Update(DX::StepTimer const& timer);
-		void Render();
+		//void Update(DX::StepTimer const& timer);
+		//void Render();
 		void Release();
 	};
 }

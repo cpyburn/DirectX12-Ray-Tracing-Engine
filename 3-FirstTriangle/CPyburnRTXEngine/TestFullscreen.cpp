@@ -145,8 +145,9 @@ namespace CPyburnRTXEngine
 #else
             UINT compileFlags = 0;
 #endif
-            ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &sceneVertexShader, &error));
-            ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"sceneShaders.hlsl").c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &scenePixelShader, &error));
+            std::wstring shaderFilePath = GetAssetFullPath(L"sceneShaders.hlsl");
+            ThrowIfFailed(D3DCompileFromFile(shaderFilePath.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &sceneVertexShader, &error));
+            ThrowIfFailed(D3DCompileFromFile(shaderFilePath.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &scenePixelShader, &error));
 
             // Des
             //         // Define the vertex input layouts.

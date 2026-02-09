@@ -102,6 +102,12 @@ namespace DX
     // Helper utility converts D3D API failures into exceptions.
     inline void ThrowIfFailed(HRESULT hr)
     {
+        char hr_msg[512];
+        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, hr, 0, hr_msg, ARRAYSIZE(hr_msg), nullptr);
+        std::string error_msg = hr_msg;
+        // todo: test
+		DebugTrace("HRESULT: 0x%08X - %s\n", static_cast<unsigned int>(hr), error_msg.c_str());
+
         if (FAILED(hr))
         {
             throw com_exception(hr);

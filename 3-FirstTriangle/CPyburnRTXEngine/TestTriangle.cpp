@@ -192,18 +192,100 @@ namespace CPyburnRTXEngine
         }
 	}
 
+    std::vector<uint8_t> TestTriangle::LoadBinaryFile(const wchar_t* path)
+    {
+        std::ifstream file(path, std::ios::binary | std::ios::ate);
+        if (!file)
+            throw std::runtime_error("Failed to open file");
+
+        size_t size = (size_t)file.tellg();
+        file.seekg(0);
+
+        std::vector<uint8_t> data(size);
+        file.read((char*)data.data(), size);
+        return data;
+    }
+
+    ComPtr<IDxcBlob> TestTriangle::CompileDXRLibrary(const wchar_t* filename)
+    {
+        ComPtr<IDxcBlob> dxil;
+
+        auto sourceData = LoadBinaryFile(filename);
+
+        ComPtr<IDxcUtils> utils;
+        ComPtr<IDxcCompiler3> compiler;
+        ComPtr<IDxcIncludeHandler> includeHandler;
+
+        HRESULT hr;
+        hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils));
+        if (FAILED(hr)) throw std::runtime_error("DxcUtils failed");
+
+        hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
+        if (FAILED(hr)) throw std::runtime_error("DxcCompiler failed");
+
+        utils->CreateDefaultIncludeHandler(&includeHandler);
+
+        DxcBuffer source = {};
+        source.Ptr = sourceData.data();
+        source.Size = sourceData.size();
+        source.Encoding = DXC_CP_UTF8;
+
+        const wchar_t* arguments[] =
+        {
+            filename,               // REQUIRED (virtual filename)
+            L"-T", L"lib_6_6",        // DXR shader library
+            L"-HV", L"2021",
+            L"-Zi",
+            L"-Qembed_debug",
+            L"-Od",
+            L"-WX"                   // Treat warnings as errors (optional)
+        };
+
+        ComPtr<IDxcResult> result;
+
+        hr = compiler->Compile(
+            &source,
+            arguments,
+            _countof(arguments),
+            includeHandler.Get(),
+            IID_PPV_ARGS(&result)
+        );
+
+        if (FAILED(hr))
+            throw std::runtime_error("Compile() failed");
+
+        // Check compile status
+        HRESULT status;
+        result->GetStatus(&status);
+        if (FAILED(status))
+        {
+            ComPtr<IDxcBlobUtf8> errors;
+            result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+            if (errors && errors->GetStringLength())
+                OutputDebugStringA(errors->GetStringPointer());
+
+            throw std::runtime_error("DXR shader compilation failed");
+        }
+
+        // Get DXIL object
+        HRESULT hr = result->GetOutput(
+            DXC_OUT_OBJECT,
+            IID_PPV_ARGS(&dxil),
+            nullptr
+        );
+
+        if (FAILED(hr) || !dxil || dxil->GetBufferSize() == 0)
+        {
+            throw std::runtime_error("Failed to retrieve DXIL object");
+        }
+
+        return dxil;
+    }
+
     void TestTriangle::createRtPipelineState()
     {
-        ComPtr<ID3DBlob> scenePixelShader;
-        ComPtr<ID3DBlob> error;
-
-#if defined(_DEBUG)
-        // Enable better shader debugging with the graphics debugging tools.
-        UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#else
-        UINT compileFlags = 0;
-#endif
-        ThrowIfFailed(D3DCompileFromFile(GetAssetFullPath(L"04-Shaders.hlsl").c_str(), nullptr, nullptr, "VSMain", "lib_6_3", compileFlags, 0, &scenePixelShader, &error));
+        std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
+		ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
         
         static const WCHAR* kRayGenShader = L"rayGen";
         static const WCHAR* kMissShader = L"miss";
@@ -217,8 +299,8 @@ namespace CPyburnRTXEngine
 
         D3D12_STATE_SUBOBJECT stateSubobject{};
         D3D12_DXIL_LIBRARY_DESC dxilLibDesc = {};
-        dxilLibDesc.DXILLibrary.pShaderBytecode = scenePixelShader->GetBufferPointer();
-        dxilLibDesc.DXILLibrary.BytecodeLength = scenePixelShader->GetBufferSize();
+        dxilLibDesc.DXILLibrary.pShaderBytecode = shaderBlob->GetBufferPointer();
+        dxilLibDesc.DXILLibrary.BytecodeLength = shaderBlob->GetBufferSize();
         dxilLibDesc.NumExports = entryPointCount;
         dxilLibDesc.pExports = exportDesc.data();
 

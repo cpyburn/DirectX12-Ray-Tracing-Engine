@@ -2,6 +2,7 @@
 
 // todo: move to pch file?
 #include <dxcapi.h>
+#include <sstream>
 
 namespace CPyburnRTXEngine
 {
@@ -24,6 +25,7 @@ namespace CPyburnRTXEngine
 		std::vector<uint8_t> LoadBinaryFile(const wchar_t* path);
 		ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
 		D3D12_STATE_SUBOBJECT CreateDxilSubobject();
+		ComPtr<IDxcBlob> CreateDxilSubobjectSample();
 	public:
 		TestTriangle();
 		~TestTriangle();

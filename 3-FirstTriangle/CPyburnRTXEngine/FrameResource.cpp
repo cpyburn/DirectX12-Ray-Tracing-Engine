@@ -33,7 +33,7 @@ namespace CPyburnRTXEngine
         BatchSubmit[1] = m_commandLists[COMMAND_LIST_POST_1].Get();
     }
 
-    ID3D12GraphicsCommandList* FrameResource::ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState)
+    ID3D12GraphicsCommandList4* FrameResource::ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState)
     {
         ThrowIfFailed(m_commandAllocators[commandList]->Reset());
         ThrowIfFailed(m_commandLists[commandList]->Reset(m_commandAllocators[commandList].Get(), pInitialState));

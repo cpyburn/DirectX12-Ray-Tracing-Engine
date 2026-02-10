@@ -29,12 +29,14 @@ namespace CPyburnRTXEngine
 
 		void createShaderResources();
 		ComPtr<ID3D12Resource> mpOutputResource;
+		UINT mUavPosition = 0;
+		UINT mSrvPosition = 0;
 	public:
 		TestTriangle();
 		~TestTriangle();
 		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources);
 		//void Update(DX::StepTimer const& timer);
-		//void Render();
+		void Render();
 		void Release();
 	};
 }

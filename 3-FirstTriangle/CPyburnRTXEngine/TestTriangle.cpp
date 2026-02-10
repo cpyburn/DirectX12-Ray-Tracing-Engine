@@ -1,5 +1,6 @@
 #include "pchlib.h"
 #include "TestTriangle.h"
+#include "GraphicsContexts.h"
 
 namespace CPyburnRTXEngine
 {
@@ -395,10 +396,9 @@ namespace CPyburnRTXEngine
                 throw std::runtime_error("Failed to serialize root signature");
             }
 
-            ComPtr<ID3D12RootSignature> pRootSigGlobal;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobGlobal->GetBufferPointer(), pSigBlobGlobal->GetBufferSize(), IID_PPV_ARGS(&pRootSigGlobal)));
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobGlobal->GetBufferPointer(), pSigBlobGlobal->GetBufferSize(), IID_PPV_ARGS(&mpEmptyRootSig)));
 
-			ID3D12RootSignature* pRootSigGlobalPtr = pRootSigGlobal.Get();
+			ID3D12RootSignature* pRootSigGlobalPtr = mpEmptyRootSig.Get();
             subobjects[index].pDesc = &pRootSigGlobalPtr;
             subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
         //10
@@ -577,16 +577,19 @@ namespace CPyburnRTXEngine
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
-        m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart());
+        mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), mUavPosition, GraphicsContexts::c_descriptorSize);
+        m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, uavCpuHandle);
 
         // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS->GetGPUVirtualAddress();
-        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
-        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        mpDevice->CreateShaderResourceView(nullptr, &srvDesc, srvHandle);
+
+        mSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), mSrvPosition, GraphicsContexts::c_descriptorSize);
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, srvHandle);
     }
 
     TestTriangle::TestTriangle()
@@ -602,6 +605,11 @@ namespace CPyburnRTXEngine
 		m_deviceResources = deviceResources;
 		createAccelerationStructures();
 		createRtPipelineState();
+    }
+
+    void TestTriangle::Render()
+    {
+
     }
 
     void TestTriangle::Release()

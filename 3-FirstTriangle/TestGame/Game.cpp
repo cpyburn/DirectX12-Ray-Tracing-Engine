@@ -87,8 +87,8 @@ void Game::Render()
     m_fullscreen.Render();
     m_deviceResources->Render();
 
-    ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
-    ID3D12GraphicsCommandList* m_postCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_POST_1).Get();
+    ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
+    ID3D12GraphicsCommandList4* m_postCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_POST_1).Get();
 
     ID3D12CommandList* ppCommandLists[] = { m_sceneCommandList, m_postCommandList };
     m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);

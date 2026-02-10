@@ -8,6 +8,24 @@ namespace CPyburnRTXEngine
     static const WCHAR* kClosestHitShader = L"chs";
     static const WCHAR* kHitGroup = L"HitGroup";
 
+    static const D3D12_HEAP_PROPERTIES kUploadHeapProps =
+    {
+        D3D12_HEAP_TYPE_UPLOAD,
+        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+        D3D12_MEMORY_POOL_UNKNOWN,
+        0,
+        0,
+    };
+
+    static const D3D12_HEAP_PROPERTIES kDefaultHeapProps =
+    {
+        D3D12_HEAP_TYPE_DEFAULT,
+        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+        D3D12_MEMORY_POOL_UNKNOWN,
+        0,
+        0
+    };
+
 	void TestTriangle::createAccelerationStructures()
 	{
         // create createTriangleVB
@@ -16,24 +34,6 @@ namespace CPyburnRTXEngine
             XMFLOAT3(0,          1,  0),
             XMFLOAT3(0.866f,  -0.5f, 0),
             XMFLOAT3(-0.866f, -0.5f, 0),
-        };
-
-        static const D3D12_HEAP_PROPERTIES kUploadHeapProps =
-        {
-            D3D12_HEAP_TYPE_UPLOAD,
-            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            D3D12_MEMORY_POOL_UNKNOWN,
-            0,
-            0,
-        };
-
-        static const D3D12_HEAP_PROPERTIES kDefaultHeapProps =
-        {
-            D3D12_HEAP_TYPE_DEFAULT,
-            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            D3D12_MEMORY_POOL_UNKNOWN,
-            0,
-            0
         };
 
         // create buffer
@@ -409,9 +409,7 @@ namespace CPyburnRTXEngine
             stateObjectDesc.pSubobjects = subobjects;
             stateObjectDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
-            ComPtr<ID3D12StateObject> pStateObject;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&pStateObject)));
-            mpPipelineState = pStateObject;
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&mpPipelineState)));
     }
 
     std::vector<uint8_t> TestTriangle::LoadBinaryFile(const wchar_t* path)
@@ -558,6 +556,37 @@ namespace CPyburnRTXEngine
         ThrowIfFailed(pResult->GetResult(&pBlob));
 
         return pBlob;
+    }
+
+    void TestTriangle::createShaderResources()
+    {
+        // Create the output resource. The dimensions and format should match the swap-chain
+        D3D12_RESOURCE_DESC resDesc = {};
+        resDesc.DepthOrArraySize = 1;
+        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
+        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        resDesc.Width = m_deviceResources->GetScreenViewport().Width;
+        resDesc.Height = m_deviceResources->GetScreenViewport().Height;
+        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+        resDesc.MipLevels = 1;
+        resDesc.SampleDesc.Count = 1;
+        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
+
+        // Create the UAV. Based on the root signature we created it should be the first entry
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+        m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart());
+
+        // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS->GetGPUVirtualAddress();
+        D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = mpSrvUavHeap->GetCPUDescriptorHandleForHeapStart();
+        srvHandle.ptr += mpDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        mpDevice->CreateShaderResourceView(nullptr, &srvDesc, srvHandle);
     }
 
     TestTriangle::TestTriangle()

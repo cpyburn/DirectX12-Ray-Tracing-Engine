@@ -26,6 +26,9 @@ namespace CPyburnRTXEngine
 		ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
 		D3D12_STATE_SUBOBJECT CreateDxilSubobject();
 		ComPtr<IDxcBlob> CreateDxilSubobjectSample();
+
+		void createShaderResources();
+		ComPtr<ID3D12Resource> mpOutputResource;
 	public:
 		TestTriangle();
 		~TestTriangle();

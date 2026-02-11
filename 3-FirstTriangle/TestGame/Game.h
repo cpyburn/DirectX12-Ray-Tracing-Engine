@@ -66,7 +66,7 @@ private:
     // Rendering loop timer.
     DX::StepTimer                               m_timer;
 
-	CPyburnRTXEngine::TestFullscreen            m_fullscreen;
+	//CPyburnRTXEngine::TestFullscreen            m_fullscreen;
 	CPyburnRTXEngine::TestTriangle              m_triangle;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:

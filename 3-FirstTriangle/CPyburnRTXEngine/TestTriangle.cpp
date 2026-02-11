@@ -1,6 +1,8 @@
 #include "pchlib.h"
 #include "TestTriangle.h"
+
 #include "GraphicsContexts.h"
+#include "FrameResource.h"
 
 namespace CPyburnRTXEngine
 {
@@ -558,16 +560,76 @@ namespace CPyburnRTXEngine
         return pBlob;
     }
 
+    void TestTriangle::createShaderTable()
+    {
+        /** The shader-table layout is as follows:
+        Entry 0 - Ray-gen program
+        Entry 1 - Miss program
+        Entry 2 - Hit program
+        All entries in the shader-table must have the same size, so we will choose it base on the largest required entry.
+        The ray-gen program requires the largest entry - sizeof(program identifier) + 8 bytes for a descriptor-table.
+        The entry size must be aligned up to D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
+        */
+
+        // Calculate the size and create the buffer
+        mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+        mShaderTableEntrySize += 8; // The ray-gen's descriptor table
+        mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, mShaderTableEntrySize);
+        uint32_t shaderTableSize = mShaderTableEntrySize * 3; // We have 3 programs and a single geometry, so we need 3 entries (we’ll get to why the number of entries depends on the geometry count in later tutorials).
+
+        // For simplicity, we create the shader-table on the upload heap. You can also create it on the default heap
+        D3D12_RESOURCE_DESC bufDesc = {};
+        bufDesc.Alignment = 0;
+        bufDesc.DepthOrArraySize = 1;
+        bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+        bufDesc.Format = DXGI_FORMAT_UNKNOWN;
+        bufDesc.Height = 1;
+        bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        bufDesc.MipLevels = 1;
+        bufDesc.SampleDesc.Count = 1;
+        bufDesc.SampleDesc.Quality = 0;
+        bufDesc.Width = shaderTableSize;
+
+        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
+
+        // Map the buffer
+        uint8_t* pData;
+        ThrowIfFailed(mpShaderTable->Map(0, nullptr, (void**)&pData));
+
+        ComPtr<ID3D12StateObjectProperties> pRtsoProps;
+        mpPipelineState->QueryInterface(IID_PPV_ARGS(&pRtsoProps));
+
+        // Entry 0 - ray-gen program ID and descriptor data
+        //memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        // 6.2 Binding the Resources
+        memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        uint64_t heapStart = GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart().ptr;
+        *(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
+
+        // This is where we need to set the descriptor data for the ray-gen shader. We'll get to it in the next tutorial
+
+        // Entry 1 - miss program
+        memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+        // Entry 2 - hit program
+        uint8_t* pHitEntry = pData + mShaderTableEntrySize * 2; // +2 skips the ray-gen and miss entries
+        memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+        // Unmap
+        mpShaderTable->Unmap(0, nullptr);
+    }
+
     void TestTriangle::createShaderResources()
     {
         // Create the output resource. The dimensions and format should match the swap-chain
         D3D12_RESOURCE_DESC resDesc = {};
         resDesc.DepthOrArraySize = 1;
         resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
+        resDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
         resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = m_deviceResources->GetScreenViewport().Width;
-        resDesc.Height = m_deviceResources->GetScreenViewport().Height;
+        resDesc.Width = 1280; // todo: window change
+        resDesc.Height = 720; // todo: window change
         resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
         resDesc.MipLevels = 1;
         resDesc.SampleDesc.Count = 1;
@@ -603,13 +665,80 @@ namespace CPyburnRTXEngine
     void TestTriangle::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources)
 	{
 		m_deviceResources = deviceResources;
-		createAccelerationStructures();
-		createRtPipelineState();
+        createAccelerationStructures(); // Tutorial 03
+        createRtPipelineState(); // Tutorial 04
+        createShaderResources(); // Tutorial 06. Need to do this before initializing the shader-table
+        createShaderTable(); // Tutorial 05
     }
 
     void TestTriangle::Render()
     {
+        ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
+        // Populate m_sceneCommandList to render scene to intermediate render target.
+        {
+            ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+            m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+            m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
+            m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
+
+            D3D12_RESOURCE_BARRIER barriers[2] = 
+            {
+                CD3DX12_RESOURCE_BARRIER::Transition(mpOutputResource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
+                CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST),
+            };
+
+            // only use the first resource barrier to transition the output resource, the second one is used later
+            m_sceneCommandList->ResourceBarrier(1, &barriers[0]);
+
+            D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
+            raytraceDesc.Width = m_deviceResources->GetScreenViewport().Width;
+            raytraceDesc.Height = m_deviceResources->GetScreenViewport().Height;
+            raytraceDesc.Depth = 1;
+
+            // 6.4.b RayGen is the first entry in the shader-table
+            raytraceDesc.RayGenerationShaderRecord.StartAddress = mpShaderTable->GetGPUVirtualAddress() + 0 * mShaderTableEntrySize;
+            raytraceDesc.RayGenerationShaderRecord.SizeInBytes = mShaderTableEntrySize;
+
+            // 6.4.c Miss is the second entry in the shader-table
+            size_t missOffset = 1 * mShaderTableEntrySize;
+            raytraceDesc.MissShaderTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + missOffset;
+            raytraceDesc.MissShaderTable.StrideInBytes = mShaderTableEntrySize;
+            raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize;   // Only a s single miss-entry
+
+            // 6.4.d Hit is the third entry in the shader-table
+            size_t hitOffset = 2 * mShaderTableEntrySize;
+            raytraceDesc.HitGroupTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + hitOffset;
+            raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;
+
+            // 6.4.e Bind the empty root signature
+            m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
+
+            // 6.4.f Set Pipeline
+            m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());
+
+            // 6.4.g Dispatch
+            m_sceneCommandList->DispatchRays(&raytraceDesc);
+
+            barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+            barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+            // barrier 1 was made early
+            m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
+			m_sceneCommandList->CopyResource(m_deviceResources->GetRenderTarget(), mpOutputResource.Get());
+
+            // 
+            barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+            barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+
+            m_sceneCommandList->ResourceBarrier(1, &barriers[1]);
+
+            ThrowIfFailed(m_sceneCommandList->Close());
+
+            //resourceBarrier(mpCmdList, mpOutputResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            //resourceBarrier(mpCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST);
+            //mpCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer, mpOutputResource);
+        }
     }
 
     void TestTriangle::Release()

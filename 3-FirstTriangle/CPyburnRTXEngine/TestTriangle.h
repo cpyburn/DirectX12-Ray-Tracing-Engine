@@ -27,6 +27,10 @@ namespace CPyburnRTXEngine
 		D3D12_STATE_SUBOBJECT CreateDxilSubobject();
 		ComPtr<IDxcBlob> CreateDxilSubobjectSample();
 
+		void createShaderTable();
+		ComPtr<ID3D12Resource> mpShaderTable;
+		uint32_t mShaderTableEntrySize = 0;
+
 		void createShaderResources();
 		ComPtr<ID3D12Resource> mpOutputResource;
 		UINT mUavPosition = 0;

@@ -95,7 +95,7 @@ namespace CPyburnRTXEngine
 
 		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
 		heapDesc.NumDescriptors = DeviceResources::c_backBufferCount // Vertex constant buffers per frame 
-			+ 1; // Arbitrary large number for now.
+			+ 100; // Arbitrary large number for now.
 		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		// This flag indicates that this descriptor heap can be bound to the pipeline and that descriptors contained in it can be referenced by a root table.
 		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;

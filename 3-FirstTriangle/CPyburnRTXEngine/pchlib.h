@@ -251,6 +251,9 @@ inline std::wstring GetAssetFullPath(LPCWSTR assetName)
 #define NAME_D3D12_OBJECT(x) SetName((x).Get(), L#x)
 #define NAME_D3D12_OBJECT_INDEXED(x, n) SetNameIndexed((x)[n].Get(), L#x, n)
 
+// RTX alignment
+#define align_to(_alignment, _val) (((_val + _alignment - 1) / _alignment) * _alignment)
+
 // Assign a name to the object to aid with debugging.
 #if defined(_DEBUG) || defined(DBG)
 inline void SetName(ID3D12Object* pObject, LPCWSTR name)

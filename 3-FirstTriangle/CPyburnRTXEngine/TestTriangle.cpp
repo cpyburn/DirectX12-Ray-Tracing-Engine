@@ -604,8 +604,15 @@ namespace CPyburnRTXEngine
         //memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         // 6.2 Binding the Resources
         memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        uint64_t heapStart = GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart().ptr;
-        *(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
+
+        //uint64_t heapStart = GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart().ptr;
+        //*(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
+        // compute GPU handle for the first descriptor in the table
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart());
+        gpuHandle.Offset(mUavPosition, GraphicsContexts::c_descriptorSize);
+
+        // write the GPU handle ptr (8 bytes) right after the identifier
+        *(UINT64*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = gpuHandle.ptr;
 
         // This is where we need to set the descriptor data for the ray-gen shader. We'll get to it in the next tutorial
 
@@ -692,8 +699,8 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->ResourceBarrier(1, &barriers[0]);
 
             D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-            raytraceDesc.Width = m_deviceResources->GetScreenViewport().Width;
-            raytraceDesc.Height = m_deviceResources->GetScreenViewport().Height;
+            raytraceDesc.Width = 1280; // todo: fix window resize
+            raytraceDesc.Height = 720; // todo: fix window resize
             raytraceDesc.Depth = 1;
 
             // 6.4.b RayGen is the first entry in the shader-table

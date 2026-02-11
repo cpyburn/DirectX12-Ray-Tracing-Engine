@@ -68,7 +68,7 @@ void Game::Update(DX::StepTimer const& timer)
     float elapsedTime = float(timer.GetElapsedSeconds());
 
     // TODO: Add your game logic here.
-    //m_fullscreen.Update(timer);
+    m_fullscreen.Update(timer);
 
     PIXEndEvent();
 }
@@ -277,7 +277,7 @@ void Game::CreateDeviceDependentResources()
     // m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
     // TODO: Initialize device dependent objects here (independent of window size).
-    //m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
+    m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);
 }
 

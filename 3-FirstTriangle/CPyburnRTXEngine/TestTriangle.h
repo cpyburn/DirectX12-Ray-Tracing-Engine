@@ -25,7 +25,6 @@ namespace CPyburnRTXEngine
 		std::vector<uint8_t> LoadBinaryFile(const wchar_t* path);
 		ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
 		D3D12_STATE_SUBOBJECT CreateDxilSubobject();
-		ComPtr<IDxcBlob> CreateDxilSubobjectSample();
 
 		void createShaderTable();
 		ComPtr<ID3D12Resource> mpShaderTable;

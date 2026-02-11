@@ -138,7 +138,7 @@ namespace DX
         Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateRenderTarget;
         static const float ClearColor[4];
         UINT m_rtvHeapIntermediateRenderTargetPosition;
-        //UINT m_cbvHeapIntermediateRenderTargetPosition;
+        UINT m_cbvHeapIntermediateRenderTargetPosition;
         std::unique_ptr<CPyburnRTXEngine::GraphicsContexts> m_graphicsContexts;
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;

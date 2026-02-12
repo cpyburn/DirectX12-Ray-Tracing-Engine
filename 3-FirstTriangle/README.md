@@ -1,4 +1,3 @@
-```markdown
 # TestTriangle – DirectX 12 DXR Minimal Raytracing Sample
 
 This module implements a minimal **DirectX 12 Raytracing (DXR)** pipeline that renders a single triangle using:

@@ -148,7 +148,7 @@ namespace DX
         static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
 
         void UpdatePostViewAndScissor();
-        void LoadSizeDependentResources();
+        //void LoadSizeDependentResources();
         void LoadSceneResolutionDependentResources();
         void UpdateTitle();
         void CreateFullscreenPostProcessingResources();

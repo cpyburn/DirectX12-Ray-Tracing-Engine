@@ -623,7 +623,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 
     // Update the width, height, and aspect ratio member variables.
     SetWindow(m_window, backBufferWidth, backBufferHeight);
-    LoadSizeDependentResources();
+    //LoadSizeDependentResources();
     LoadSceneResolutionDependentResources();
 #pragma endregion
 
@@ -1014,31 +1014,31 @@ void DeviceResources::UpdatePostViewAndScissor()
     m_postScissorRect.bottom = static_cast<LONG>(m_postViewport.TopLeftY + m_postViewport.Height);
 }
 
-void DeviceResources::LoadSizeDependentResources()
-{
-    UpdatePostViewAndScissor();
-
-    // Create frame resources.
-    {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRenderTargetView();
-
-        // Create a RTV for each frame.
-        for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
-        {
-            ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
-            m_d3dDevice->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
-            rtvHandle.Offset(1, m_rtvDescriptorSize);
-
-            NAME_D3D12_OBJECT_INDEXED(m_renderTargets, n);
-        }
-    }
-
-    // Update resolutions shown in app title.
-    UpdateTitle();
-
-    // todo: This is where you would create/resize intermediate render targets, depth stencils, or other resources
-    // dependent on the window size.
-}
+//void DeviceResources::LoadSizeDependentResources()
+//{
+//    UpdatePostViewAndScissor();
+//
+//    // Create frame resources.
+//    {
+//        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetRenderTargetView();
+//
+//        // Create a RTV for each frame.
+//        for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+//        {
+//            ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
+//            m_d3dDevice->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
+//            rtvHandle.Offset(1, m_rtvDescriptorSize);
+//
+//            NAME_D3D12_OBJECT_INDEXED(m_renderTargets, n);
+//        }
+//    }
+//
+//    // Update resolutions shown in app title.
+//    UpdateTitle();
+//
+//    // todo: This is where you would create/resize intermediate render targets, depth stencils, or other resources
+//    // dependent on the window size.
+//}
 
 void DeviceResources::LoadSceneResolutionDependentResources()
 {

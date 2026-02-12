@@ -129,8 +129,6 @@ namespace DX
             DirectX::XMFLOAT2 uv;
         };
 
-        UINT m_width; // todo: can this be replaced with m_outputSize.right - m_outputSize.bottom ?
-        UINT m_height;
         CD3DX12_VIEWPORT m_postViewport;
         CD3DX12_RECT m_postScissorRect;
         Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateRenderTarget;

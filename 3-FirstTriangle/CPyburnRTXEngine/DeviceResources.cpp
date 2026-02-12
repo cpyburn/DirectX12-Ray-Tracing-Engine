@@ -639,10 +639,7 @@ void DeviceResources::SetWindow(HWND window, int width, int height) noexcept
     m_outputSize.right = static_cast<long>(width);
     m_outputSize.bottom = static_cast<long>(height);
 
-	// todo: can this be replaced with m_outputSize.right - m_outputSize.bottom ?
     // todo: aspect ratio?
-	m_width = width;
-	m_height = height;
     UpdateTitle();
 }
 
@@ -987,8 +984,8 @@ void DX::DeviceResources::DecreaseResolutionIndex()
 
 void DeviceResources::UpdatePostViewAndScissor()
 {
-    float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_width;
-    float viewHeightRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height) / m_height;
+    float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_outputSize.right;
+    float viewHeightRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height) / m_outputSize.bottom;
 
     float x = 1.0f;
     float y = 1.0f;
@@ -1006,10 +1003,10 @@ void DeviceResources::UpdatePostViewAndScissor()
         y = viewHeightRatio / viewWidthRatio;
     }
 
-    m_postViewport.TopLeftX = m_width * (1.0f - x) / 2.0f;
-    m_postViewport.TopLeftY = m_height * (1.0f - y) / 2.0f;
-    m_postViewport.Width = x * m_width;
-    m_postViewport.Height = y * m_height;
+    m_postViewport.TopLeftX = m_outputSize.right * (1.0f - x) / 2.0f;
+    m_postViewport.TopLeftY = m_outputSize.bottom * (1.0f - y) / 2.0f;
+    m_postViewport.Width = x * m_outputSize.right;
+    m_postViewport.Height = y * m_outputSize.bottom;
 
     m_postScissorRect.left = static_cast<LONG>(m_postViewport.TopLeftX);
     m_postScissorRect.right = static_cast<LONG>(m_postViewport.TopLeftX + m_postViewport.Width);
@@ -1095,7 +1092,7 @@ void DeviceResources::UpdateTitle()
 {
     // Update resolutions shown in app title.
     wchar_t updatedTitle[256];
-    swprintf_s(updatedTitle, L"( %u x %u ) scaled to ( %u x %u )\n", m_resolutionOptions[m_resolutionIndex].Width, m_resolutionOptions[m_resolutionIndex].Height, m_width, m_height);
+    swprintf_s(updatedTitle, L"( %u x %u ) scaled to ( %u x %u )\n", m_resolutionOptions[m_resolutionIndex].Width, m_resolutionOptions[m_resolutionIndex].Height, m_outputSize.right, m_outputSize.bottom);
     DebugTrace(updatedTitle);
 
     SetWindowText(m_window, updatedTitle);

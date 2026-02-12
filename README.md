@@ -26,6 +26,8 @@ A good book to read:
 
 Alright chums let's do this!
 
-### [1-CreatingGameProject](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/1-CreatingGameProject) - Creating the game project
+### [1-Creating the game project](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/1-CreatingGameProject)  
 
-### [2-Fullscreen](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen) - Adding Fullscreen code
+### [2-Adding Fullscreen code](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen)  
+
+### [3-Rendering the first ray trace triangle](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/3-FirstTriangle) 

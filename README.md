@@ -9,7 +9,7 @@ Knowledge you should possess or wanting to learn:
 - c++
 - rasterization
 - matrices and vectors
-- directx 12, or vulkan
+- directx 12 or vulkan
 
 Things you will learn:
 - ray tracing in c++

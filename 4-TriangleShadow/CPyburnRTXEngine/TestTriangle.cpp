@@ -29,8 +29,8 @@ namespace CPyburnRTXEngine
         0
     };
 
-	void TestTriangle::createAccelerationStructures()
-	{
+    void TestTriangle::createAccelerationStructures()
+    {
         // create createTriangleVB
         const XMFLOAT3 vertices[] =
         {
@@ -134,7 +134,7 @@ namespace CPyburnRTXEngine
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
             inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
             inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-            inputs.NumDescs = 1;
+            inputs.NumDescs = 3; // 3 instances
             inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
             D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
@@ -154,21 +154,30 @@ namespace CPyburnRTXEngine
 
             // The instance desc should be inside a buffer, create and map the buffer
             bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC);
+            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * 3; // 3 instances
 
-			ComPtr<ID3D12Resource> pInstanceDescResource;
+            ComPtr<ID3D12Resource> pInstanceDescResource;
             ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&pInstanceDescResource)));
             D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
             pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
+            ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * 3); // 3 instances
 
-            // Initialize the instance desc. We only have a single instance
-            pInstanceDesc->InstanceID = 0;                            // This value will be exposed to the shader via InstanceID()
-            pInstanceDesc->InstanceContributionToHitGroupIndex = 0;   // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
-            pInstanceDesc->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            XMMATRIX xmIdentity = XMMatrixIdentity(); // Identity matrix
-            memcpy(pInstanceDesc->Transform, &xmIdentity, sizeof(pInstanceDesc->Transform));
-            pInstanceDesc->AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress();
-            pInstanceDesc->InstanceMask = 0xFF;
+            // 3 instances
+            XMMATRIX xmIdentity[3] = {};
+            xmIdentity[0] = XMMatrixIdentity(); // Identity matrix
+            xmIdentity[1] = XMMatrixTranslation(-2, 0, 0) * XMMatrixIdentity();
+            xmIdentity[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixIdentity();
+
+            for (size_t i = 0; i < _countof(xmIdentity); i++)
+            {
+                pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
+                pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;   // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
+                pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+                XMMATRIX transpose = XMMatrixTranspose(xmIdentity[i]);
+                memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
+                pInstanceDesc[i].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress();
+                pInstanceDesc[i].InstanceMask = 0xFF;
+            }
 
             // Unmap
             pInstanceDescResource->Unmap(0, nullptr);
@@ -198,7 +207,7 @@ namespace CPyburnRTXEngine
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             mpTopLevelAS = pResult;
         }
-	}
+    }
 
     void TestTriangle::createRtPipelineState()
     {
@@ -486,13 +495,13 @@ namespace CPyburnRTXEngine
     D3D12_STATE_SUBOBJECT TestTriangle::CreateDxilSubobject()
     {
         std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
-		ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
-        
+        ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
+
         const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader };
 
         std::vector<D3D12_EXPORT_DESC> exportDesc;
         std::vector<std::wstring> exportName;
-		uint32_t entryPointCount = _countof(entryPoints);
+        uint32_t entryPointCount = _countof(entryPoints);
 
         D3D12_STATE_SUBOBJECT stateSubobject{};
         D3D12_DXIL_LIBRARY_DESC dxilLibDesc = {};
@@ -513,9 +522,9 @@ namespace CPyburnRTXEngine
                 exportDesc[i].ExportToRename = nullptr;
             }
         }
-		stateSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+        stateSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
         stateSubobject.pDesc = &dxilLibDesc;
-		return stateSubobject;
+        return stateSubobject;
     }
 
     void TestTriangle::createShaderTable()
@@ -568,7 +577,7 @@ namespace CPyburnRTXEngine
         //uint64_t heapStart = GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart().ptr;
         //*(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
         // compute GPU handle for the first descriptor in the table
-        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart());; 
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart());;
         gpuHandle.Offset(mUavPosition, GraphicsContexts::c_descriptorSize);
 
         // write the GPU handle ptr (8 bytes) right after the identifier
@@ -587,7 +596,7 @@ namespace CPyburnRTXEngine
         mpShaderTable->Unmap(0, nullptr);
     }
 
-	// todo: handle this in a more elegant way when we implement resizing
+    // todo: handle this in a more elegant way when we implement resizing
     void TestTriangle::createShaderResources()
     {
         // Create the output resource. The dimensions and format should match the swap-chain
@@ -632,8 +641,8 @@ namespace CPyburnRTXEngine
     }
 
     void TestTriangle::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources)
-	{
-		m_deviceResources = deviceResources;
+    {
+        m_deviceResources = deviceResources;
         createAccelerationStructures(); // Tutorial 03
         createRtPipelineState(); // Tutorial 04
         createShaderResources(); // Tutorial 06. Need to do this before initializing the shader-table
@@ -651,7 +660,7 @@ namespace CPyburnRTXEngine
             ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
             m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-            D3D12_RESOURCE_BARRIER barriers[2] = 
+            D3D12_RESOURCE_BARRIER barriers[2] =
             {
                 CD3DX12_RESOURCE_BARRIER::Transition(mpOutputResource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
                 CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetIntermediateRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST),
@@ -694,7 +703,7 @@ namespace CPyburnRTXEngine
             barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
 
             m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
-			m_sceneCommandList->CopyResource(m_deviceResources->GetIntermediateRenderTarget(), mpOutputResource.Get());
+            m_sceneCommandList->CopyResource(m_deviceResources->GetIntermediateRenderTarget(), mpOutputResource.Get());
 
             barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
             barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -708,7 +717,7 @@ namespace CPyburnRTXEngine
     }
 
     void TestTriangle::Release()
-	{
+    {
         mpVertexBuffer.Reset();
         mpTopLevelAS.Reset();
         mpBottomLevelAS.Reset();
@@ -716,5 +725,5 @@ namespace CPyburnRTXEngine
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();
         mpOutputResource.Reset();
-	}
+    }
 }

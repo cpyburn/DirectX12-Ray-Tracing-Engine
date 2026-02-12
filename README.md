@@ -29,5 +29,7 @@ Alright chums let's do this!
 ### [1-Creating the game project](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/1-CreatingGameProject)  
 
 ### [2-Adding Fullscreen code](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen)  
+<img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/b7f7e9a7-8f30-4b15-adcf-2ff8801f16a7" />
 
 ### [3-Rendering the first ray trace triangle](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/3-FirstTriangle) 
+<img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/873ef043-4a61-4a68-bf36-9e0ce6cacbae" />

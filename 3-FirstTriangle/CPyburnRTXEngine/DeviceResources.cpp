@@ -393,10 +393,10 @@ void DeviceResources::CreateDeviceResources()
         // Define the geometry for a fullscreen quad.
         PostVertex quadVertices[] =
         {
-            { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },    // Bottom left.
-            { { -1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },    // Top left.
-            { { 1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },    // Bottom right.
-            { { 1.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } }        // Top right.
+            { { -1.0f, -1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } }, // Bottom left
+            { { -1.0f,  1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } }, // Top left
+            { {  1.0f, -1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } }, // Bottom right
+            { {  1.0f,  1.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } }  // Top right
         };
 
         const UINT vertexBufferSize = sizeof(quadVertices);
@@ -906,6 +906,8 @@ void DX::DeviceResources::Render()
 
     // Populate m_postCommandList to scale intermediate render target to screen.
     {
+        PIXBeginEvent(m_postCommandList, 0, L"DeviceResourcesRender.");
+
         // Set necessary state.
         m_postCommandList->SetGraphicsRootSignature(m_postRootSignature.Get());
 
@@ -947,6 +949,8 @@ void DX::DeviceResources::Render()
         barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
         m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+        PIXEndEvent(m_postCommandList);
     }
 
     ThrowIfFailed(m_postCommandList->Close());

@@ -644,15 +644,17 @@ namespace CPyburnRTXEngine
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {
+            PIXBeginEvent(m_sceneCommandList, 0, L"TestTriangle.");
+
             ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
             m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-            m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
-            m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
+            //m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
+            //m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
 
             D3D12_RESOURCE_BARRIER barriers[2] = 
             {
                 CD3DX12_RESOURCE_BARRIER::Transition(mpOutputResource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
-                CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COPY_DEST),
+                CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetIntermediateRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST),
             };
 
             // only use the first resource barrier to transition the output resource, the second one is used later
@@ -690,15 +692,16 @@ namespace CPyburnRTXEngine
 
             barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
             barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
-            // barrier 1 was made early
-            m_sceneCommandList->ResourceBarrier(_countof(barriers), barriers);
-			m_sceneCommandList->CopyResource(m_deviceResources->GetRenderTarget(), mpOutputResource.Get());
 
-            // 
+            m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
+			m_sceneCommandList->CopyResource(m_deviceResources->GetIntermediateRenderTarget(), mpOutputResource.Get());
+
             barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-            barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+            barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
             m_sceneCommandList->ResourceBarrier(1, &barriers[1]);
+
+            PIXEndEvent(m_sceneCommandList);
 
             ThrowIfFailed(m_sceneCommandList->Close());
 

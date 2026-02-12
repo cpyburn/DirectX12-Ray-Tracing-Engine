@@ -118,10 +118,8 @@ namespace DX
         };
     public:
         void Render();
-		Resolution GetResolution() const noexcept
-		{
-			return m_resolutionOptions[m_resolutionIndex];
-		}
+		Resolution GetResolution() const noexcept { return m_resolutionOptions[m_resolutionIndex]; }
+        ID3D12Resource* GetIntermediateRenderTarget() const noexcept { return m_intermediateRenderTarget.Get(); }
 		void IncreaseResolutionIndex();
 		void DecreaseResolutionIndex();
     private:

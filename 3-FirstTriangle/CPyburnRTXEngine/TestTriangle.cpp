@@ -628,6 +628,7 @@ namespace CPyburnRTXEngine
 
     TestTriangle::~TestTriangle()
     {
+        Release();
     }
 
     void TestTriangle::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources)
@@ -714,6 +715,12 @@ namespace CPyburnRTXEngine
 
     void TestTriangle::Release()
 	{
-
+        mpVertexBuffer.Reset();
+        mpTopLevelAS.Reset();
+        mpBottomLevelAS.Reset();
+        mpPipelineState.Reset();
+        mpEmptyRootSig.Reset();
+        mpShaderTable.Reset();
+        mpOutputResource.Reset();
 	}
 }

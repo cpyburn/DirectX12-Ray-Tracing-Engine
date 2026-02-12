@@ -587,6 +587,7 @@ namespace CPyburnRTXEngine
         mpShaderTable->Unmap(0, nullptr);
     }
 
+	// todo: handle this in a more elegant way when we implement resizing
     void TestTriangle::createShaderResources()
     {
         // Create the output resource. The dimensions and format should match the swap-chain

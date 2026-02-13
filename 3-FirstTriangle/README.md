@@ -1,6 +1,8 @@
 # TestTriangle – DirectX 12 DXR Minimal Raytracing Sample
 
-This is just a modified version of my DXR [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tutorials-2) up to tutorial 6.  A lot of the code changed, but I intentionaly left the member and method names the same for now so that you can follow along if you did those or plan on doing those to understand this code.  Later on down the road I will change the class member and method names to more modern names.
+This is just a modified version of my DXR [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tutorials-2) up to tutorial 6.  A lot of the code changed, but I intentionaly left the member and method names the same for now so that you can follow along if you did the tutorials or plan on doing those to understand this code.  Later on down the road I will change the class member and method names to more modern names.
+
+One thing to note is I do not handle the resolution changes in this tutorial. We will visit that during the next tutorial when we do refitting.
 
 This module implements a minimal **DirectX 12 Raytracing (DXR)** pipeline that renders a single triangle using:
 

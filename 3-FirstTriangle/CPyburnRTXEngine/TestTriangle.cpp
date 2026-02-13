@@ -388,7 +388,7 @@ namespace CPyburnRTXEngine
         ComPtr<ID3DBlob> pSigBlobGlobal;
         ComPtr<ID3DBlob> pErrorBlobGlobal;
         HRESULT hrGlobal = D3D12SerializeRootSignature(&emptyDescGlobal, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobGlobal, &pErrorBlobGlobal);
-        if (FAILED(hr))
+        if (FAILED(hrGlobal))
         {
             if (pErrorBlobGlobal)
             {

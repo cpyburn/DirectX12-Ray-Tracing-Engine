@@ -378,9 +378,6 @@ namespace CPyburnRTXEngine
             subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
             subobjects[index++].pDesc = &associationHit;
         
-
-
-        
             //6
             D3D12_ROOT_SIGNATURE_DESC emptyDescMiss = {};
             emptyDescMiss.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
@@ -854,5 +851,6 @@ namespace CPyburnRTXEngine
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();
         mpOutputResource.Reset();
+		mpConstantBuffer.Release();
     }
 }

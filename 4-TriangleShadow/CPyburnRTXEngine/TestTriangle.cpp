@@ -724,16 +724,15 @@ namespace CPyburnRTXEngine
             for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
             {
                 mpConstantBuffer.HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
-                CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), mpConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
 
                 // Describe and create constant buffer views.
                 D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
                 cbvDesc.BufferLocation = cbvGpuAddress;
                 cbvDesc.SizeInBytes = mpConstantBuffer.AlignedSize;
-                m_deviceResources->GetD3DDevice()->CreateConstantBufferView(&cbvDesc, cpuHandle);
+                m_deviceResources->GetD3DDevice()->CreateConstantBufferView(&cbvDesc, GraphicsContexts::GetCpuHandle(mpConstantBuffer.HeapIndex[n]));
 
                 cbvGpuAddress += mpConstantBuffer.AlignedSize;
-                mpConstantBuffer.GpuHandle[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), mpConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
+				mpConstantBuffer.GpuHandle[n] = GraphicsContexts::GetGpuHandle(mpConstantBuffer.HeapIndex[n]);
             }
 
             // Map and initialize the constant buffer. We don't unmap this until the
@@ -742,7 +741,7 @@ namespace CPyburnRTXEngine
             ThrowIfFailed(mpConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&mpConstantBuffer.MappedData)));
             
 			memcpy(mpConstantBuffer.CpuData, bufferData, sizeof(bufferData));
-            for (size_t i = 0; i < DeviceResources::c_backBufferCount; i++)
+            for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
             {
                 mpConstantBuffer.CopyToGpu(i);
             }
@@ -800,8 +799,8 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->ResourceBarrier(1, &barriers[0]);
 
             D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-            raytraceDesc.Width = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Width));
-            raytraceDesc.Height = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Height));
+            raytraceDesc.Width = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Width)); // todo: verify the window resizing works when doing refitting
+            raytraceDesc.Height = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Height)); // todo: verify the window resizing works when doing refitting
             raytraceDesc.Depth = 1;
 
             // 6.4.b RayGen is the first entry in the shader-table

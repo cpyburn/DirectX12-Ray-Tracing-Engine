@@ -51,8 +51,11 @@ namespace CPyburnRTXEngine
             {
                 GraphicsContexts::RemoveHeapPosition(HeapIndex[n]);
             }
-			Resource->Unmap(0, nullptr); // reset should and probably does unmap, but we conver our tracks
-            Resource.Reset();
+            if (Resource)
+            {
+                Resource->Unmap(0, nullptr); // reset should and probably does unmap, but we conver our tracks
+                Resource.Reset();
+            }
             MappedData = nullptr;
 		}
     };

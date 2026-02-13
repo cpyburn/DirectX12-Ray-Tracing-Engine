@@ -23,6 +23,22 @@ namespace CPyburnRTXEngine
 		Release();
 	}
 
+	D3D12_CPU_DESCRIPTOR_HANDLE GraphicsContexts::GetCpuHandle(const UINT& index)
+	{
+		//CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), index, GraphicsContexts::c_descriptorSize);
+		D3D12_CPU_DESCRIPTOR_HANDLE handle = c_heap->GetCPUDescriptorHandleForHeapStart();
+		handle.ptr += index * c_descriptorSize;
+		return handle;
+	}
+
+	D3D12_GPU_DESCRIPTOR_HANDLE GraphicsContexts::GetGpuHandle(const UINT& index)
+	{
+		//CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), index, GraphicsContexts::c_descriptorSize);
+		D3D12_GPU_DESCRIPTOR_HANDLE handle = c_heap->GetGPUDescriptorHandleForHeapStart();
+		handle.ptr += index * c_descriptorSize;
+		return handle;
+	}
+
 	void GraphicsContexts::AddMultiHeapPosition(UINT heapPosition)
 	{
 		m_mutexMultiUseHeapPositions.lock();

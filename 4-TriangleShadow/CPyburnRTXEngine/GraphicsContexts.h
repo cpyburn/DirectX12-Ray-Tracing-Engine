@@ -20,6 +20,8 @@ namespace CPyburnRTXEngine
 		GraphicsContexts();
 		~GraphicsContexts();
 
+		static D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandle(const UINT& index);
+		static D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle(const UINT& index);
 		static void AddMultiHeapPosition(UINT heapPosition);
 		static bool RemoveHeapPosition(UINT heapPosition);
 		static UINT GetAvailableHeapPosition();

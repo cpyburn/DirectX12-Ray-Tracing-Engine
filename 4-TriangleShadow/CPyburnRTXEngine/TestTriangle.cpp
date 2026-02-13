@@ -638,8 +638,15 @@ namespace CPyburnRTXEngine
         memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
         // Entry 2 - hit program
+        //uint8_t* pHitEntry = pData + mShaderTableEntrySize * 2; // +2 skips the ray-gen and miss entries
+        //memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        // 9.5 The Shader Table
+        // Entry 2 - hit program. Program ID and one constant-buffer as root descriptor    
         uint8_t* pHitEntry = pData + mShaderTableEntrySize * 2; // +2 skips the ray-gen and miss entries
         memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;  // Adding `progIdSize` gets us to the location of the constant-buffer entry
+        assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+        *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = mpConstantBuffer.Resource->GetGPUVirtualAddress();
 
         // Unmap
         mpShaderTable->Unmap(0, nullptr);
@@ -666,8 +673,7 @@ namespace CPyburnRTXEngine
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
-        CD3DX12_CPU_DESCRIPTOR_HANDLE uavCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), mUavPosition, GraphicsContexts::c_descriptorSize);
-        m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, uavCpuHandle);
+        m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, GraphicsContexts::GetCpuHandle(mUavPosition));
 
         // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -676,8 +682,7 @@ namespace CPyburnRTXEngine
         srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS->GetGPUVirtualAddress();
 
         mSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), mSrvPosition, GraphicsContexts::c_descriptorSize);
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, srvHandle);
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition));
     }
 
     void TestTriangle::createConstantBuffer()
@@ -701,11 +706,53 @@ namespace CPyburnRTXEngine
             XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f),
         };
 
-        mpConstantBuffer = createBuffer(mpDevice, sizeof(bufferData), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-        uint8_t* pData;
-        d3d_call(mpConstantBuffer->Map(0, nullptr, (void**)&pData));
-        memcpy(pData, bufferData, sizeof(bufferData));
-        mpConstantBuffer->Unmap(0, nullptr);
+        // Create the constant buffer.
+        {
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                D3D12_HEAP_FLAG_NONE,
+                &CD3DX12_RESOURCE_DESC::Buffer(mpConstantBuffer.AlignedSize * DeviceResources::c_backBufferCount),
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&mpConstantBuffer.Resource)));
+
+            NAME_D3D12_OBJECT(mpConstantBuffer.Resource);
+
+            // Create constant buffer views to access the upload buffer.
+            D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = mpConstantBuffer.Resource->GetGPUVirtualAddress();
+
+            for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+            {
+                mpConstantBuffer.HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
+                CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), mpConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
+
+                // Describe and create constant buffer views.
+                D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+                cbvDesc.BufferLocation = cbvGpuAddress;
+                cbvDesc.SizeInBytes = mpConstantBuffer.AlignedSize;
+                m_deviceResources->GetD3DDevice()->CreateConstantBufferView(&cbvDesc, cpuHandle);
+
+                cbvGpuAddress += mpConstantBuffer.AlignedSize;
+                mpConstantBuffer.GpuHandle[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), mpConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
+            }
+
+            // Map and initialize the constant buffer. We don't unmap this until the
+            // app closes. Keeping things mapped for the lifetime of the resource is okay.
+            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+            ThrowIfFailed(mpConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&mpConstantBuffer.MappedData)));
+            
+			memcpy(mpConstantBuffer.CpuData, bufferData, sizeof(bufferData));
+            for (size_t i = 0; i < DeviceResources::c_backBufferCount; i++)
+            {
+                mpConstantBuffer.CopyToGpu(i);
+            }
+        }
+
+        //mpConstantBuffer = createBuffer(mpDevice, sizeof(bufferData), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+        //uint8_t* pData;
+        //d3d_call(mpConstantBuffer->Map(0, nullptr, (void**)&pData));
+        //memcpy(pData, bufferData, sizeof(bufferData));
+        //mpConstantBuffer->Unmap(0, nullptr);
     }
 
     TestTriangle::TestTriangle()
@@ -721,6 +768,7 @@ namespace CPyburnRTXEngine
     {
         m_deviceResources = deviceResources;
         createAccelerationStructures(); // Tutorial 03
+        createConstantBuffer(); // Tutorial 09
         createRtPipelineState(); // Tutorial 04
         createShaderResources(); // Tutorial 06. Need to do this before initializing the shader-table
         createShaderTable(); // Tutorial 05

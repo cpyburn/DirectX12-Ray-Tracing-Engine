@@ -3,6 +3,7 @@
 // todo: move to pch file?
 #include <dxcapi.h>
 #include <sstream>
+#include "ConstantBuffer.h"
 
 namespace CPyburnRTXEngine
 {
@@ -36,7 +37,7 @@ namespace CPyburnRTXEngine
 		UINT mSrvPosition = 0;
 
 		void createConstantBuffer();
-		ComPtr<ID3D12Resource> mpConstantBuffer;
+		ConstantBuffer<XMFLOAT4[9], DeviceResources::c_backBufferCount> mpConstantBuffer;
 
 	public:
 		TestTriangle();

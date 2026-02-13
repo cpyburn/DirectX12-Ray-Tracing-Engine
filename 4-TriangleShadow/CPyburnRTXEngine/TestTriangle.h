@@ -34,10 +34,15 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> mpOutputResource;
 		UINT mUavPosition = 0;
 		UINT mSrvPosition = 0;
+
+		void createConstantBuffer();
+		ComPtr<ID3D12Resource> mpConstantBuffer;
+
 	public:
 		TestTriangle();
 		~TestTriangle();
 		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources);
+		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
 		//void Update(DX::StepTimer const& timer);
 		void Render();
 		void Release();

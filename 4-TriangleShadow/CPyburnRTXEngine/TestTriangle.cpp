@@ -63,27 +63,27 @@ namespace CPyburnRTXEngine
         }
         
         // create createPlaneVB
-        {
-            const XMFLOAT3 vertices[] =
-            {
-                XMFLOAT3(-100, -1,  -2),
-                XMFLOAT3(100, -1,  100),
-                XMFLOAT3(-100, -1,  100),
+        //{
+        //    const XMFLOAT3 vertices[] =
+        //    {
+        //        XMFLOAT3(-100, -1,  -2),
+        //        XMFLOAT3(100, -1,  100),
+        //        XMFLOAT3(-100, -1,  100),
 
-                XMFLOAT3(-100, -1,  -2),
-                XMFLOAT3(100, -1,  -2),
-                XMFLOAT3(100, -1,  100),
-            };
-            bufDesc.Width = sizeof(vertices);
+        //        XMFLOAT3(-100, -1,  -2),
+        //        XMFLOAT3(100, -1,  -2),
+        //        XMFLOAT3(100, -1,  100),
+        //    };
+        //    bufDesc.Width = sizeof(vertices);
 
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpPlaneVertexBuffer)));
+        //    ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpPlaneVertexBuffer)));
 
-            // For simplicity, we create the vertex buffer on the upload heap, but that's not required
-            uint8_t* pData;
-            mpPlaneVertexBuffer->Map(0, nullptr, (void**)&pData);
-            memcpy(pData, vertices, sizeof(vertices));
-            mpPlaneVertexBuffer->Unmap(0, nullptr);
-        }
+        //    // For simplicity, we create the vertex buffer on the upload heap, but that's not required
+        //    uint8_t* pData;
+        //    mpPlaneVertexBuffer->Map(0, nullptr, (void**)&pData);
+        //    memcpy(pData, vertices, sizeof(vertices));
+        //    mpPlaneVertexBuffer->Unmap(0, nullptr);
+        //}
 
 
         // Single-use command allocator and command list for creating resources.
@@ -153,64 +153,64 @@ namespace CPyburnRTXEngine
         ThrowIfFailed(commandAllocator->Reset());
         ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
-        {
-            D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
-            geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-            geomDesc.Triangles.VertexBuffer.StartAddress = mpPlaneVertexBuffer->GetGPUVirtualAddress();
-            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
-            geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-            geomDesc.Triangles.VertexCount = 6;
-            geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+        //{
+        //    D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
+        //    geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+        //    geomDesc.Triangles.VertexBuffer.StartAddress = mpPlaneVertexBuffer->GetGPUVirtualAddress();
+        //    geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
+        //    geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+        //    geomDesc.Triangles.VertexCount = 6;
+        //    geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
-            // Get the size requirements for the scratch and AS buffers
-            D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
-            inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-            inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-            inputs.NumDescs = 1;
-            inputs.pGeometryDescs = &geomDesc;
-            inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+        //    // Get the size requirements for the scratch and AS buffers
+        //    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+        //    inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+        //    inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+        //    inputs.NumDescs = 1;
+        //    inputs.pGeometryDescs = &geomDesc;
+        //    inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 
-            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
-            m_deviceResources->GetD3DDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
+        //    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
+        //    m_deviceResources->GetD3DDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
 
-            // Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
-            bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-            bufDesc.Width = info.ScratchDataSizeInBytes;
+        //    // Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
+        //    bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        //    bufDesc.Width = info.ScratchDataSizeInBytes;
 
-            ComPtr<ID3D12Resource> pScratch;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
+        //    ComPtr<ID3D12Resource> pScratch;
+        //    ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
 
-            bufDesc.Width = info.ResultDataMaxSizeInBytes;
-            ComPtr<ID3D12Resource> pResult;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
+        //    bufDesc.Width = info.ResultDataMaxSizeInBytes;
+        //    ComPtr<ID3D12Resource> pResult;
+        //    ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
 
-            // Create the bottom-level AS
-            D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
-            asDesc.Inputs = inputs;
-            asDesc.DestAccelerationStructureData = pResult->GetGPUVirtualAddress();
-            asDesc.ScratchAccelerationStructureData = pScratch->GetGPUVirtualAddress();
+        //    // Create the bottom-level AS
+        //    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
+        //    asDesc.Inputs = inputs;
+        //    asDesc.DestAccelerationStructureData = pResult->GetGPUVirtualAddress();
+        //    asDesc.ScratchAccelerationStructureData = pScratch->GetGPUVirtualAddress();
 
-            commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+        //    commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
 
-            // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
-            D3D12_RESOURCE_BARRIER uavBarrier = {};
-            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-            uavBarrier.UAV.pResource = pResult.Get();
-            commandList->ResourceBarrier(1, &uavBarrier);
+        //    // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
+        //    D3D12_RESOURCE_BARRIER uavBarrier = {};
+        //    uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        //    uavBarrier.UAV.pResource = pResult.Get();
+        //    commandList->ResourceBarrier(1, &uavBarrier);
 
-            // Close the resource creation command list and execute it to begin the vertex buffer copy into
-            // the default heap.
-            ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-            m_deviceResources->WaitForGpu();
+        //    // Close the resource creation command list and execute it to begin the vertex buffer copy into
+        //    // the default heap.
+        //    ThrowIfFailed(commandList->Close());
+        //    ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+        //    m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+        //    m_deviceResources->WaitForGpu();
 
-            // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            mpPlaneBottomLevelAS = pResult;
-        }
+        //    // Store the AS buffers. The rest of the buffers will be released once we exit the function
+        //    mpPlaneBottomLevelAS = pResult;
+        //}
 
-        ThrowIfFailed(commandAllocator->Reset());
-        ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+        //ThrowIfFailed(commandAllocator->Reset());
+        //ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
         // Top Level AS
         {
@@ -218,7 +218,7 @@ namespace CPyburnRTXEngine
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
             inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
             inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-            inputs.NumDescs = 4; // 3 instances
+            inputs.NumDescs = 3; // 3 instances
             inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
             D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
@@ -247,25 +247,25 @@ namespace CPyburnRTXEngine
             ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * 4); // 3 instances
 
             // 3 instances
-            XMMATRIX xmIdentity[4] = {};
+            XMMATRIX xmIdentity[3] = {};
             xmIdentity[0] = XMMatrixIdentity(); // Identity matrix
             xmIdentity[1] = XMMatrixTranslation(-2, 0, 0) * XMMatrixIdentity();
             xmIdentity[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixIdentity();
-            xmIdentity[3] = XMMatrixIdentity();
+            //xmIdentity[3] = XMMatrixIdentity();
 
             // 11.3.b Create the desc for the triangle/plane instance
-            pInstanceDesc[0].InstanceID = 0;
-            pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0;
-            pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            XMMATRIX transpose = XMMatrixTranspose(xmIdentity[0]);
-            memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
-            pInstanceDesc[0].AccelerationStructure = mpPlaneBottomLevelAS->GetGPUVirtualAddress(); // plane blas
-            pInstanceDesc[0].InstanceMask = 0xFF;
+            //pInstanceDesc[0].InstanceID = 0;
+            //pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0;
+            //pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+            //XMMATRIX transpose = XMMatrixTranspose(xmIdentity[0]);
+            //memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
+            //pInstanceDesc[0].AccelerationStructure = mpPlaneBottomLevelAS->GetGPUVirtualAddress(); // plane blas
+            //pInstanceDesc[0].InstanceMask = 0xFF;
 
-            for (UINT i = 1; i < 4; i++)
+            for (UINT i = 0; i < countOfConstantBuffers; i++)
             {
                 pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
-                pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;   // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
+                pInstanceDesc[i].InstanceContributionToHitGroupIndex = i;   // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
                 pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
                 XMMATRIX transpose = XMMatrixTranspose(xmIdentity[i]);
                 memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
@@ -682,7 +682,7 @@ namespace CPyburnRTXEngine
         mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
         mShaderTableEntrySize += 8; // The ray-gen's descriptor table
         mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, mShaderTableEntrySize);
-        uint32_t shaderTableSize = mShaderTableEntrySize * 3; // We have 3 programs and a single geometry, so we need 3 entries (we’ll get to why the number of entries depends on the geometry count in later tutorials).
+        uint32_t shaderTableSize = mShaderTableEntrySize * 6; 
 
         // For simplicity, we create the shader-table on the upload heap. You can also create it on the default heap
         D3D12_RESOURCE_DESC bufDesc = {};
@@ -731,13 +731,19 @@ namespace CPyburnRTXEngine
         // Entry 2 - hit program
         //uint8_t* pHitEntry = pData + mShaderTableEntrySize * 2; // +2 skips the ray-gen and miss entries
         //memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        // 9.5 The Shader Table
-        // Entry 2 - hit program. Program ID and one constant-buffer as root descriptor    
-        uint8_t* pHitEntry = pData + mShaderTableEntrySize * 2; // +2 skips the ray-gen and miss entries
-        memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;  // Adding `progIdSize` gets us to the location of the constant-buffer entry
-        assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
-        *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = mpConstantBuffer.Resource->GetGPUVirtualAddress();
+        //uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;  // Adding `progIdSize` gets us to the location of the constant-buffer entry
+        //assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+        //*(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = mpConstantBuffer.Resource->GetGPUVirtualAddress();
+
+        // 10.4.b Entries 2-4 - The triangles' hit program. ProgramID and constant-buffer data
+        for (uint32_t i = 0; i < countOfConstantBuffers; i++)
+        {
+            uint8_t* pHitEntry = pData + mShaderTableEntrySize * (i + 2); // +2 skips the ray-gen and miss entries
+            memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+            uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
+            assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+            *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = mpConstantBuffer[i].Resource->GetGPUVirtualAddress();
+        }
 
         // Unmap
         mpShaderTable->Unmap(0, nullptr);
@@ -779,6 +785,24 @@ namespace CPyburnRTXEngine
     void TestTriangle::createConstantBuffer()
     {
         // The shader declares the CB with 9 float3. However, due to HLSL packing rules, we create the CB with 9 float4 (each float3 needs to start on a 16-byte boundary)
+        //XMFLOAT4 bufferData[] =
+        //{
+        //    // A
+        //    XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+        //    XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+        //    XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
+
+        //    // B
+        //    XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
+        //    XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f),
+        //    XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
+
+        //    // C
+        //    XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
+        //    XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
+        //    XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f),
+        //};
+
         XMFLOAT4 bufferData[] =
         {
             // A
@@ -799,50 +823,48 @@ namespace CPyburnRTXEngine
 
         // Create the constant buffer.
         {
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(mpConstantBuffer.AlignedSize * DeviceResources::c_backBufferCount),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&mpConstantBuffer.Resource)));
-
-            NAME_D3D12_OBJECT(mpConstantBuffer.Resource);
-
-            // Create constant buffer views to access the upload buffer.
-            D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = mpConstantBuffer.Resource->GetGPUVirtualAddress();
-
-            for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+            for (UINT cbvIndex = 0; cbvIndex < countOfConstantBuffers; cbvIndex++)
             {
-                mpConstantBuffer.HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
+                ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                    D3D12_HEAP_FLAG_NONE,
+                    &CD3DX12_RESOURCE_DESC::Buffer(mpConstantBuffer[cbvIndex].AlignedSize * DeviceResources::c_backBufferCount),
+                    D3D12_RESOURCE_STATE_GENERIC_READ,
+                    nullptr,
+                    IID_PPV_ARGS(&mpConstantBuffer[cbvIndex].Resource)));
 
-                // Describe and create constant buffer views.
-                D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-                cbvDesc.BufferLocation = cbvGpuAddress;
-                cbvDesc.SizeInBytes = mpConstantBuffer.AlignedSize;
-                m_deviceResources->GetD3DDevice()->CreateConstantBufferView(&cbvDesc, GraphicsContexts::GetCpuHandle(mpConstantBuffer.HeapIndex[n]));
+                NAME_D3D12_OBJECT(mpConstantBuffer[cbvIndex].Resource);
 
-                cbvGpuAddress += mpConstantBuffer.AlignedSize;
-				mpConstantBuffer.GpuHandle[n] = GraphicsContexts::GetGpuHandle(mpConstantBuffer.HeapIndex[n]);
-            }
+                // Create constant buffer views to access the upload buffer.
+                D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = mpConstantBuffer[cbvIndex].Resource->GetGPUVirtualAddress();
 
-            // Map and initialize the constant buffer. We don't unmap this until the
-            // app closes. Keeping things mapped for the lifetime of the resource is okay.
-            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-            ThrowIfFailed(mpConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&mpConstantBuffer.MappedData)));
-            
-			memcpy(mpConstantBuffer.CpuData, bufferData, sizeof(bufferData));
-            for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
-            {
-                mpConstantBuffer.CopyToGpu(i);
+                for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+                {
+                    mpConstantBuffer[cbvIndex].HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
+
+                    // Describe and create constant buffer views.
+                    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+                    cbvDesc.BufferLocation = cbvGpuAddress;
+                    cbvDesc.SizeInBytes = mpConstantBuffer[cbvIndex].AlignedSize;
+                    m_deviceResources->GetD3DDevice()->CreateConstantBufferView(&cbvDesc, GraphicsContexts::GetCpuHandle(mpConstantBuffer[cbvIndex].HeapIndex[n]));
+
+                    cbvGpuAddress += mpConstantBuffer[cbvIndex].AlignedSize;
+                    mpConstantBuffer[cbvIndex].GpuHandle[n] = GraphicsContexts::GetGpuHandle(mpConstantBuffer[cbvIndex].HeapIndex[n]);
+                }
+
+                // Map and initialize the constant buffer. We don't unmap this until the
+                // app closes. Keeping things mapped for the lifetime of the resource is okay.
+                CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+                ThrowIfFailed(mpConstantBuffer[cbvIndex].Resource->Map(0, &readRange, reinterpret_cast<void**>(&mpConstantBuffer[cbvIndex].MappedData)));
+
+                memcpy(mpConstantBuffer[cbvIndex].CpuData, &bufferData[cbvIndex * countOfConstantBuffers], sizeof(bufferData));
+
+                for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+                {
+                    mpConstantBuffer[cbvIndex].CopyToGpu(i);
+                }
             }
         }
-
-        //mpConstantBuffer = createBuffer(mpDevice, sizeof(bufferData), D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
-        //uint8_t* pData;
-        //d3d_call(mpConstantBuffer->Map(0, nullptr, (void**)&pData));
-        //memcpy(pData, bufferData, sizeof(bufferData));
-        //mpConstantBuffer->Unmap(0, nullptr);
     }
 
     TestTriangle::TestTriangle()
@@ -945,6 +967,9 @@ namespace CPyburnRTXEngine
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();
         mpOutputResource.Reset();
-		mpConstantBuffer.Release();
+        for (UINT cbvIndex = 0; cbvIndex < countOfConstantBuffers; cbvIndex++)
+        {
+            mpConstantBuffer[cbvIndex].Release();
+        }
     }
 }

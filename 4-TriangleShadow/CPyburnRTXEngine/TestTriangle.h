@@ -19,8 +19,8 @@ namespace CPyburnRTXEngine
 		
 		UINT64 mTlasSize = 0;
 
-		ComPtr<ID3D12Resource> mpPlaneVertexBuffer;
-		ComPtr<ID3D12Resource> mpPlaneBottomLevelAS;
+		//ComPtr<ID3D12Resource> mpPlaneVertexBuffer;
+		//ComPtr<ID3D12Resource> mpPlaneBottomLevelAS;
 
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();
@@ -42,7 +42,8 @@ namespace CPyburnRTXEngine
 		UINT mSrvPosition = 0;
 
 		void createConstantBuffer();
-		ConstantBuffer<XMFLOAT4[9], DeviceResources::c_backBufferCount> mpConstantBuffer;
+		static const UINT countOfConstantBuffers = 3;
+		ConstantBuffer<XMFLOAT4[9], DeviceResources::c_backBufferCount> mpConstantBuffer[countOfConstantBuffers];
 
 	public:
 		TestTriangle();

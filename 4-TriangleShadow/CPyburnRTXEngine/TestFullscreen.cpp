@@ -269,7 +269,7 @@ namespace CPyburnRTXEngine
             // app closes. Keeping things mapped for the lifetime of the resource is okay.
             CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
             ThrowIfFailed(m_sceneConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&m_sceneConstantBuffer.MappedData)));
-            for (size_t i = 0; i < DeviceResources::c_backBufferCount; i++)
+            for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
             {
                 m_sceneConstantBuffer.CopyToGpu(i);
             }

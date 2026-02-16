@@ -16,7 +16,12 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> mpVertexBuffer;
 		ComPtr<ID3D12Resource> mpTopLevelAS;
 		ComPtr<ID3D12Resource> mpBottomLevelAS;
+		
 		UINT64 mTlasSize = 0;
+
+		ComPtr<ID3D12Resource> mpPlaneVertexBuffer;
+		ComPtr<ID3D12Resource> mpPlaneBottomLevelAS;
+
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();
 		

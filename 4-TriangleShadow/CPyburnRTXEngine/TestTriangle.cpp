@@ -10,6 +10,9 @@ namespace CPyburnRTXEngine
     static const WCHAR* kMissShader = L"miss";
     static const WCHAR* kClosestHitShader = L"chs";
     static const WCHAR* kHitGroup = L"HitGroup";
+    // 12.1.f
+    static const WCHAR* kPlaneChs = L"planeChs";
+    static const WCHAR* kPlaneHitGroup = L"PlaneHitGroup";
 
     static const D3D12_HEAP_PROPERTIES kUploadHeapProps =
     {
@@ -118,7 +121,7 @@ namespace CPyburnRTXEngine
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
             inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
             inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-            inputs.NumDescs = geomDescVector.size();
+            inputs.NumDescs = static_cast<UINT>(geomDescVector.size());
             //inputs.pGeometryDescs = &geomDesc;
             inputs.pGeometryDescs = geomDescVector.data();
             inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
@@ -274,10 +277,12 @@ namespace CPyburnRTXEngine
             pInstanceDesc[0].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress(); // plane blas
             pInstanceDesc[0].InstanceMask = 0xFF;
 
+            // 8.0.d
             for (UINT i = 1; i < countOfConstantBuffers; i++)
             {
                 pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
-                pInstanceDesc[i].InstanceContributionToHitGroupIndex = i;   // This is the offset inside the shader-table. We only have a single geometry, so the offset 0
+                // 12.3.b
+                pInstanceDesc[i].InstanceContributionToHitGroupIndex = i + 1;  // The plane takes an additional entry in the shader-table, hence the +1
                 pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
                 XMMATRIX transpose = XMMatrixTranspose(xmIdentity[i]);
                 memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
@@ -319,7 +324,8 @@ namespace CPyburnRTXEngine
     {
         // Need 10 subobjects:
         //  1 for the DXIL library
-        //  1 for hit-group
+        //  1 for hit-group triangle
+        //  1 for hit-group plane
         //  2 for RayGen root-signature (root-signature and the subobject association)
         //  9.2.a 2 for hit-program root-signature (root-signature and the subobject association)
         //  9.2.b 2 for miss-shader root-signature (signature and association)
@@ -327,7 +333,7 @@ namespace CPyburnRTXEngine
         //  1 for pipeline config
         //  1 for the global root signature
 
-        D3D12_STATE_SUBOBJECT subobjects[12] = {};
+        D3D12_STATE_SUBOBJECT subobjects[13] = {};
         uint32_t index = 0;
 
         //0
@@ -335,7 +341,7 @@ namespace CPyburnRTXEngine
         std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
         ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
 
-        const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader };
+        const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kPlaneChs /* 12.3.e */, kClosestHitShader };
 
         std::vector<D3D12_EXPORT_DESC> exportDesc;
         std::vector<std::wstring> exportName;
@@ -366,15 +372,27 @@ namespace CPyburnRTXEngine
 
         //1
         // Hit group
-        D3D12_HIT_GROUP_DESC hitGroupDesc = {};
-        hitGroupDesc.ClosestHitShaderImport = kClosestHitShader;
-        hitGroupDesc.HitGroupExport = kHitGroup;
+        D3D12_HIT_GROUP_DESC hitGroupDescTriangle = {};
+        hitGroupDescTriangle.ClosestHitShaderImport = kClosestHitShader;
+        hitGroupDescTriangle.HitGroupExport = kHitGroup;
         //hitGroupDesc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
 
-        D3D12_STATE_SUBOBJECT hitGroupSubobject = {};
-        hitGroupSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-        hitGroupSubobject.pDesc = &hitGroupDesc;
-        subobjects[index++] = hitGroupSubobject;
+        D3D12_STATE_SUBOBJECT hitGroupSubobjectTriangle = {};
+        hitGroupSubobjectTriangle.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        hitGroupSubobjectTriangle.pDesc = &hitGroupDescTriangle;    
+        subobjects[index++] = hitGroupSubobjectTriangle;
+        
+        //2
+        // Hit group /*12.1.c*/
+        D3D12_HIT_GROUP_DESC hitGroupDescPlane = {};
+        hitGroupDescPlane.ClosestHitShaderImport = kPlaneChs;
+        hitGroupDescPlane.HitGroupExport = kPlaneHitGroup;
+        //hitGroupDesc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
+
+        D3D12_STATE_SUBOBJECT hitGroupSubobjectPlane = {};
+        hitGroupSubobjectPlane.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        hitGroupSubobjectPlane.pDesc = &hitGroupDescPlane;
+        subobjects[index++] = hitGroupSubobjectPlane;
 
         //2
         
@@ -510,8 +528,8 @@ namespace CPyburnRTXEngine
 
             //7
             D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationMiss = {};
-            associationMiss.NumExports = 1;
-            const WCHAR* exportsMiss[] = { kMissShader };
+            associationMiss.NumExports = 2;
+            const WCHAR* exportsMiss[] = { kPlaneChs, /*12.1.d*/ kMissShader };
             associationMiss.pExports = exportsMiss;
             associationMiss.pSubobjectToAssociate = &subobjects[index - 1];
             subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
@@ -529,8 +547,8 @@ namespace CPyburnRTXEngine
 
         //9
         D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationMissChsRgs = {};
-        associationMissChsRgs.NumExports = 3;
-        const WCHAR* exportsMissChsRgs[] = { kMissShader, kClosestHitShader, kRayGenShader };
+        associationMissChsRgs.NumExports = 4;
+        const WCHAR* exportsMissChsRgs[] = { kPlaneChs, kMissShader, kClosestHitShader, kRayGenShader };
         associationMissChsRgs.pExports = exportsMissChsRgs;
         associationMissChsRgs.pSubobjectToAssociate = &subobjects[index - 1];
         subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
@@ -682,12 +700,15 @@ namespace CPyburnRTXEngine
     void TestTriangle::createShaderTable()
     {
         /** The shader-table layout is as follows:
-        Entry 0 - Ray-gen program
-        Entry 1 - Miss program
-        Entry 2 - Hit program
-        All entries in the shader-table must have the same size, so we will choose it base on the largest required entry.
-        The ray-gen program requires the largest entry - sizeof(program identifier) + 8 bytes for a descriptor-table.
-        The entry size must be aligned up to D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
+            Entry 0 - Ray-gen program
+            Entry 1 - Miss program
+            Entry 2 - Hit program for triangle 0
+            Entry 3 - Hit program for the plane
+            Entry 4 - Hit program for triangle 1
+            Entry 5 - Hit program for triangle 2
+            All entries in the shader-table must have the same size, so we will choose it base on the largest required entry.
+            The triangle hit program requires the largest entry - sizeof(program identifier) + 8 bytes for the constant-buffer root descriptor.
+            The entry size must be aligned up to D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
         */
 
         // Calculate the size and create the buffer
@@ -723,39 +744,45 @@ namespace CPyburnRTXEngine
         //memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         // 6.2 Binding the Resources
         memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-
-        //If your descriptor table contains multiple descriptors(UAV at slot 3 and SRV at slot 4), you only need to write the GPU handle that points to the first descriptor in the table; the shader’s descriptor table layout then indexes into subsequent consecutive descriptors.
-
-        //uint64_t heapStart = GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart().ptr;
-        //*(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
-        // compute GPU handle for the first descriptor in the table
         CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart());;
         gpuHandle.Offset(mUavPosition, GraphicsContexts::c_descriptorSize);
-
         // write the GPU handle ptr (8 bytes) right after the identifier
         *(UINT64*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = gpuHandle.ptr;
-
-        // This is where we need to set the descriptor data for the ray-gen shader. We'll get to it in the next tutorial
 
         // Entry 1 - miss program
         memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-        // Entry 2 - hit program
-        //uint8_t* pHitEntry = pData + mShaderTableEntrySize * 2; // +2 skips the ray-gen and miss entries
-        //memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        //uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;  // Adding `progIdSize` gets us to the location of the constant-buffer entry
-        //assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
-        //*(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = mpConstantBuffer.Resource->GetGPUVirtualAddress();
+        // Entry 2 - Triangle 0 hit program. ProgramID and constant-buffer data
+        uint8_t* pEntry2 = pData + mShaderTableEntrySize * 2;
+        memcpy(pEntry2, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        assert(((uint64_t)(pEntry2 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+        *(D3D12_GPU_VIRTUAL_ADDRESS*)(pEntry2 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = mpConstantBuffer[0].Resource->GetGPUVirtualAddress();
+
+        // Entry 3 - Plane hit program. ProgramID only
+        uint8_t* pEntry3 = pData + mShaderTableEntrySize * 3;
+        memcpy(pEntry3, pRtsoProps->GetShaderIdentifier(kPlaneHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+        // Entry 4 - Triangle 1 hit. ProgramID and constant-buffer data
+        uint8_t* pEntry4 = pData + mShaderTableEntrySize * 4;
+        memcpy(pEntry4, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        assert(((uint64_t)(pEntry4 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+        *(D3D12_GPU_VIRTUAL_ADDRESS*)(pEntry4 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = mpConstantBuffer[1].Resource->GetGPUVirtualAddress();
+
+        // Entry 5 - Triangle 2 hit. ProgramID and constant-buffer data
+        uint8_t* pEntry5 = pData + mShaderTableEntrySize * 5;
+        memcpy(pEntry5, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        assert(((uint64_t)(pEntry5 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+        *(D3D12_GPU_VIRTUAL_ADDRESS*)(pEntry5 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = mpConstantBuffer[2].Resource->GetGPUVirtualAddress();
 
         // 10.4.b Entries 2-4 - The triangles' hit program. ProgramID and constant-buffer data
-        for (uint32_t i = 0; i < countOfConstantBuffers; i++)
-        {
-            uint8_t* pHitEntry = pData + mShaderTableEntrySize * (i + 2); // +2 skips the ray-gen and miss entries
-            memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-            uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
-            assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
-            *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = mpConstantBuffer[i].Resource->GetGPUVirtualAddress();
-        }
+        //for (uint32_t i = 0; i < countOfConstantBuffers; i++)
+        //{
+        //    uint8_t* pHitEntry = pData + mShaderTableEntrySize * (i + 2); // +2 skips the ray-gen and miss entries
+        //    memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        //    uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
+        //    assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+        //    *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = mpConstantBuffer[i].Resource->GetGPUVirtualAddress();
+        //}
 
         // Unmap
         mpShaderTable->Unmap(0, nullptr);
@@ -942,7 +969,9 @@ namespace CPyburnRTXEngine
             size_t hitOffset = 2 * mShaderTableEntrySize;
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize;
+            // 12.3.d
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 4; // todo: shouldn't this be 2?
+            // We have 4 hit entries - 3 for the triangle hit programs and 1 for the plane hit program. The raytracing pipeline will run the correct hit program based on the instance hit, but we need to make sure all entries are in the shader-table
 
             // 6.4.e Bind the empty root signature
             m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());

@@ -13,6 +13,10 @@ namespace CPyburnRTXEngine
     // 12.1.f
     static const WCHAR* kPlaneChs = L"planeChs";
     static const WCHAR* kPlaneHitGroup = L"PlaneHitGroup";
+    // 13.2.a
+    static const WCHAR* kShadowChs = L"shadowChs";
+    static const WCHAR* kShadowMiss = L"shadowMiss";
+    static const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
 
     static const D3D12_HEAP_PROPERTIES kUploadHeapProps =
     {
@@ -107,7 +111,7 @@ namespace CPyburnRTXEngine
             geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
             geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
             geomDesc.Triangles.VertexCount = 3;
-            geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+            geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 
             // add triangle
             geomDescVector[0] = geomDesc; // triangle
@@ -449,9 +453,11 @@ namespace CPyburnRTXEngine
 
         //3
         // Associate the ray-gen root signature with the ray-gen shader
+        const WCHAR* entryPointsRay[] = { kRayGenShader };
+
         D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationRay = {};
-        associationRay.NumExports = 1;
-        associationRay.pExports = &kRayGenShader;
+        associationRay.pExports = entryPointsRay;
+        associationRay.NumExports = _countof(entryPointsRay);
         associationRay.pSubobjectToAssociate = &subobjects[index - 1];
         subobjects[index] = {};
         subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
@@ -494,9 +500,9 @@ namespace CPyburnRTXEngine
             subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
 
             //5
-            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationHit = {};
-            associationHit.NumExports = 1;
             const WCHAR* exportsHit[] = { kClosestHitShader };
+            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationHit = {};
+            associationHit.NumExports = _countof(exportsHit);
             associationHit.pExports = exportsHit;
             associationHit.pSubobjectToAssociate = &subobjects[index - 1];
             subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
@@ -527,9 +533,9 @@ namespace CPyburnRTXEngine
             subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
 
             //7
-            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationMiss = {};
-            associationMiss.NumExports = 2;
             const WCHAR* exportsMiss[] = { kPlaneChs, /*12.1.d*/ kMissShader };
+            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationMiss = {};
+            associationMiss.NumExports = _countof(exportsMiss);
             associationMiss.pExports = exportsMiss;
             associationMiss.pSubobjectToAssociate = &subobjects[index - 1];
             subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;

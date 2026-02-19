@@ -104,5 +104,24 @@ void planeChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes
     payload.color = 0.9f;
 }
 
+// 13.1.a
+struct ShadowPayload
+{
+    bool hit;
+};
+
+// 13.1.b
+[shader("closesthit")]
+void shadowChs(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+{
+    payload.hit = true;
+}
+
+// 13.1.c
+[shader("miss")]
+void shadowMiss(inout ShadowPayload payload)
+{
+    payload.hit = false;
+}
 
 

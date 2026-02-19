@@ -345,7 +345,7 @@ namespace CPyburnRTXEngine
         std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
         ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
 
-        const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kPlaneChs /* 12.3.e */, kClosestHitShader };
+        const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kPlaneChs /* 12.3.e */, kClosestHitShader, kShadowMiss /* 12.3.b */, kShadowChs /* 12.3.b */ };
 
         std::vector<D3D12_EXPORT_DESC> exportDesc;
         std::vector<std::wstring> exportName;
@@ -397,6 +397,18 @@ namespace CPyburnRTXEngine
         hitGroupSubobjectPlane.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
         hitGroupSubobjectPlane.pDesc = &hitGroupDescPlane;
         subobjects[index++] = hitGroupSubobjectPlane;
+
+        // 3
+        // 13.2.c Create the shadow-ray hit group
+        D3D12_HIT_GROUP_DESC hitGroupDescShadow = {};
+        hitGroupDescShadow.ClosestHitShaderImport = kShadowChs;
+        hitGroupDescShadow.HitGroupExport = kShadowHitGroup;
+        //hitGroupDesc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
+
+        D3D12_STATE_SUBOBJECT hitGroupSubobjectShadow = {};
+        hitGroupSubobjectShadow.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        hitGroupSubobjectShadow.pDesc = &hitGroupDescShadow;
+        subobjects[index++] = hitGroupSubobjectShadow;
 
         //2
         
@@ -533,7 +545,7 @@ namespace CPyburnRTXEngine
             subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
 
             //7
-            const WCHAR* exportsMiss[] = { kPlaneChs, /*12.1.d*/ kMissShader };
+            const WCHAR* exportsMiss[] = { /*12.1.d kPlaneChs,*/ kMissShader, kShadowChs /* 13.2.d */, kShadowMiss /* 13.2.d */ };
             D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationMiss = {};
             associationMiss.NumExports = _countof(exportsMiss);
             associationMiss.pExports = exportsMiss;
@@ -553,16 +565,16 @@ namespace CPyburnRTXEngine
 
         //9
         D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationMissChsRgs = {};
-        associationMissChsRgs.NumExports = 4;
-        const WCHAR* exportsMissChsRgs[] = { kPlaneChs, kMissShader, kClosestHitShader, kRayGenShader };
-        associationMissChsRgs.pExports = exportsMissChsRgs;
+        const WCHAR* shaderExports[] = { kMissShader, kClosestHitShader, kPlaneChs /*12.1.e*/, kRayGenShader, kShadowMiss /* 13.2.e */, kShadowChs /* 13.2.e */ };
+        associationMissChsRgs.NumExports = _countof(shaderExports);
+        associationMissChsRgs.pExports = shaderExports;
         associationMissChsRgs.pSubobjectToAssociate = &subobjects[index - 1];
         subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
         subobjects[index++].pDesc = &associationMissChsRgs;
 
         //10
         D3D12_RAYTRACING_PIPELINE_CONFIG config = {};
-        config.MaxTraceRecursionDepth = 1;
+        config.MaxTraceRecursionDepth = 2; // 13.2.f
         subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
         subobjects[index++].pDesc = &config;
 

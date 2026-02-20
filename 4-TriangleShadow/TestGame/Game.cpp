@@ -227,6 +227,7 @@ void Game::OnKeyDown(UINT8 key)
     case VK_RIGHT:
     {
         m_deviceResources->IncreaseResolutionIndex();
+        CreateWindowSizeDependentResources();
     }
     break;
 
@@ -235,6 +236,7 @@ void Game::OnKeyDown(UINT8 key)
     case VK_LEFT:
     {
 		m_deviceResources->DecreaseResolutionIndex();
+        CreateWindowSizeDependentResources();
     }
     break;
     
@@ -285,7 +287,7 @@ void Game::CreateDeviceDependentResources()
 void Game::CreateWindowSizeDependentResources()
 {
     // TODO: Initialize windows-size dependent objects here.
-    
+    m_triangle.CreateWindowSizeDependentResources();
 }
 
 void Game::OnDeviceLost()

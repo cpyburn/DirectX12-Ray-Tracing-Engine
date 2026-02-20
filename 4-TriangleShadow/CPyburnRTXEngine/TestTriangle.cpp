@@ -895,8 +895,8 @@ namespace CPyburnRTXEngine
         resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         resDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
         resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = 1280; // todo: window change
-        resDesc.Height = 720; // todo: window change
+        resDesc.Width = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetResolution().Width), 1u);
+        resDesc.Height = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetResolution().Height), 1u);
         resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
         resDesc.MipLevels = 1;
         resDesc.SampleDesc.Count = 1;
@@ -906,7 +906,6 @@ namespace CPyburnRTXEngine
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
-        mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
         m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, GraphicsContexts::GetCpuHandle(mUavPosition));
 
         // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
@@ -915,7 +914,6 @@ namespace CPyburnRTXEngine
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS.pResult->GetGPUVirtualAddress();
 
-        mSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition));
     }
 
@@ -1016,6 +1014,11 @@ namespace CPyburnRTXEngine
     void TestTriangle::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources)
     {
         m_deviceResources = deviceResources;
+
+        // reserve the uav position and srv position for reuse if window is resized
+        mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
+        mSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09
         createRtPipelineState(); // Tutorial 04
@@ -1025,7 +1028,7 @@ namespace CPyburnRTXEngine
 
     void TestTriangle::CreateWindowSizeDependentResources()
     {
-
+        createShaderResources();
     }
 
     void TestTriangle::Update(DX::StepTimer const& timer)
@@ -1054,8 +1057,12 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->ResourceBarrier(1, &barriers[0]);
 
             D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-            raytraceDesc.Width = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Width)); // todo: verify the window resizing works when doing refitting
-            raytraceDesc.Height = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Height)); // todo: verify the window resizing works when doing refitting
+            //raytraceDesc.Width = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetOutputSize().right - m_deviceResources->GetOutputSize().left), 1u);
+            //raytraceDesc.Height = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetOutputSize().bottom - m_deviceResources->GetOutputSize().top), 1u);
+            //raytraceDesc.Width = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Width)); // todo: verify the window resizing works when doing refitting
+            //raytraceDesc.Height = static_cast<UINT>(std::max(1.0f, m_deviceResources->GetScreenViewport().Height)); // todo: verify the window resizing works when doing refitting
+            raytraceDesc.Width = std::max<UINT>(m_deviceResources->GetResolution().Width, 1u);
+            raytraceDesc.Height = std::max<UINT>(m_deviceResources->GetResolution().Height, 1u);
             raytraceDesc.Depth = 1;
 
             // 6.4.b RayGen is the first entry in the shader-table
@@ -1114,5 +1121,8 @@ namespace CPyburnRTXEngine
         {
             mpConstantBuffer[cbvIndex].Release();
         }
+
+        GraphicsContexts::RemoveHeapPosition(mUavPosition);
+        GraphicsContexts::RemoveHeapPosition(mSrvPosition);
     }
 }

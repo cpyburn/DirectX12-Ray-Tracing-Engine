@@ -329,8 +329,10 @@ namespace CPyburnRTXEngine
         //  1 for the DXIL library
         //  1 for hit-group triangle
         //  1 for hit-group plane
+        //  1 for shadow hit group
         //  2 for RayGen root-signature (root-signature and the subobject association)
         //  9.2.a 2 for hit-program root-signature (root-signature and the subobject association)
+        //  13 2 for plane hit root-signature and association
         //  9.2.b 2 for miss-shader root-signature (signature and association)
         //  2 for shader config (shared between all programs. 1 for the config, 1 for association)
         //  1 for pipeline config

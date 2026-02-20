@@ -65,7 +65,7 @@ void Game::Update(DX::StepTimer const& timer)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
 
-    float elapsedTime = float(timer.GetElapsedSeconds());
+    //float elapsedTime = float(timer.GetElapsedSeconds());
 
     // TODO: Add your game logic here.
     m_fullscreen.Update(timer);

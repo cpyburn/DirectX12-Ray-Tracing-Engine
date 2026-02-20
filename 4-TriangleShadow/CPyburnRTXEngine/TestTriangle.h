@@ -10,17 +10,43 @@ namespace CPyburnRTXEngine
 	class TestTriangle
 	{
 	private:
+		// 14.3.b bottom-level acceleration structure
+		struct AccelerationStructureBuffers
+		{
+			ComPtr<ID3D12Resource> pScratch;
+			ComPtr<ID3D12Resource> pResult;
+			ComPtr<ID3D12Resource> pInstanceDescResource;    // Used only for top-level AS
+
+			void Release()
+			{
+				if (pScratch)
+				{
+					pScratch.Reset();
+				}
+				if (pResult)
+				{
+					pResult.Reset();
+				}
+				if (pInstanceDescResource)
+				{
+					pInstanceDescResource.Reset();
+				}
+			}
+		};
+
 		std::shared_ptr<DeviceResources> m_deviceResources;
 		// Acceleration structure buffers and sizes
 		void createAccelerationStructures();
 		ComPtr<ID3D12Resource> mpVertexBuffer;
-		ComPtr<ID3D12Resource> mpTopLevelAS;
+		AccelerationStructureBuffers mpTopLevelAS;
 		ComPtr<ID3D12Resource> mpBottomLevelAS;
 		
 		UINT64 mTlasSize = 0;
 
 		ComPtr<ID3D12Resource> mpVertexBuffer1;
 		ComPtr<ID3D12Resource> mpBottomLevelAS1;
+
+		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList);
 
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();
@@ -50,7 +76,7 @@ namespace CPyburnRTXEngine
 		~TestTriangle();
 		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources);
 		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
-		//void Update(DX::StepTimer const& timer);
+		void Update(DX::StepTimer const& timer);
 		void Render();
 		void Release();
 	};

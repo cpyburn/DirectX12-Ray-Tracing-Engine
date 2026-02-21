@@ -232,7 +232,7 @@ namespace CPyburnRTXEngine
         ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
         // Top Level AS
-        RefitOrRebuildTLAS(commandList.Get());
+        RefitOrRebuildTLAS(commandList.Get(), 0, false);
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
         // the default heap.
@@ -242,12 +242,13 @@ namespace CPyburnRTXEngine
         m_deviceResources->WaitForGpu();
     }
 
-    void TestTriangle::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList)
+    void TestTriangle::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT index, bool update)
     {
         // First, get the size of the TLAS buffers and create them
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
         inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-        inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+        // 14.1.b
+        inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
         inputs.NumDescs = countOfConstantBuffers; // 3 instances
         inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
@@ -268,20 +269,33 @@ namespace CPyburnRTXEngine
         bufDesc.SampleDesc.Quality = 0;
         bufDesc.Width = info.ScratchDataSizeInBytes;
 
-        //ComPtr<ID3D12Resource> pScratch;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pScratch)));
+        // 14.1.c
+        if (update)
+        {
+            // If this a request for an update, then the TLAS was already used in a DispatchRay() call. We need a UAV barrier to make sure the read operation ends before updating the buffer
+            D3D12_RESOURCE_BARRIER uavBarrier = {};
+            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarrier.UAV.pResource = mpTopLevelAS.pResult.Get();
+            commandList->ResourceBarrier(1, &uavBarrier);
+        }
+        else
+        {
+            //ComPtr<ID3D12Resource> pScratch;
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pScratch)));
 
-        bufDesc.Width = info.ResultDataMaxSizeInBytes;
-        //ComPtr<ID3D12Resource> pResult;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pResult)));
-        mTlasSize = info.ResultDataMaxSizeInBytes;
+            bufDesc.Width = info.ResultDataMaxSizeInBytes;
+            //ComPtr<ID3D12Resource> pResult;
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pResult)));
+            mTlasSize = info.ResultDataMaxSizeInBytes;
 
-        // The instance desc should be inside a buffer, create and map the buffer
-        bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers; // 3 instances
+            // The instance desc should be inside a buffer, create and map the buffer
+            bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers; // 3 instances
 
-        //ComPtr<ID3D12Resource> pInstanceDescResource;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pInstanceDescResource)));
+            //ComPtr<ID3D12Resource> pInstanceDescResource;
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pInstanceDescResource)));
+        }
+
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
         mpTopLevelAS.pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
         ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers); // 3 instances
@@ -324,6 +338,13 @@ namespace CPyburnRTXEngine
         asDesc.Inputs.InstanceDescs = mpTopLevelAS.pInstanceDescResource->GetGPUVirtualAddress();
         asDesc.DestAccelerationStructureData = mpTopLevelAS.pResult->GetGPUVirtualAddress();
         asDesc.ScratchAccelerationStructureData = mpTopLevelAS.pScratch->GetGPUVirtualAddress();
+
+        // 14.1.e If this is an update operation, set the source buffer and the perform_update flag
+        if (update)
+        {
+            asDesc.Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+            asDesc.SourceAccelerationStructureData = mpTopLevelAS.pResult->GetGPUVirtualAddress();
+        }
 
         commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
 

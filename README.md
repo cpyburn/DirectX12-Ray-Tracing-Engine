@@ -33,3 +33,9 @@ Alright chums let's do this!
 
 ### [3-Rendering the first ray trace triangle](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/3-FirstTriangle) 
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/873ef043-4a61-4a68-bf36-9e0ce6cacbae" />
+
+### [4-Rendering shadow rays]() 
+<img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/5e39af24-4db7-456b-a6d4-06106b31ee04" />
+
+### [5-Buffered Top Level Acceleration Structure for rebuilding or refitting](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/4-TriangleShadow) 
+coming soon

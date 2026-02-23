@@ -38,7 +38,7 @@ namespace CPyburnRTXEngine
 		// Acceleration structure buffers and sizes
 		void createAccelerationStructures();
 		ComPtr<ID3D12Resource> mpVertexBuffer;
-		AccelerationStructureBuffers mpTopLevelAS;
+		AccelerationStructureBuffers mpTopLevelAS[DeviceResources::c_backBufferCount];
 		ComPtr<ID3D12Resource> mpBottomLevelAS;
 		
 		UINT64 mTlasSize = 0;
@@ -46,7 +46,11 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> mpVertexBuffer1;
 		ComPtr<ID3D12Resource> mpBottomLevelAS1;
 
-		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT index, bool update);
+		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
+
+		ComPtr<ID3D12CommandAllocator> m_commandAllocator;
+		ComPtr<ID3D12GraphicsCommandList4> m_commandList;
+		XMMATRIX m_xmIdentity[3] = {};
 
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();

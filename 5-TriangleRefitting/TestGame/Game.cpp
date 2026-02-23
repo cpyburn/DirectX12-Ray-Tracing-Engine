@@ -69,6 +69,7 @@ void Game::Update(DX::StepTimer const& timer)
 
     // TODO: Add your game logic here.
     m_fullscreen.Update(timer);
+	m_triangle.Update(timer);
 
     PIXEndEvent();
 }

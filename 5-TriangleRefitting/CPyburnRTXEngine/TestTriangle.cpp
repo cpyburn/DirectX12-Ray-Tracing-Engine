@@ -100,6 +100,9 @@ namespace CPyburnRTXEngine
         ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
         ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
+        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
+        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
+
         // Bottom Level AS
         {
             std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescVector;
@@ -232,7 +235,10 @@ namespace CPyburnRTXEngine
         ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
         // Top Level AS
-        RefitOrRebuildTLAS(commandList.Get(), 0, false);
+        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        {
+            RefitOrRebuildTLAS(commandList.Get(), i, false);
+        }
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
         // the default heap.
@@ -242,7 +248,7 @@ namespace CPyburnRTXEngine
         m_deviceResources->WaitForGpu();
     }
 
-    void TestTriangle::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT index, bool update)
+    void TestTriangle::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
     {
         // First, get the size of the TLAS buffers and create them
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -275,17 +281,17 @@ namespace CPyburnRTXEngine
             // If this a request for an update, then the TLAS was already used in a DispatchRay() call. We need a UAV barrier to make sure the read operation ends before updating the buffer
             D3D12_RESOURCE_BARRIER uavBarrier = {};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-            uavBarrier.UAV.pResource = mpTopLevelAS.pResult.Get();
+            uavBarrier.UAV.pResource = mpTopLevelAS[currentFrame].pResult.Get();
             commandList->ResourceBarrier(1, &uavBarrier);
         }
         else
         {
             //ComPtr<ID3D12Resource> pScratch;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pScratch)));
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             //ComPtr<ID3D12Resource> pResult;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pResult)));
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
             mTlasSize = info.ResultDataMaxSizeInBytes;
 
             // The instance desc should be inside a buffer, create and map the buffer
@@ -293,25 +299,18 @@ namespace CPyburnRTXEngine
             bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers; // 3 instances
 
             //ComPtr<ID3D12Resource> pInstanceDescResource;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS.pInstanceDescResource)));
+            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
         }
 
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
-        mpTopLevelAS.pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
+        mpTopLevelAS[currentFrame].pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
         ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers); // 3 instances
-
-        // 3 instances
-        XMMATRIX xmIdentity[3] = {};
-        xmIdentity[0] = XMMatrixIdentity(); // Identity matrix
-        xmIdentity[1] = XMMatrixTranslation(-2, 0, 0) * XMMatrixIdentity();
-        xmIdentity[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixIdentity();
-        //xmIdentity[3] = XMMatrixIdentity();
 
         // 11.3.b Create the desc for the triangle/plane instance
         pInstanceDesc[0].InstanceID = 0;
         pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0;
         pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        XMMATRIX transpose = XMMatrixTranspose(xmIdentity[0]);
+        XMMATRIX transpose = XMMatrixTranspose(m_xmIdentity[0]);
         memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
         pInstanceDesc[0].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress(); // plane blas
         pInstanceDesc[0].InstanceMask = 0xFF;
@@ -323,27 +322,27 @@ namespace CPyburnRTXEngine
             // 13.3.a
             pInstanceDesc[i].InstanceContributionToHitGroupIndex = (i * 2) + 2;  // The indices are relative to to the start of the hit-table entries specified in Raytrace(), so we need 4 and 6
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            XMMATRIX transpose = XMMatrixTranspose(xmIdentity[i]);
+            XMMATRIX transpose = XMMatrixTranspose(m_xmIdentity[i]);
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
             pInstanceDesc[i].AccelerationStructure = mpBottomLevelAS1->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
         }
 
         // Unmap
-        mpTopLevelAS.pInstanceDescResource->Unmap(0, nullptr);
+        mpTopLevelAS[currentFrame].pInstanceDescResource->Unmap(0, nullptr);
 
         // Create the TLAS
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
         asDesc.Inputs = inputs;
-        asDesc.Inputs.InstanceDescs = mpTopLevelAS.pInstanceDescResource->GetGPUVirtualAddress();
-        asDesc.DestAccelerationStructureData = mpTopLevelAS.pResult->GetGPUVirtualAddress();
-        asDesc.ScratchAccelerationStructureData = mpTopLevelAS.pScratch->GetGPUVirtualAddress();
+        asDesc.Inputs.InstanceDescs = mpTopLevelAS[currentFrame].pInstanceDescResource->GetGPUVirtualAddress();
+        asDesc.DestAccelerationStructureData = mpTopLevelAS[currentFrame].pResult->GetGPUVirtualAddress();
+        asDesc.ScratchAccelerationStructureData = mpTopLevelAS[currentFrame].pScratch->GetGPUVirtualAddress();
 
         // 14.1.e If this is an update operation, set the source buffer and the perform_update flag
         if (update)
         {
             asDesc.Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
-            asDesc.SourceAccelerationStructureData = mpTopLevelAS.pResult->GetGPUVirtualAddress();
+            asDesc.SourceAccelerationStructureData = mpTopLevelAS[currentFrame].pResult->GetGPUVirtualAddress();
         }
 
         commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
@@ -351,7 +350,7 @@ namespace CPyburnRTXEngine
         // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
         D3D12_RESOURCE_BARRIER uavBarrier = {};
         uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-        uavBarrier.UAV.pResource = mpTopLevelAS.pResult.Get();
+        uavBarrier.UAV.pResource = mpTopLevelAS[currentFrame].pResult.Get();
         commandList->ResourceBarrier(1, &uavBarrier);
     }
 
@@ -933,7 +932,7 @@ namespace CPyburnRTXEngine
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS.pResult->GetGPUVirtualAddress();
+        srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS[0].pResult->GetGPUVirtualAddress();
 
         m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition));
     }
@@ -1054,7 +1053,35 @@ namespace CPyburnRTXEngine
 
     void TestTriangle::Update(DX::StepTimer const& timer)
     {
+		float rotation = timer.GetTotalSeconds() * 0.5f;
+
+		XMMATRIX orthoLH = XMMatrixIdentity();
+        //XMMATRIX orthoLH = XMMatrixOrthographicLH(static_cast<float>(m_deviceResources->GetResolution().Width), static_cast<float>(m_deviceResources->GetResolution().Height), 0.0f, 100.0f);
+        
+        // 3 instances
+        m_xmIdentity[0] = XMMatrixIdentity() * orthoLH; // Identity matrix
+        m_xmIdentity[1] = XMMatrixTranslation(-2, 0, 0) * XMMatrixRotationY(rotation) * orthoLH;
+        m_xmIdentity[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation) * orthoLH;
+        //xmIdentity[3] = XMMatrixIdentity();
+
         //float elapsedTime = float(timer.GetElapsedSeconds());
+		RefitOrRebuildTLAS(m_commandList.Get(), m_deviceResources->GetCurrentFrameIndex(), true);
+
+        // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS[m_deviceResources->GetCurrentFrameIndex()].pResult->GetGPUVirtualAddress();
+
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition));
+
+        ThrowIfFailed(m_commandList->Close());
+        ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+        m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+        m_deviceResources->WaitForGpu();
+
+        ThrowIfFailed(m_commandAllocator->Reset());
+        ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
     }
 
     void TestTriangle::Render()
@@ -1132,7 +1159,7 @@ namespace CPyburnRTXEngine
     void TestTriangle::Release()
     {
         mpVertexBuffer.Reset();
-        mpTopLevelAS.Release();
+        //mpTopLevelAS.Release(); // todo:
         mpBottomLevelAS.Reset();
         mpPipelineState.Reset();
         mpEmptyRootSig.Reset();

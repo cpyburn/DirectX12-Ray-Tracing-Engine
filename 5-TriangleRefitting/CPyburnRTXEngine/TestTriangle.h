@@ -47,9 +47,6 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> mpBottomLevelAS1;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
-
-		ComPtr<ID3D12CommandAllocator> m_commandAllocator;
-		ComPtr<ID3D12GraphicsCommandList4> m_commandList;
 		XMMATRIX m_xmIdentity[3] = {};
 
 		// Ray tracing pipeline state and root signature
@@ -69,7 +66,7 @@ namespace CPyburnRTXEngine
 		void createShaderResources();
 		ComPtr<ID3D12Resource> mpOutputResource;
 		UINT mUavPosition = 0;
-		UINT mSrvPosition = 0;
+		UINT mSrvPosition[DeviceResources::c_backBufferCount] = {};
 
 		void createConstantBuffer();
 		static const UINT countOfConstantBuffers = 3;

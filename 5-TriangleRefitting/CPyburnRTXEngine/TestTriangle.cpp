@@ -100,9 +100,6 @@ namespace CPyburnRTXEngine
         ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
         ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
-
         // Bottom Level AS
         {
             std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescVector;
@@ -876,7 +873,7 @@ namespace CPyburnRTXEngine
         // Entry 5 - Plane, primary ray. ProgramID only and the TLAS SRV
         uint8_t* pEntry5 = pData + mShaderTableEntrySize * 5;
         memcpy(pEntry5, pRtsoProps->GetShaderIdentifier(kPlaneHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        *(uint64_t*)(pEntry5 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart + GraphicsContexts::c_descriptorSize * mSrvPosition;
+        *(uint64_t*)(pEntry5 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart + GraphicsContexts::c_descriptorSize * mSrvPosition[0];
 
         // Entry 6 - Plane, shadow ray
         uint8_t* pEntry6 = pData + mShaderTableEntrySize * 6;
@@ -928,13 +925,16 @@ namespace CPyburnRTXEngine
 
         m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, GraphicsContexts::GetCpuHandle(mUavPosition));
 
-        // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS[0].pResult->GetGPUVirtualAddress();
+        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        {
+            // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
+            D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+            srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS[i].pResult->GetGPUVirtualAddress();
 
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition));
+            m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition[i]));
+        }
     }
 
     void TestTriangle::createConstantBuffer()
@@ -1037,7 +1037,10 @@ namespace CPyburnRTXEngine
 
         // reserve the uav position and srv position for reuse if window is resized
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
-        mSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        {
+            mSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
+        }
 
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09
@@ -1058,30 +1061,18 @@ namespace CPyburnRTXEngine
 		XMMATRIX orthoLH = XMMatrixIdentity();
         //XMMATRIX orthoLH = XMMatrixOrthographicLH(static_cast<float>(m_deviceResources->GetResolution().Width), static_cast<float>(m_deviceResources->GetResolution().Height), 0.0f, 100.0f);
         
+        XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
+        XMVECTOR vec2 = XMVectorSet(2, 0, 0, 0);
+
+		XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
+
         // 3 instances
-        m_xmIdentity[0] = XMMatrixIdentity() * orthoLH; // Identity matrix
-        m_xmIdentity[1] = XMMatrixTranslation(-2, 0, 0) * XMMatrixRotationY(rotation) * orthoLH;
-        m_xmIdentity[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation) * orthoLH;
+        m_xmIdentity[0] = XMMatrixIdentity(); // Identity matrix
+        m_xmIdentity[1] = XMMatrixRotationY(rotation) * translation1;
+        m_xmIdentity[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
         //xmIdentity[3] = XMMatrixIdentity();
 
-        //float elapsedTime = float(timer.GetElapsedSeconds());
-		RefitOrRebuildTLAS(m_commandList.Get(), m_deviceResources->GetCurrentFrameIndex(), true);
 
-        // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS[m_deviceResources->GetCurrentFrameIndex()].pResult->GetGPUVirtualAddress();
-
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition));
-
-        ThrowIfFailed(m_commandList->Close());
-        ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-        m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-        m_deviceResources->WaitForGpu();
-
-        ThrowIfFailed(m_commandAllocator->Reset());
-        ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
     }
 
     void TestTriangle::Render()
@@ -1091,6 +1082,20 @@ namespace CPyburnRTXEngine
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {
             PIXBeginEvent(m_sceneCommandList, 0, L"TestTriangle.");
+
+            // refitting
+            {
+                //float elapsedTime = float(timer.GetElapsedSeconds());
+                RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true);
+
+                // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
+                //D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+                //srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+                //srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+                //srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS[m_deviceResources->GetCurrentFrameIndex()].pResult->GetGPUVirtualAddress();
+
+                //m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition[m_deviceResources->GetCurrentFrameIndex()]));
+            }
 
             ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
             m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
@@ -1171,6 +1176,9 @@ namespace CPyburnRTXEngine
         }
 
         GraphicsContexts::RemoveHeapPosition(mUavPosition);
-        GraphicsContexts::RemoveHeapPosition(mSrvPosition);
+        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        {
+            GraphicsContexts::RemoveHeapPosition(mSrvPosition[i]);
+        }
     }
 }

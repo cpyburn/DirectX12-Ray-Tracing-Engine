@@ -58,6 +58,7 @@ namespace CPyburnRTXEngine
 		std::vector<uint8_t> LoadBinaryFile(const wchar_t* path);
 		ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
 
+		uint8_t* shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const ComPtr<ID3D12Resource>& resource = nullptr);
 		void createShaderTable();
 		ComPtr<ID3D12Resource> mpShaderTable;
 		uint32_t mShaderTableEntrySize = 0;

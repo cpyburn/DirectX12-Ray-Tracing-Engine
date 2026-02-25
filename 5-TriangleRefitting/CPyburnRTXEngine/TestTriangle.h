@@ -57,7 +57,6 @@ namespace CPyburnRTXEngine
 
 		std::vector<uint8_t> LoadBinaryFile(const wchar_t* path);
 		ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
-		D3D12_STATE_SUBOBJECT CreateDxilSubobject();
 
 		void createShaderTable();
 		ComPtr<ID3D12Resource> mpShaderTable;
@@ -67,6 +66,7 @@ namespace CPyburnRTXEngine
 		ComPtr<ID3D12Resource> mpOutputResource;
 		UINT mUavPosition = 0;
 		UINT mSrvPosition[DeviceResources::c_backBufferCount] = {};
+		UINT mVertexBufferSrvPosition = 0;
 
 		void createConstantBuffer();
 		static const UINT countOfConstantBuffers = 3;

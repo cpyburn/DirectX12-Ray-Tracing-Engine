@@ -36,6 +36,14 @@ namespace CPyburnRTXEngine
         0
     };
 
+    // 15.5.a
+    struct TriVertex
+    {
+        XMFLOAT3 vertex;
+        XMFLOAT4 color;
+    };
+
+
     void TestTriangle::createAccelerationStructures()
     {
         D3D12_RESOURCE_DESC bufDesc = {};
@@ -52,11 +60,11 @@ namespace CPyburnRTXEngine
 
         // create createTriangleVB
         {
-            const XMFLOAT3 vertices[] =
+            const TriVertex vertices[] =
             {
-                XMFLOAT3(0,          1,  0),
-                XMFLOAT3(0.866f,  -0.5f, 0),
-                XMFLOAT3(-0.866f, -0.5f, 0),
+                XMFLOAT3(0,          1,  0), XMFLOAT4(1, 0, 0, 1),
+                XMFLOAT3(0.866f,  -0.5f, 0), XMFLOAT4(1, 1, 0, 1),
+                XMFLOAT3(-0.866f, -0.5f, 0), XMFLOAT4(1, 0, 1, 1),
             };
             bufDesc.Width = sizeof(vertices);
 
@@ -108,7 +116,7 @@ namespace CPyburnRTXEngine
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
             geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             geomDesc.Triangles.VertexBuffer.StartAddress = mpVertexBuffer->GetGPUVirtualAddress(); // triangle 
-            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
+            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(TriVertex);
             geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
             geomDesc.Triangles.VertexCount = 3;
             geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
@@ -118,6 +126,7 @@ namespace CPyburnRTXEngine
 
             // add plane
             geomDesc.Triangles.VertexBuffer.StartAddress = mpVertexBuffer1->GetGPUVirtualAddress(); // plane
+            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
             geomDesc.Triangles.VertexCount = 6; // plane
             geomDescVector[1] = geomDesc; // plane
 
@@ -176,7 +185,7 @@ namespace CPyburnRTXEngine
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
             geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             geomDesc.Triangles.VertexBuffer.StartAddress = mpVertexBuffer->GetGPUVirtualAddress();
-            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
+            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(TriVertex);
             geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
             geomDesc.Triangles.VertexCount = 3;
             geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
@@ -504,17 +513,29 @@ namespace CPyburnRTXEngine
         subobjects[index++].pDesc = &associationRay;
 #pragma endregion
 
-#pragma region CBV root signature
+#pragma region Hit triangle root signature
         D3D12_ROOT_SIGNATURE_DESC descHit = {};
         std::vector<D3D12_DESCRIPTOR_RANGE> rangeHit;
         std::vector<D3D12_ROOT_PARAMETER> rootParamsHit;
 
-        rootParamsHit.resize(1);
+        rootParamsHit.resize(1 + 1); // cbv + srv
+        // CBV
         rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         rootParamsHit[0].Descriptor.RegisterSpace = 0;
         rootParamsHit[0].Descriptor.ShaderRegister = 0;
+        // SRV
+        rangeHit.resize(1); // srv
+        rangeHit[0].BaseShaderRegister = 1; // gOutput used the first t() register in the shader
+        rangeHit[0].NumDescriptors = 1;
+        rangeHit[0].RegisterSpace = 0;
+        rangeHit[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        rangeHit[0].OffsetInDescriptorsFromTableStart = 0;
+        // SRV
+        rootParamsHit[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        rootParamsHit[1].DescriptorTable.NumDescriptorRanges = 1;
+        rootParamsHit[1].DescriptorTable.pDescriptorRanges = rangeHit.data();
 
-        descHit.NumParameters = 1;
+        descHit.NumParameters = 1 + 1; // cbv + srv
         descHit.pParameters = rootParamsHit.data();
         descHit.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
@@ -539,7 +560,7 @@ namespace CPyburnRTXEngine
         subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
 #pragma endregion
 
-#pragma region CBV root associations
+#pragma region Hit triangle root associations
         D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationHit = {};
         associationHit.NumExports = 1;
         const WCHAR* exportsHit[] = { kClosestHitShader };
@@ -769,41 +790,6 @@ namespace CPyburnRTXEngine
         return dxil;
     }
 
-    D3D12_STATE_SUBOBJECT TestTriangle::CreateDxilSubobject()
-    {
-        std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
-        ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
-
-        const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader };
-
-        std::vector<D3D12_EXPORT_DESC> exportDesc;
-        std::vector<std::wstring> exportName;
-        uint32_t entryPointCount = _countof(entryPoints);
-
-        D3D12_STATE_SUBOBJECT stateSubobject{};
-        D3D12_DXIL_LIBRARY_DESC dxilLibDesc = {};
-        exportName.resize(entryPointCount);
-        exportDesc.resize(entryPointCount);
-        if (shaderBlob)
-        {
-            dxilLibDesc.DXILLibrary.pShaderBytecode = shaderBlob->GetBufferPointer();
-            dxilLibDesc.DXILLibrary.BytecodeLength = shaderBlob->GetBufferSize();
-            dxilLibDesc.NumExports = entryPointCount;
-            dxilLibDesc.pExports = exportDesc.data();
-
-            for (uint32_t i = 0; i < entryPointCount; i++)
-            {
-                exportName[i] = entryPoints[i];
-                exportDesc[i].Name = exportName[i].c_str();
-                exportDesc[i].Flags = D3D12_EXPORT_FLAG_NONE;
-                exportDesc[i].ExportToRename = nullptr;
-            }
-        }
-        stateSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-        stateSubobject.pDesc = &dxilLibDesc;
-        return stateSubobject;
-    }
-
     void TestTriangle::createShaderTable()
     {
         /** The shader-table layout is as follows:
@@ -865,6 +851,8 @@ namespace CPyburnRTXEngine
         memcpy(pEntry3, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         assert(((uint64_t)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
         *(D3D12_GPU_VIRTUAL_ADDRESS*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = mpConstantBuffer[0].Resource->GetGPUVirtualAddress();
+        // 15.3.a
+        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         uint8_t* pEntry4 = pData + mShaderTableEntrySize * 4;
@@ -884,6 +872,8 @@ namespace CPyburnRTXEngine
         memcpy(pEntry7, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         assert(((uint64_t)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
         *(D3D12_GPU_VIRTUAL_ADDRESS*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = mpConstantBuffer[1].Resource->GetGPUVirtualAddress();
+        // 15.3.b
+        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
 
         // Entry 8 - Triangle 1, shadow ray. ProgramID only
         uint8_t* pEntry8 = pData + mShaderTableEntrySize * 8;
@@ -894,6 +884,8 @@ namespace CPyburnRTXEngine
         memcpy(pEntry9, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         assert(((uint64_t)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
         *(D3D12_GPU_VIRTUAL_ADDRESS*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = mpConstantBuffer[2].Resource->GetGPUVirtualAddress();
+        // 15.3.c
+        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
 
         // Entry 10 - Triangle 2, shadow ray. ProgramID only
         uint8_t* pEntry10 = pData + mShaderTableEntrySize * 10;
@@ -935,6 +927,16 @@ namespace CPyburnRTXEngine
 
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition[i]));
         }
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER;
+        srvDesc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+        srvDesc.Buffer.StructureByteStride = sizeof(TriVertex); // your vertex struct size goes here
+        srvDesc.Buffer.NumElements = 3; // number of vertices go here
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(mpVertexBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mVertexBufferSrvPosition));
+        mpVertexBuffer->SetName(L"SRV VB");
     }
 
     void TestTriangle::createConstantBuffer()
@@ -1041,6 +1043,7 @@ namespace CPyburnRTXEngine
         {
             mSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
+        mVertexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
 
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09

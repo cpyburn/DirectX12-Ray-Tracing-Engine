@@ -962,25 +962,6 @@ namespace CPyburnRTXEngine
 
     void TestTriangle::createConstantBuffer()
     {
-        // The shader declares the CB with 9 float3. However, due to HLSL packing rules, we create the CB with 9 float4 (each float3 needs to start on a 16-byte boundary)
-        //XMFLOAT4 bufferData[] =
-        //{
-        //    // A
-        //    XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
-        //    XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
-        //    XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
-
-        //    // B
-        //    XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
-        //    XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f),
-        //    XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
-
-        //    // C
-        //    XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
-        //    XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
-        //    XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f),
-        //};
-
         XMFLOAT4 bufferData[] =
         {
             // A
@@ -1003,35 +984,7 @@ namespace CPyburnRTXEngine
         {
             for (UINT cbvIndex = 0; cbvIndex < countOfConstantBuffers; cbvIndex++)
             {
-                DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                    D3D12_HEAP_FLAG_NONE,
-                    &CD3DX12_RESOURCE_DESC::Buffer(mpConstantBuffer[cbvIndex].AlignedSize * DX::DeviceResources::c_backBufferCount),
-                    D3D12_RESOURCE_STATE_GENERIC_READ,
-                    nullptr,
-                    IID_PPV_ARGS(&mpConstantBuffer[cbvIndex].Resource)));
-
-                NAME_D3D12_OBJECT(mpConstantBuffer[cbvIndex].Resource);
-
-                // Create constant buffer views to access the upload buffer.
-                D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = mpConstantBuffer[cbvIndex].Resource->GetGPUVirtualAddress();
-
-                for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
-                {
-                    // Describe and create constant buffer views.
-                    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-                    cbvDesc.BufferLocation = cbvGpuAddress;
-                    cbvDesc.SizeInBytes = mpConstantBuffer[cbvIndex].AlignedSize;
-                    m_deviceResources->GetD3DDevice()->CreateConstantBufferView(&cbvDesc, GraphicsContexts::GetCpuHandle(mpConstantBuffer[cbvIndex].HeapIndex[n]));
-
-                    cbvGpuAddress += mpConstantBuffer[cbvIndex].AlignedSize;
-                    mpConstantBuffer[cbvIndex].GpuHandle[n] = GraphicsContexts::GetGpuHandle(mpConstantBuffer[cbvIndex].HeapIndex[n]);
-                }
-
-                // Map and initialize the constant buffer. We don't unmap this until the
-                // app closes. Keeping things mapped for the lifetime of the resource is okay.
-                CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-                DX::ThrowIfFailed(mpConstantBuffer[cbvIndex].Resource->Map(0, &readRange, reinterpret_cast<void**>(&mpConstantBuffer[cbvIndex].MappedData)));
+                mpConstantBuffer[cbvIndex].CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestTriangle Cbv");
 
                 memcpy(mpConstantBuffer[cbvIndex].CpuData, &bufferData[cbvIndex * countOfConstantBuffers], sizeof(XMFLOAT4) * countOfConstantBuffers);
 

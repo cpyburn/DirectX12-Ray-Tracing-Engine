@@ -233,35 +233,7 @@ namespace CPyburnRTXEngine
 
         // Create the constant buffer.
         {
-            DX::ThrowIfFailed(device->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(m_sceneConstantBuffer.AlignedSize * DX::DeviceResources::c_backBufferCount),
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_sceneConstantBuffer.Resource)));
-
-            NAME_D3D12_OBJECT(m_sceneConstantBuffer.Resource);
-
-            // Create constant buffer views to access the upload buffer.
-            D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = m_sceneConstantBuffer.Resource->GetGPUVirtualAddress();
-
-            for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
-            {
-                // Describe and create constant buffer views.
-                D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-                cbvDesc.BufferLocation = cbvGpuAddress;
-                cbvDesc.SizeInBytes = m_sceneConstantBuffer.AlignedSize;
-                device->CreateConstantBufferView(&cbvDesc, GraphicsContexts::GetCpuHandle(m_sceneConstantBuffer.HeapIndex[n]));
-
-                cbvGpuAddress += m_sceneConstantBuffer.AlignedSize;
-                m_sceneConstantBuffer.GpuHandle[n] = GraphicsContexts::GetGpuHandle(m_sceneConstantBuffer.HeapIndex[n]);
-            }
-
-            // Map and initialize the constant buffer. We don't unmap this until the
-            // app closes. Keeping things mapped for the lifetime of the resource is okay.
-            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-            DX::ThrowIfFailed(m_sceneConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&m_sceneConstantBuffer.MappedData)));
+            m_sceneConstantBuffer.CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestFullscreen Cbv");
             for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
             {
                 m_sceneConstantBuffer.CopyToGpu(i);

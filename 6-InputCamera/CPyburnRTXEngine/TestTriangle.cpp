@@ -68,7 +68,7 @@ namespace CPyburnRTXEngine
             };
             bufDesc.Width = sizeof(vertices);
 
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpVertexBuffer)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpVertexBuffer)));
 
             // For simplicity, we create the vertex buffer on the upload heap, but that's not required
             uint8_t* pData;
@@ -91,7 +91,7 @@ namespace CPyburnRTXEngine
             };
             bufDesc.Width = sizeof(vertices);
 
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpVertexBuffer1)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpVertexBuffer1)));
 
             // For simplicity, we create the vertex buffer on the upload heap, but that's not required
             uint8_t* pData;
@@ -102,11 +102,11 @@ namespace CPyburnRTXEngine
 
 
         // Single-use command allocator and command list for creating resources.
-        ComPtr<ID3D12CommandAllocator> commandAllocator;
-        ComPtr<ID3D12GraphicsCommandList4> commandList;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
 
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
         // Bottom Level AS
         {
@@ -146,12 +146,12 @@ namespace CPyburnRTXEngine
             bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             bufDesc.Width = info.ScratchDataSizeInBytes;
 
-            ComPtr<ID3D12Resource> pScratch;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
+            Microsoft::WRL::ComPtr<ID3D12Resource> pScratch;
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
-            ComPtr<ID3D12Resource> pResult;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
+            Microsoft::WRL::ComPtr<ID3D12Resource> pResult;
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
 
             // Create the bottom-level AS
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -169,7 +169,7 @@ namespace CPyburnRTXEngine
 
             // Close the resource creation command list and execute it to begin the vertex buffer copy into
             // the default heap.
-            ThrowIfFailed(commandList->Close());
+            DX::ThrowIfFailed(commandList->Close());
             ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
             m_deviceResources->WaitForGpu();
@@ -178,8 +178,8 @@ namespace CPyburnRTXEngine
             mpBottomLevelAS = pResult;
         }
 
-        ThrowIfFailed(commandAllocator->Reset());
-        ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+        DX::ThrowIfFailed(commandAllocator->Reset());
+        DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
         {
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
@@ -205,12 +205,12 @@ namespace CPyburnRTXEngine
             bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             bufDesc.Width = info.ScratchDataSizeInBytes;
 
-            ComPtr<ID3D12Resource> pScratch;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
+            Microsoft::WRL::ComPtr<ID3D12Resource> pScratch;
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
-            ComPtr<ID3D12Resource> pResult;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
+            Microsoft::WRL::ComPtr<ID3D12Resource> pResult;
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
 
             // Create the bottom-level AS
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -228,7 +228,7 @@ namespace CPyburnRTXEngine
 
             // Close the resource creation command list and execute it to begin the vertex buffer copy into
             // the default heap.
-            ThrowIfFailed(commandList->Close());
+            DX::ThrowIfFailed(commandList->Close());
             ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
             m_deviceResources->WaitForGpu();
@@ -237,18 +237,18 @@ namespace CPyburnRTXEngine
             mpBottomLevelAS1 = pResult;
         }
 
-        ThrowIfFailed(commandAllocator->Reset());
-        ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+        DX::ThrowIfFailed(commandAllocator->Reset());
+        DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
         // Top Level AS
-        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
             RefitOrRebuildTLAS(commandList.Get(), i, false);
         }
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
         // the default heap.
-        ThrowIfFailed(commandList->Close());
+        DX::ThrowIfFailed(commandList->Close());
         ID3D12CommandList* ppCommandLists[] = { commandList.Get()};
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         m_deviceResources->WaitForGpu();
@@ -293,11 +293,11 @@ namespace CPyburnRTXEngine
         else
         {
             //ComPtr<ID3D12Resource> pScratch;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             //ComPtr<ID3D12Resource> pResult;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
             mTlasSize = info.ResultDataMaxSizeInBytes;
 
             // The instance desc should be inside a buffer, create and map the buffer
@@ -305,7 +305,7 @@ namespace CPyburnRTXEngine
             bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers; // 3 instances
 
             //ComPtr<ID3D12Resource> pInstanceDescResource;
-            ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
         }
 
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
@@ -380,7 +380,7 @@ namespace CPyburnRTXEngine
 #pragma region DXIL library
         // DXIL library
         std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
-        ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
+        Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
 
         const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kPlaneChs /* 12.3.e */, kClosestHitShader, kShadowMiss /* 12.3.b */, kShadowChs /* 12.3.b */ };
 
@@ -482,8 +482,8 @@ namespace CPyburnRTXEngine
         descRay.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
         // create ray-gen root-signature and associate it with the ray-gen shader
-        ComPtr<ID3DBlob> pSigBlobRay;
-        ComPtr<ID3DBlob> pErrorBlobRay;
+        Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobRay;
+        Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobRay;
         HRESULT hrRay = D3D12SerializeRootSignature(&descRay, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobRay, &pErrorBlobRay);
         if (FAILED(hrRay))
         {
@@ -494,8 +494,8 @@ namespace CPyburnRTXEngine
             throw std::runtime_error("Failed to serialize root signature");
         }
 
-        ComPtr<ID3D12RootSignature> pRootSigRay;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobRay->GetBufferPointer(), pSigBlobRay->GetBufferSize(), IID_PPV_ARGS(&pRootSigRay)));
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigRay;
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobRay->GetBufferPointer(), pSigBlobRay->GetBufferSize(), IID_PPV_ARGS(&pRootSigRay)));
 
         ID3D12RootSignature* pRootSigRayPtr = pRootSigRay.Get();
         subobjects[index].pDesc = &pRootSigRayPtr;
@@ -540,8 +540,8 @@ namespace CPyburnRTXEngine
         descHit.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
         // create ray-gen root-signature and associate it with the ray-gen shader
-        ComPtr<ID3DBlob> pSigBlobHit;
-        ComPtr<ID3DBlob> pErrorBlobHit;
+        Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobHit;
+        Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobHit;
         HRESULT hrHit = D3D12SerializeRootSignature(&descHit, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobHit, &pErrorBlobHit);
         if (FAILED(hrHit))
         {
@@ -552,8 +552,8 @@ namespace CPyburnRTXEngine
             throw std::runtime_error("Failed to serialize root signature");
         }
 
-        ComPtr<ID3D12RootSignature> pRootSigHit;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobHit->GetBufferPointer(), pSigBlobHit->GetBufferSize(), IID_PPV_ARGS(&pRootSigHit)));
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigHit;
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobHit->GetBufferPointer(), pSigBlobHit->GetBufferSize(), IID_PPV_ARGS(&pRootSigHit)));
 
         ID3D12RootSignature* pRootSigHitPtr = pRootSigHit.Get();
         subobjects[index].pDesc = &pRootSigHitPtr;
@@ -594,8 +594,8 @@ namespace CPyburnRTXEngine
         descPlaneHit.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
         // create ray-gen root-signature and associate it with the ray-gen shader
-        ComPtr<ID3DBlob> pSigBlobPlaneHit;
-        ComPtr<ID3DBlob> pErrorBlobPlaneHit;
+        Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobPlaneHit;
+        Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobPlaneHit;
         HRESULT hrPlaneHit = D3D12SerializeRootSignature(&descPlaneHit, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobPlaneHit, &pErrorBlobPlaneHit);
         if (FAILED(hrPlaneHit))
         {
@@ -606,8 +606,8 @@ namespace CPyburnRTXEngine
             throw std::runtime_error("Failed to serialize root signature");
         }
 
-        ComPtr<ID3D12RootSignature> pRootSigPlaneHit;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobPlaneHit->GetBufferPointer(), pSigBlobPlaneHit->GetBufferSize(), IID_PPV_ARGS(&pRootSigPlaneHit)));
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigPlaneHit;
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobPlaneHit->GetBufferPointer(), pSigBlobPlaneHit->GetBufferSize(), IID_PPV_ARGS(&pRootSigPlaneHit)));
 
         ID3D12RootSignature* pRootSigPlaneHitPtr = pRootSigPlaneHit.Get();
         subobjects[index].pDesc = &pRootSigPlaneHitPtr;
@@ -631,8 +631,8 @@ namespace CPyburnRTXEngine
         emptyDescMiss.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
         // create empty root-signature and associate it with the ray-gen shader
-        ComPtr<ID3DBlob> pSigBlobEmptyMiss;
-        ComPtr<ID3DBlob> pErrorBlobEmptyMiss;
+        Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobEmptyMiss;
+        Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobEmptyMiss;
         HRESULT hrEmptyHitMiss = D3D12SerializeRootSignature(&emptyDescMiss, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobEmptyMiss, &pErrorBlobEmptyMiss);
         if (FAILED(hrEmptyHitMiss))
         {
@@ -643,8 +643,8 @@ namespace CPyburnRTXEngine
             throw std::runtime_error("Failed to serialize root signature");
         }
 
-        ComPtr<ID3D12RootSignature> pRootSigEmptyMiss;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobEmptyMiss->GetBufferPointer(), pSigBlobEmptyMiss->GetBufferSize(), IID_PPV_ARGS(&pRootSigEmptyMiss)));
+        Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigEmptyMiss;
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobEmptyMiss->GetBufferPointer(), pSigBlobEmptyMiss->GetBufferSize(), IID_PPV_ARGS(&pRootSigEmptyMiss)));
 
         ID3D12RootSignature* pRootSigEmptyPtrMiss = pRootSigEmptyMiss.Get();
         subobjects[index].pDesc = &pRootSigEmptyPtrMiss;
@@ -693,8 +693,8 @@ namespace CPyburnRTXEngine
         D3D12_ROOT_SIGNATURE_DESC emptyDescGlobal = {};
         emptyDescGlobal.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-        ComPtr<ID3DBlob> pSigBlobGlobal;
-        ComPtr<ID3DBlob> pErrorBlobGlobal;
+        Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobGlobal;
+        Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobGlobal;
         HRESULT hrGlobal = D3D12SerializeRootSignature(&emptyDescGlobal, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobGlobal, &pErrorBlobGlobal);
         if (FAILED(hrGlobal))
         {
@@ -705,7 +705,7 @@ namespace CPyburnRTXEngine
             throw std::runtime_error("Failed to serialize root signature");
         }
 
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobGlobal->GetBufferPointer(), pSigBlobGlobal->GetBufferSize(), IID_PPV_ARGS(&mpEmptyRootSig)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobGlobal->GetBufferPointer(), pSigBlobGlobal->GetBufferSize(), IID_PPV_ARGS(&mpEmptyRootSig)));
 
         ID3D12RootSignature* pRootSigGlobalPtr = mpEmptyRootSig.Get();
         subobjects[index].pDesc = &pRootSigGlobalPtr;
@@ -718,7 +718,7 @@ namespace CPyburnRTXEngine
         stateObjectDesc.pSubobjects = subobjects;
         stateObjectDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&mpPipelineState)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&mpPipelineState)));
     }
 
     std::vector<uint8_t> TestTriangle::LoadBinaryFile(const wchar_t* path)
@@ -735,17 +735,17 @@ namespace CPyburnRTXEngine
         return data;
     }
 
-    ComPtr<IDxcBlob> TestTriangle::CompileDXRLibrary(const wchar_t* filename)
+    Microsoft::WRL::ComPtr<IDxcBlob> TestTriangle::CompileDXRLibrary(const wchar_t* filename)
     {
         auto sourceData = LoadBinaryFile(filename);
 
-        ComPtr<IDxcUtils> utils;
-        ComPtr<IDxcCompiler3> compiler;
-        ComPtr<IDxcIncludeHandler> includeHandler;
+        Microsoft::WRL::ComPtr<IDxcUtils> utils;
+        Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
+        Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
 
-        ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
-        ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
-        ThrowIfFailed(utils->CreateDefaultIncludeHandler(&includeHandler));
+        DX::ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
+        DX::ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
+        DX::ThrowIfFailed(utils->CreateDefaultIncludeHandler(&includeHandler));
 
         DxcBuffer source = {};
         source.Ptr = sourceData.data();
@@ -763,15 +763,15 @@ namespace CPyburnRTXEngine
             //, L"-WX"                   // Treat warnings as errors (optional)
         };
 
-        ComPtr<IDxcResult> result;
-        ThrowIfFailed(compiler->Compile(&source, arguments, _countof(arguments), includeHandler.Get(), IID_PPV_ARGS(&result)));
+        Microsoft::WRL::ComPtr<IDxcResult> result;
+        DX::ThrowIfFailed(compiler->Compile(&source, arguments, _countof(arguments), includeHandler.Get(), IID_PPV_ARGS(&result)));
 
         // Check compile status
         HRESULT status;
         result->GetStatus(&status);
         if (FAILED(status))
         {
-            ComPtr<IDxcBlobUtf8> errors;
+            Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
             result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
             if (errors && errors->GetStringLength())
                 OutputDebugStringA(errors->GetStringPointer());
@@ -780,7 +780,7 @@ namespace CPyburnRTXEngine
         }
 
         // Get DXIL object
-        ComPtr<IDxcBlob> dxil;
+        Microsoft::WRL::ComPtr<IDxcBlob> dxil;
         HRESULT hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&dxil), nullptr);
         if (FAILED(hr) || !dxil || dxil->GetBufferSize() == 0)
         {
@@ -790,7 +790,7 @@ namespace CPyburnRTXEngine
         return dxil;
     }
 
-    uint8_t* TestTriangle::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const ComPtr<ID3D12Resource>& resource)
+    uint8_t* TestTriangle::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
     {
         uint8_t* pDataEntry = pData + (entry * mShaderTableEntrySize);
         memcpy(pDataEntry, pRtsoProps->GetShaderIdentifier(exportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
@@ -840,14 +840,14 @@ namespace CPyburnRTXEngine
         bufDesc.SampleDesc.Quality = 0;
         bufDesc.Width = shaderTableSize;
 
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
 
         // Map the buffer
         uint8_t* pData;
-        ThrowIfFailed(mpShaderTable->Map(0, nullptr, (void**)&pData));
+        DX::ThrowIfFailed(mpShaderTable->Map(0, nullptr, (void**)&pData));
 
-        ComPtr<ID3D12StateObjectProperties> pRtsoProps;
-        ThrowIfFailed(mpPipelineState->QueryInterface(IID_PPV_ARGS(&pRtsoProps)));
+        Microsoft::WRL::ComPtr<ID3D12StateObjectProperties> pRtsoProps;
+        DX::ThrowIfFailed(mpPipelineState->QueryInterface(IID_PPV_ARGS(&pRtsoProps)));
 
         // Entry 0 - ray-gen program ID and descriptor data
         //memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
@@ -933,7 +933,7 @@ namespace CPyburnRTXEngine
         resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
         resDesc.MipLevels = 1;
         resDesc.SampleDesc.Count = 1;
-        ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
 
         // Create the UAV. Based on the root signature we created it should be the first entry
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -941,7 +941,7 @@ namespace CPyburnRTXEngine
 
         m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, GraphicsContexts::GetCpuHandle(mUavPosition));
 
-        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
             // 6.1 Create the TLAS SRV right after the UAV. Note that we are using a different SRV desc here
             D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -1006,10 +1006,10 @@ namespace CPyburnRTXEngine
         {
             for (UINT cbvIndex = 0; cbvIndex < countOfConstantBuffers; cbvIndex++)
             {
-                ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
                     &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                     D3D12_HEAP_FLAG_NONE,
-                    &CD3DX12_RESOURCE_DESC::Buffer(mpConstantBuffer[cbvIndex].AlignedSize * DeviceResources::c_backBufferCount),
+                    &CD3DX12_RESOURCE_DESC::Buffer(mpConstantBuffer[cbvIndex].AlignedSize * DX::DeviceResources::c_backBufferCount),
                     D3D12_RESOURCE_STATE_GENERIC_READ,
                     nullptr,
                     IID_PPV_ARGS(&mpConstantBuffer[cbvIndex].Resource)));
@@ -1019,7 +1019,7 @@ namespace CPyburnRTXEngine
                 // Create constant buffer views to access the upload buffer.
                 D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = mpConstantBuffer[cbvIndex].Resource->GetGPUVirtualAddress();
 
-                for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+                for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
                 {
                     mpConstantBuffer[cbvIndex].HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
 
@@ -1036,11 +1036,11 @@ namespace CPyburnRTXEngine
                 // Map and initialize the constant buffer. We don't unmap this until the
                 // app closes. Keeping things mapped for the lifetime of the resource is okay.
                 CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-                ThrowIfFailed(mpConstantBuffer[cbvIndex].Resource->Map(0, &readRange, reinterpret_cast<void**>(&mpConstantBuffer[cbvIndex].MappedData)));
+                DX::ThrowIfFailed(mpConstantBuffer[cbvIndex].Resource->Map(0, &readRange, reinterpret_cast<void**>(&mpConstantBuffer[cbvIndex].MappedData)));
 
                 memcpy(mpConstantBuffer[cbvIndex].CpuData, &bufferData[cbvIndex * countOfConstantBuffers], sizeof(XMFLOAT4) * countOfConstantBuffers);
 
-                for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+                for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
                 {
                     mpConstantBuffer[cbvIndex].CopyToGpu(i);
                 }
@@ -1057,13 +1057,13 @@ namespace CPyburnRTXEngine
         Release();
     }
 
-    void TestTriangle::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources)
+    void TestTriangle::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
     {
         m_deviceResources = deviceResources;
 
         // reserve the uav position and srv position for reuse if window is resized
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
-        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
             mSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
@@ -1184,7 +1184,7 @@ namespace CPyburnRTXEngine
 
             PIXEndEvent(m_sceneCommandList);
 
-            ThrowIfFailed(m_sceneCommandList->Close());
+            DX::ThrowIfFailed(m_sceneCommandList->Close());
         }
     }
 
@@ -1203,7 +1203,7 @@ namespace CPyburnRTXEngine
         }
 
         GraphicsContexts::RemoveHeapPosition(mUavPosition);
-        for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+        for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
             GraphicsContexts::RemoveHeapPosition(mSrvPosition[i]);
         }

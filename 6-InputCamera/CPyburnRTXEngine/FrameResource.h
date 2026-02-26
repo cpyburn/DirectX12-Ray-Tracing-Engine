@@ -12,15 +12,15 @@ namespace CPyburnRTXEngine
 
 		ID3D12CommandList* BatchSubmit[COMMAND_LIST_COUNT];
 	private:
-		ComPtr<ID3D12CommandAllocator> m_commandAllocators[COMMAND_LIST_COUNT];
-		ComPtr<ID3D12GraphicsCommandList4> m_commandLists[COMMAND_LIST_COUNT];
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocators[COMMAND_LIST_COUNT];
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandLists[COMMAND_LIST_COUNT];
 	public:
 		FrameResource();
 		~FrameResource();
 
-		void Init(DeviceResources* deviceResources);
+		void Init(DX::DeviceResources* deviceResources);
 		ID3D12GraphicsCommandList4* ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState = nullptr);
-		ComPtr<ID3D12GraphicsCommandList4> GetCommandList(int commandList) { return m_commandLists[commandList]; }
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> GetCommandList(int commandList) { return m_commandLists[commandList]; }
 		void Release();
 	};
 }

@@ -200,18 +200,23 @@ inline void PIXEndEvent(T*) {}
 #else
 // To use graphics and CPU markup events with the latest version of PIX, change this to include <pix3.h>
 // then add the NuGet package WinPixEventRuntime to the project.
-#include <pix3.h>
+#include <pix3.h> // pix nuget
 #endif
 
 // ADDED FOR CPyburnRTXEngine
 #include <ppltasks.h>
-using namespace concurrency;
-#include "DeviceResources.h" // available to all libraries
-using namespace DX;
+//using namespace concurrency;
 
-using Microsoft::WRL::ComPtr;
+#include "DeviceResources.h" // available to all libraries
+//using namespace DX;
+
+
+//using Microsoft::WRL::ComPtr;
 #include "StepTimer.h"
-#include "d3dcompiler.h"
+#include <d3dcompiler.h> // d3dcompiler nuget
+#include <Keyboard.h> // directxtk nuget
+#include <Mouse.h> // directxtk nuget
+
 
 inline void GetAssetsPath(_Out_writes_(pathSize) WCHAR* path, UINT pathSize)
 {

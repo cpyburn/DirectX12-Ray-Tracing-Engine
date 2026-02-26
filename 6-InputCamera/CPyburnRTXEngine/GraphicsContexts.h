@@ -1,17 +1,14 @@
 #pragma once
 
-using namespace DirectX;
-using namespace std;
-
 namespace CPyburnRTXEngine
 {
 	class GraphicsContexts
 	{
 	private:
 		static UINT m_heapPositionCounter;
-		static vector<UINT> m_availableHeapPositions;
-		static map<UINT, UINT> m_multiUseHeapPositions;
-		static mutex m_mutexMultiUseHeapPositions;
+		static std::vector<UINT> m_availableHeapPositions;
+		static std::map<UINT, UINT> m_multiUseHeapPositions;
+		static std::mutex m_mutexMultiUseHeapPositions;
 
 	public:
 		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> c_heap;

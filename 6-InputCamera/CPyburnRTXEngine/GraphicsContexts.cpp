@@ -7,9 +7,9 @@ UINT GraphicsContexts::c_descriptorSize;
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> GraphicsContexts::c_heap;
 
 UINT GraphicsContexts::m_heapPositionCounter;
-vector<UINT> GraphicsContexts::m_availableHeapPositions;
-map<UINT, UINT> GraphicsContexts::m_multiUseHeapPositions;
-mutex GraphicsContexts::m_mutexMultiUseHeapPositions;
+std::vector<UINT> GraphicsContexts::m_availableHeapPositions;
+std::map<UINT, UINT> GraphicsContexts::m_multiUseHeapPositions;
+std::mutex GraphicsContexts::m_mutexMultiUseHeapPositions;
 
 namespace CPyburnRTXEngine
 {
@@ -68,7 +68,7 @@ namespace CPyburnRTXEngine
 			{
 				// remove from multiheap if all are gone
 				m_multiUseHeapPositions.erase(iter);
-				DebugTrace("Heap position reclaimed: %s\n", (to_string(heapPosition)).c_str());
+				DebugTrace("Heap position reclaimed: %s\n", (std::to_string(heapPosition)).c_str());
 				m_availableHeapPositions.push_back(heapPosition);
 				didErase = true;
 			}
@@ -91,13 +91,13 @@ namespace CPyburnRTXEngine
 		if (m_availableHeapPositions.size() > 0)
 		{
 			value = m_availableHeapPositions[0];
-			DebugTrace("Heap position reused: %s\n", (to_string(value)).c_str());
+			DebugTrace("Heap position reused: %s\n", (std::to_string(value)).c_str());
 			m_availableHeapPositions.erase(m_availableHeapPositions.begin());
 		}
 		else
 		{
 			m_heapPositionCounter++;
-			DebugTrace("Heap position used: %s\n", (to_string(value)).c_str());
+			DebugTrace("Heap position used: %s\n", (std::to_string(value)).c_str());
 		}
 
 		m_mutexMultiUseHeapPositions.unlock();
@@ -110,13 +110,13 @@ namespace CPyburnRTXEngine
 		c_descriptorSize = d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-		heapDesc.NumDescriptors = DeviceResources::c_backBufferCount // Vertex constant buffers per frame 
+		heapDesc.NumDescriptors = DX::DeviceResources::c_backBufferCount // Vertex constant buffers per frame 
 			+ 100; // Arbitrary large number for now.
 		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		// This flag indicates that this descriptor heap can be bound to the pipeline and that descriptors contained in it can be referenced by a root table.
 		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-		ThrowIfFailed(d3dDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&c_heap)));
+		DX::ThrowIfFailed(d3dDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&c_heap)));
 		c_heap->SetName(L"Descriptor Heap from GraphicsContexts");
 	}
 

@@ -27,10 +27,10 @@ namespace CPyburnRTXEngine
         static constexpr UINT AlignedSize = (sizeof(T) + 255u) & ~255u;
 
         // Per-frame descriptor heap positions
-        UINT HeapIndex[DeviceResources::c_backBufferCount]{};
+        UINT HeapIndex[DX::DeviceResources::c_backBufferCount]{};
 
         // Per-frame GPU descriptor handles
-        CD3DX12_GPU_DESCRIPTOR_HANDLE GpuHandle[DeviceResources::c_backBufferCount]{};
+        CD3DX12_GPU_DESCRIPTOR_HANDLE GpuHandle[DX::DeviceResources::c_backBufferCount]{};
 
         // Upload heap resource
         Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
@@ -46,7 +46,7 @@ namespace CPyburnRTXEngine
 
         void Release()
         {
-            for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+            for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
             {
                 GraphicsContexts::RemoveHeapPosition(HeapIndex[n]);
             }

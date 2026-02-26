@@ -31,16 +31,16 @@ namespace CPyburnRTXEngine
 		void Update(DX::StepTimer const& timer);
 		void Render();
 
-		void CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResources);
+		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void Release();
 	private:
-		std::shared_ptr<DeviceResources> m_deviceResources;
+		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
-		ComPtr<ID3D12PipelineState> m_scenePipelineState;
-		ComPtr<ID3D12RootSignature> m_sceneRootSignature;
+		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_scenePipelineState;
+		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_sceneRootSignature;
 
 		// App resources.
-		ComPtr<ID3D12Resource> m_sceneVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_sceneVertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_sceneVertexBufferView = {};
 		
 		ConstantBuffer<SceneConstantBuffer> m_sceneConstantBuffer;

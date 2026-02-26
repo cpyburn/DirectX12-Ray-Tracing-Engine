@@ -76,7 +76,7 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
             m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
+            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DX::DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
             //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResource->GetRenderTargetView();
             m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
@@ -94,13 +94,13 @@ namespace CPyburnRTXEngine
             PIXEndEvent(m_sceneCommandList);
         }
 
-        ThrowIfFailed(m_sceneCommandList->Close());
+        DX::ThrowIfFailed(m_sceneCommandList->Close());
     }
 
-    void TestFullscreen::CreateDeviceDependentResources(const std::shared_ptr<DeviceResources>& deviceResource)
+    void TestFullscreen::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResource)
     {
         m_deviceResources = deviceResource;
-        ComPtr<ID3D12Device> device = deviceResource->GetD3DDevice();
+        Microsoft::WRL::ComPtr<ID3D12Device> device = deviceResource->GetD3DDevice();
 
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
@@ -126,18 +126,18 @@ namespace CPyburnRTXEngine
             CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
             rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
 
-            ComPtr<ID3DBlob> signature;
-            ComPtr<ID3DBlob> error;
-            ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
-            ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
+            Microsoft::WRL::ComPtr<ID3DBlob> signature;
+            Microsoft::WRL::ComPtr<ID3DBlob> error;
+            DX::ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
+            DX::ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_sceneRootSignature)));
             NAME_D3D12_OBJECT(m_sceneRootSignature);
         }
 
         // Create the pipeline state, which includes compiling and loading shaders.
         {
-            ComPtr<ID3DBlob> sceneVertexShader;
-            ComPtr<ID3DBlob> scenePixelShader;
-            ComPtr<ID3DBlob> error;
+            Microsoft::WRL::ComPtr<ID3DBlob> sceneVertexShader;
+            Microsoft::WRL::ComPtr<ID3DBlob> scenePixelShader;
+            Microsoft::WRL::ComPtr<ID3DBlob> error;
 
 #if defined(_DEBUG)
             // Enable better shader debugging with the graphics debugging tools.
@@ -146,8 +146,8 @@ namespace CPyburnRTXEngine
             UINT compileFlags = 0;
 #endif
             std::wstring shaderFilePath = GetAssetFullPath(L"sceneShaders.hlsl");
-            ThrowIfFailed(D3DCompileFromFile(shaderFilePath.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &sceneVertexShader, &error));
-            ThrowIfFailed(D3DCompileFromFile(shaderFilePath.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &scenePixelShader, &error));
+            DX::ThrowIfFailed(D3DCompileFromFile(shaderFilePath.c_str(), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &sceneVertexShader, &error));
+            DX::ThrowIfFailed(D3DCompileFromFile(shaderFilePath.c_str(), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &scenePixelShader, &error));
 
             // Des
             //         // Define the vertex input layouts.
@@ -173,19 +173,19 @@ namespace CPyburnRTXEngine
             psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
             psoDesc.SampleDesc.Count = 1;
 
-            ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
+            DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_scenePipelineState)));
             NAME_D3D12_OBJECT(m_scenePipelineState);
         }
 
         // Single-use command allocator and command list for creating resources.
-        ComPtr<ID3D12CommandAllocator> commandAllocator;
-        ComPtr<ID3D12GraphicsCommandList> commandList;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
 
-        ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
-        ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+        DX::ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+        DX::ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
         // Create/update the vertex buffer.
-        ComPtr<ID3D12Resource> sceneVertexBufferUpload;
+        Microsoft::WRL::ComPtr<ID3D12Resource> sceneVertexBufferUpload;
         {
             // Define the geometry for a thin quad that will animate across the screen.
             const float x = QuadWidth / 2.0f;
@@ -200,7 +200,7 @@ namespace CPyburnRTXEngine
 
             const UINT vertexBufferSize = sizeof(quadVertices);
 
-            ThrowIfFailed(device->CreateCommittedResource(
+            DX::ThrowIfFailed(device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                 D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
@@ -208,7 +208,7 @@ namespace CPyburnRTXEngine
                 nullptr,
                 IID_PPV_ARGS(&m_sceneVertexBuffer)));
 
-            ThrowIfFailed(device->CreateCommittedResource(
+            DX::ThrowIfFailed(device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
                 &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
@@ -222,7 +222,7 @@ namespace CPyburnRTXEngine
             // from the upload heap to the vertex buffer.
             UINT8* pVertexDataBegin;
             CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-            ThrowIfFailed(sceneVertexBufferUpload->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+            DX::ThrowIfFailed(sceneVertexBufferUpload->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
             memcpy(pVertexDataBegin, quadVertices, sizeof(quadVertices));
             sceneVertexBufferUpload->Unmap(0, nullptr);
 
@@ -237,10 +237,10 @@ namespace CPyburnRTXEngine
 
         // Create the constant buffer.
         {
-            ThrowIfFailed(device->CreateCommittedResource(
+            DX::ThrowIfFailed(device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(m_sceneConstantBuffer.AlignedSize * DeviceResources::c_backBufferCount),
+                &CD3DX12_RESOURCE_DESC::Buffer(m_sceneConstantBuffer.AlignedSize * DX::DeviceResources::c_backBufferCount),
                 D3D12_RESOURCE_STATE_GENERIC_READ,
                 nullptr,
                 IID_PPV_ARGS(&m_sceneConstantBuffer.Resource)));
@@ -250,7 +250,7 @@ namespace CPyburnRTXEngine
             // Create constant buffer views to access the upload buffer.
             D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = m_sceneConstantBuffer.Resource->GetGPUVirtualAddress();
 
-            for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
+            for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
             {
                 m_sceneConstantBuffer.HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
                 CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_sceneConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
@@ -268,8 +268,8 @@ namespace CPyburnRTXEngine
             // Map and initialize the constant buffer. We don't unmap this until the
             // app closes. Keeping things mapped for the lifetime of the resource is okay.
             CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-            ThrowIfFailed(m_sceneConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&m_sceneConstantBuffer.MappedData)));
-            for (UINT i = 0; i < DeviceResources::c_backBufferCount; i++)
+            DX::ThrowIfFailed(m_sceneConstantBuffer.Resource->Map(0, &readRange, reinterpret_cast<void**>(&m_sceneConstantBuffer.MappedData)));
+            for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
             {
                 m_sceneConstantBuffer.CopyToGpu(i);
             }
@@ -277,7 +277,7 @@ namespace CPyburnRTXEngine
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
         // the default heap.
-        ThrowIfFailed(commandList->Close());
+        DX::ThrowIfFailed(commandList->Close());
         ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         m_deviceResources->WaitForGpu();

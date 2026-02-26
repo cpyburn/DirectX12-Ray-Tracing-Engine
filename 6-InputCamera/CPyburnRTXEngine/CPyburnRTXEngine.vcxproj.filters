@@ -15,6 +15,9 @@
     <Filter Include="Testing">
       <UniqueIdentifier>{851eadcb-7951-49c4-aa4e-6156ee98ce8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Cameras">
+      <UniqueIdentifier>{ded96a62-1e64-474f-ac5c-76320aaee969}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StepTimer.h">
@@ -44,6 +47,9 @@
     <ClInclude Include="TestTriangle.h">
       <Filter>Testing</Filter>
     </ClInclude>
+    <ClInclude Include="CameraBase.h">
+      <Filter>Cameras</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -63,6 +69,9 @@
     </ClCompile>
     <ClCompile Include="TestTriangle.cpp">
       <Filter>Testing</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraBase.cpp">
+      <Filter>Cameras</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

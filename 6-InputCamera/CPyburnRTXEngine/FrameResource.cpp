@@ -13,19 +13,19 @@ namespace CPyburnRTXEngine
         Release();
     }
 
-    void FrameResource::Init(DeviceResources* deviceResources)
+    void FrameResource::Init(DX::DeviceResources* deviceResources)
     {
         Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice = deviceResources->GetD3DDevice();
 
         for (UINT i = 0; i < COMMAND_LIST_COUNT; i++)
         {
-            ThrowIfFailed(d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i])));
-            ThrowIfFailed(d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[i].Get(), nullptr, IID_PPV_ARGS(&m_commandLists[i])));
+            DX::ThrowIfFailed(d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i])));
+            DX::ThrowIfFailed(d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[i].Get(), nullptr, IID_PPV_ARGS(&m_commandLists[i])));
 
             NAME_D3D12_OBJECT_INDEXED(m_commandLists, i);
 
             // Close these command lists; don't record into them for now.
-            ThrowIfFailed(m_commandLists[i]->Close());
+            DX::ThrowIfFailed(m_commandLists[i]->Close());
         }
 
         // Batch up command lists for execution later.
@@ -35,8 +35,8 @@ namespace CPyburnRTXEngine
 
     ID3D12GraphicsCommandList4* FrameResource::ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState)
     {
-        ThrowIfFailed(m_commandAllocators[commandList]->Reset());
-        ThrowIfFailed(m_commandLists[commandList]->Reset(m_commandAllocators[commandList].Get(), pInitialState));
+        DX::ThrowIfFailed(m_commandAllocators[commandList]->Reset());
+        DX::ThrowIfFailed(m_commandLists[commandList]->Reset(m_commandAllocators[commandList].Get(), pInitialState));
         return m_commandLists[commandList].Get();
     }
 

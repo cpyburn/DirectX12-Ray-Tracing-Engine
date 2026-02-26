@@ -204,18 +204,21 @@ inline void PIXEndEvent(T*) {}
 #endif
 
 // ADDED FOR CPyburnRTXEngine
-#include <ppltasks.h>
-//using namespace concurrency;
-
-#include "DeviceResources.h" // available to all libraries
-//using namespace DX;
-
-
-//using Microsoft::WRL::ComPtr;
 #include "StepTimer.h"
 #include <d3dcompiler.h> // d3dcompiler nuget
+#include <dxcapi.h> // d3dcompiler nuget
 #include <Keyboard.h> // directxtk nuget
 #include <Mouse.h> // directxtk nuget
+// CONVIENENCE classes that will used all over
+#include "DeviceResources.h" // available to all libraries
+//using namespace DX;
+#include "FrameResource.h"
+#include "ConstantBuffer.h"
+#include "GraphicsContexts.h"
+#include <ppltasks.h>
+using namespace DirectX;
+//using namespace concurrency;
+//using Microsoft::WRL::ComPtr;
 
 
 inline void GetAssetsPath(_Out_writes_(pathSize) WCHAR* path, UINT pathSize)

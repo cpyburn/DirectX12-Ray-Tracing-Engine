@@ -1,9 +1,6 @@
 #include "pchlib.h"
 #include "TestTriangle.h"
 
-#include "GraphicsContexts.h"
-#include "FrameResource.h"
-
 namespace CPyburnRTXEngine
 {
     static const WCHAR* kRayGenShader = L"rayGen";

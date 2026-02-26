@@ -1,9 +1,5 @@
 #pragma once
 
-#include "ConstantBuffer.h"
-
-using namespace DirectX;
-
 namespace CPyburnRTXEngine
 {
 	class TestFullscreen

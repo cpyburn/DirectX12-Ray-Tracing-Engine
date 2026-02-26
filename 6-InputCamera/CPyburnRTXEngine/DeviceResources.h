@@ -10,9 +10,6 @@ namespace CPyburnRTXEngine
     class GraphicsContexts; // forward declaration
 }
 
-using namespace CPyburnRTXEngine;
-using namespace DirectX;
-
 namespace DX
 {
     class CPyburnRTXEngine::GraphicsContexts;
@@ -73,7 +70,7 @@ namespace DX
         ID3D12Resource*             GetRenderTarget() const noexcept       { return m_renderTargets[m_backBufferIndex].Get(); }
         ID3D12Resource*             GetDepthStencil() const noexcept       { return m_depthStencil.Get(); }
         ID3D12CommandQueue*         GetCommandQueue() const noexcept       { return m_commandQueue.Get(); }
-        FrameResource*              GetCurrentFrameResource()              { return m_frameResource[m_backBufferIndex].get(); }
+        CPyburnRTXEngine::FrameResource*              GetCurrentFrameResource()              { return m_frameResource[m_backBufferIndex].get(); }
         DXGI_FORMAT                 GetBackBufferFormat() const noexcept   { return m_backBufferFormat; }
         DXGI_FORMAT                 GetDepthBufferFormat() const noexcept  { return m_depthBufferFormat; }
         D3D12_VIEWPORT              GetScreenViewport() const noexcept     { return m_screenViewport; }
@@ -164,7 +161,7 @@ namespace DX
         // Direct3D objects.
         Microsoft::WRL::ComPtr<ID3D12Device5>               m_d3dDevice;
         Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_commandQueue;
-        std::unique_ptr<FrameResource>						m_frameResource[c_backBufferCount];
+        std::unique_ptr<CPyburnRTXEngine::FrameResource>						m_frameResource[c_backBufferCount];
 
         // Swap chain objects.
         Microsoft::WRL::ComPtr<IDXGIFactory4>               m_dxgiFactory;

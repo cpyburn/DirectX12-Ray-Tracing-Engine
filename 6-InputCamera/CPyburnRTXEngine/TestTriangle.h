@@ -1,10 +1,5 @@
 #pragma once
 
-// todo: move to pch file?
-#include <dxcapi.h>
-#include <sstream>
-#include "ConstantBuffer.h"
-
 namespace CPyburnRTXEngine
 {
 	class TestTriangle

@@ -4,6 +4,8 @@
 
 #pragma once
 
+using namespace CPyburnRTXEngine;
+
 #include <DeviceResources.h>
 #include <StepTimer.h>
 #include <TestFullscreen.h>

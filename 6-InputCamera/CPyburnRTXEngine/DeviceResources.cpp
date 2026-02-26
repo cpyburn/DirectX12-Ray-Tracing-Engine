@@ -8,10 +8,6 @@
 using namespace DirectX;
 using namespace DX;
 using namespace CPyburnRTXEngine;
-
-#include "FrameResource.h"
-#include "GraphicsContexts.h"
-
 using Microsoft::WRL::ComPtr;
 
 #ifdef __clang__

@@ -1,16 +1,12 @@
 #include "pchlib.h"
 #include "TestFullscreen.h"
 
-#include "GraphicsContexts.h"
-#include "FrameResource.h"
-#include "TestTriangle.h"
-
-const float TestFullscreen::QuadWidth = 20.0f;
-const float TestFullscreen::QuadHeight = 720.0f;
-const float TestFullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
-
 namespace CPyburnRTXEngine
 {
+    const float TestFullscreen::QuadWidth = 20.0f;
+    const float TestFullscreen::QuadHeight = 720.0f;
+    const float TestFullscreen::ClearColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
+
     TestFullscreen::TestFullscreen()
     {
 

@@ -1,5 +1,6 @@
 #pragma once
 
+using namespace DirectX;
 
 namespace CPyburnRTXEngine
 {
@@ -21,8 +22,10 @@ namespace CPyburnRTXEngine
 		CameraBase();
 		virtual ~CameraBase() = default;
 
+		ID3D12Resource* GetCbv() { return m_cameraCbv.Resource.Get(); }
+
 		virtual void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
-		virtual void Update(_In_ DX::StepTimer const& timer, _In_  const XMVECTOR& mousePosition);
-		virtual void Release();
+		//virtual void Update(_In_ DX::StepTimer const& timer, _In_  const XMVECTOR& mousePosition);
+		//virtual void Release();
 	};
 }

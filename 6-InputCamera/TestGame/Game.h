@@ -11,6 +11,7 @@ using namespace CPyburnRTXEngine;
 #include <TestFullscreen.h>
 #include <FrameResource.h>
 #include <TestTriangle.h>
+#include <CameraBase.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -70,6 +71,7 @@ private:
 
 	CPyburnRTXEngine::TestFullscreen            m_fullscreen;
 	CPyburnRTXEngine::TestTriangle              m_triangle;
+    CPyburnRTXEngine::CameraBase                m_camera;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:
     // std::unique_ptr<DirectX::GraphicsMemory> m_graphicsMemory;

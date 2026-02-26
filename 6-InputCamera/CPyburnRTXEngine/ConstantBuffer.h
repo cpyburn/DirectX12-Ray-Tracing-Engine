@@ -7,20 +7,6 @@ namespace CPyburnRTXEngine
     template<typename T>
     class ConstantBuffer
     {
-    private:
-        void Initialize()
-        {
-            if (HeapIndex[0] == 0)
-            {
-                for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
-                {
-                    HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
-                    CpuHandle[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetCpuHandle(HeapIndex[n]));
-                    GpuHandle[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetGpuHandle(HeapIndex[n]));
-                }
-            }
-        }
-
     public:
         ConstantBuffer()
         {
@@ -54,7 +40,16 @@ namespace CPyburnRTXEngine
 
         void CreateCbvOnUploadHeap(Microsoft::WRL::ComPtr<ID3D12Device> device, const WCHAR* name = L"CBV not named")
         {
-            Initialize(); // make sure descriptor heap is allocated
+            // make sure descriptor heap is allocated
+            if (HeapIndex[0] == 0)
+            {
+                for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
+                {
+                    HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
+                    CpuHandle[n] = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetCpuHandle(HeapIndex[n]));
+                    GpuHandle[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetGpuHandle(HeapIndex[n]));
+                }
+            }
 
             DX::ThrowIfFailed(device->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),

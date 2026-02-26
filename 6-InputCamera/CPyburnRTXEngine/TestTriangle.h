@@ -74,7 +74,7 @@ namespace CPyburnRTXEngine
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
 		void Update(DX::StepTimer const& timer);
-		void Render();
+		void Render(CameraBase* camera);
 		void Release();
 	};
 }

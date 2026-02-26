@@ -215,6 +215,7 @@ inline void PIXEndEvent(T*) {}
 #include "FrameResource.h"
 #include "ConstantBuffer.h"
 #include "GraphicsContexts.h"
+#include "CameraBase.h"
 #include <ppltasks.h>
 using namespace DirectX;
 //using namespace concurrency;

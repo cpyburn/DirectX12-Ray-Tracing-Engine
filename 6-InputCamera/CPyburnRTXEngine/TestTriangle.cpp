@@ -518,8 +518,8 @@ namespace CPyburnRTXEngine
         rootParamsHit.resize(1 + 1); // cbv + srv
         // CBV
         rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        rootParamsHit[0].Descriptor.RegisterSpace = 0;
-        rootParamsHit[0].Descriptor.ShaderRegister = 0;
+        rootParamsHit[0].Descriptor.RegisterSpace = 0; 
+        rootParamsHit[0].Descriptor.ShaderRegister = 1; // b1
         // SRV
         rangeHit.resize(1); // srv
         rangeHit[0].BaseShaderRegister = 1; // gOutput used the first t() register in the shader
@@ -685,29 +685,35 @@ namespace CPyburnRTXEngine
         subobjects[index++].pDesc = &config;
 #pragma endregion
 
-#pragma region Global root signature, required always
-        // Global root signature. We don't actually use it in this sample, but it's required to create the pipeline state object
-        D3D12_ROOT_SIGNATURE_DESC emptyDescGlobal = {};
-        emptyDescGlobal.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+#pragma region Global root signature (with camera CBV)
+        // Global root signature: camera CBV at b0
+        D3D12_ROOT_PARAMETER globalParams[1] = {};
+        globalParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        globalParams[0].Descriptor.ShaderRegister = 0; // b0
+        globalParams[0].Descriptor.RegisterSpace = 0;
+        globalParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+        D3D12_ROOT_SIGNATURE_DESC globalDesc = {};
+        globalDesc.NumParameters = _countof(globalParams);
+        globalDesc.pParameters = globalParams;
+        globalDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
         Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobGlobal;
         Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobGlobal;
-        HRESULT hrGlobal = D3D12SerializeRootSignature(&emptyDescGlobal, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobGlobal, &pErrorBlobGlobal);
+        HRESULT hrGlobal = D3D12SerializeRootSignature(&globalDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobGlobal, &pErrorBlobGlobal);
         if (FAILED(hrGlobal))
         {
-            if (pErrorBlobGlobal)
-            {
-                OutputDebugStringA((char*)pErrorBlobGlobal->GetBufferPointer());
-            }
-            throw std::runtime_error("Failed to serialize root signature");
+            if (pErrorBlobGlobal) OutputDebugStringA((char*)pErrorBlobGlobal->GetBufferPointer());
+            throw std::runtime_error("Failed to serialize global root signature");
         }
 
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobGlobal->GetBufferPointer(), pSigBlobGlobal->GetBufferSize(), IID_PPV_ARGS(&mpEmptyRootSig)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobGlobal->GetBufferPointer(), pSigBlobGlobal->GetBufferSize(), IID_PPV_ARGS(&mpEmptyRootSig))); // mpEmptyRootSig now holds global RS
 
         ID3D12RootSignature* pRootSigGlobalPtr = mpEmptyRootSig.Get();
         subobjects[index].pDesc = &pRootSigGlobalPtr;
-        subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+        subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
 #pragma endregion
+
 
         // Create the state object
         D3D12_STATE_OBJECT_DESC stateObjectDesc = {};
@@ -1050,7 +1056,7 @@ namespace CPyburnRTXEngine
 
     }
 
-    void TestTriangle::Render()
+    void TestTriangle::Render(CameraBase* camera)
     {
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
@@ -1112,6 +1118,7 @@ namespace CPyburnRTXEngine
 
             // 6.4.e Bind the empty root signature
             m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
+            m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
 
             // 6.4.f Set Pipeline
             m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());

@@ -40,8 +40,18 @@ struct STriVertex
 };
 StructuredBuffer<STriVertex> BTriVertex : register(t1);
 
+cbuffer Camera : register(b0)
+{
+    float4x4 invViewProj;   // inverse view * projection matrix (maps clip -> world)
+    float3   camPos;       // camera world-space position (ray origin)
+    //float    _pad0;        // pad to 16 bytes
+
+    float2   resolution;   // screen resolution (width, height)
+    //float2   _pad1;        // pad to 16 bytes (keep cb size multiple of 16)
+}
+
 // 10.1.a
-cbuffer PerFrame : register(b0)
+cbuffer PerFrame : register(b1)
 {
     float3 A;
     float3 B;

@@ -85,8 +85,8 @@ void Game::Render()
         return;
     }
 
-    m_fullscreen.Render();
-	//m_triangle.Render();
+    //m_fullscreen.Render();
+	m_triangle.Render(&m_camera);
     m_deviceResources->Render();
 
     ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
@@ -282,6 +282,7 @@ void Game::CreateDeviceDependentResources()
     // TODO: Initialize device dependent objects here (independent of window size).
     m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);
+    m_camera.CreateDeviceDependentResources(m_deviceResources);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.

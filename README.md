@@ -41,3 +41,5 @@ Note: I will not be doing any code reuse methods for the next couple of tutorial
 ### [5-Buffered Top Level Acceleration Structure for rebuilding or refitting with vertex data available in shader](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/4-TriangleShadow) 
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/ce19812a-2038-4c12-a97a-351b153390fb" />
 
+### [6-Global Root Signature, Camera, and user input]() 
+Coming soon

@@ -40,7 +40,6 @@ namespace CPyburnRTXEngine
         XMFLOAT4 color;
     };
 
-
     void TestTriangle::createAccelerationStructures()
     {
         D3D12_RESOURCE_DESC bufDesc = {};
@@ -1037,7 +1036,7 @@ namespace CPyburnRTXEngine
 
     void TestTriangle::Update(DX::StepTimer const& timer)
     {
-		float rotation = timer.GetTotalSeconds() * 0.5f;
+		float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
 		XMMATRIX orthoLH = XMMatrixIdentity();
         //XMMATRIX orthoLH = XMMatrixOrthographicLH(static_cast<float>(m_deviceResources->GetResolution().Width), static_cast<float>(m_deviceResources->GetResolution().Height), 0.0f, 100.0f);

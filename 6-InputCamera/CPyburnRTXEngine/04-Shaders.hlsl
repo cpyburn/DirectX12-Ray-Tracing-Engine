@@ -100,6 +100,61 @@ void rayGen()
     gOutput[launchIndex.xy] = float4(col, 1);
 }
 
+// Replace the previous rayGen() with this implementation
+//[shader("raygeneration")]
+//void rayGen()
+//{
+//    // pixel / dispatch indices
+//    uint3 launchIndex = DispatchRaysIndex();
+//    // Use resolution from the Camera cbuffer (safer when windows resize)
+//    float2 dims = resolution;
+
+//    // subpixel center
+//    float2 pixel = (float2(launchIndex.xy) + 0.5f);
+
+//    // NDC in range [-1, +1]
+//    float2 ndc = (pixel / dims) * 2.0f - 1.0f;
+
+//    // Build a clip-space position at the far plane (z = 1, w = 1)
+//    float4 clip = float4(ndc.xy, 1.0f, 1.0f);
+
+//    // Transform clip -> world using inverse view-projection
+//    float4 worldPosH = mul(invViewProj, clip);
+//    worldPosH /= worldPosH.w;
+//    float3 worldPos = worldPosH.xyz;
+
+//    // Ray origin from camera CB; direction from camera to worldPos
+//    RayDesc ray;
+//    ray.Origin = camPos;
+//    ray.Direction = normalize(worldPos - camPos);
+
+//    // T range
+//    ray.TMin = 0.001; // avoid self-intersections
+//    ray.TMax = 1e8;
+
+//    // payload init
+//    RayPayload payload;
+//    payload.color = float3(0, 0, 0);
+
+//    // Trace the ray.
+//    // Keep SBT offset = 0, SBT contribution-to-hitgroup-index = 2 (as your example),
+//    // and miss index = 0 (adjust if your shader table layout differs).
+//    TraceRay(
+//        gRtScene, // acceleration structure
+//        0, // rayFlags
+//        0xFF, // instance inclusion mask
+//        0, // SBT record offset
+//        2, // SBT record stride / multiplier for hit-group index contribution
+//        0, // miss shader index
+//        ray,
+//        payload
+//    );
+
+//    // Convert to sRGB and write out
+//    float3 col = linearToSrgb(payload.color);
+//    gOutput[launchIndex.xy] = float4(col, 1.0f);
+//}
+
 // 7.2 Miss Shader
 [shader("miss")]
 void miss(inout RayPayload payload)

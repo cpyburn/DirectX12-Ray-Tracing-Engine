@@ -70,6 +70,7 @@ void Game::Update(DX::StepTimer const& timer)
     // TODO: Add your game logic here.
     m_fullscreen.Update(timer);
 	m_triangle.Update(timer);
+    m_camera.Update(timer, XMVectorZero());
 
     PIXEndEvent();
 }
@@ -290,6 +291,7 @@ void Game::CreateWindowSizeDependentResources()
 {
     // TODO: Initialize windows-size dependent objects here.
     m_triangle.CreateWindowSizeDependentResources();
+    m_camera.CreateWindowSizeDependentResources();
 }
 
 void Game::OnDeviceLost()

@@ -93,10 +93,10 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(m_sceneCommandList->Close());
     }
 
-    void TestFullscreen::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResource)
+    void TestFullscreen::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
     {
-        m_deviceResources = deviceResource;
-        Microsoft::WRL::ComPtr<ID3D12Device> device = deviceResource->GetD3DDevice();
+        m_deviceResources = deviceResources;
+        Microsoft::WRL::ComPtr<ID3D12Device> device = deviceResources->GetD3DDevice();
 
         D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
@@ -248,17 +248,14 @@ namespace CPyburnRTXEngine
 
             for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
             {
-                m_sceneConstantBuffer.HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
-                CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_sceneConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
-
                 // Describe and create constant buffer views.
                 D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
                 cbvDesc.BufferLocation = cbvGpuAddress;
                 cbvDesc.SizeInBytes = m_sceneConstantBuffer.AlignedSize;
-                device->CreateConstantBufferView(&cbvDesc, cpuHandle);
+                device->CreateConstantBufferView(&cbvDesc, GraphicsContexts::GetCpuHandle(m_sceneConstantBuffer.HeapIndex[n]));
 
                 cbvGpuAddress += m_sceneConstantBuffer.AlignedSize;
-                m_sceneConstantBuffer.GpuHandle[n] = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_sceneConstantBuffer.HeapIndex[n], GraphicsContexts::c_descriptorSize);
+                m_sceneConstantBuffer.GpuHandle[n] = GraphicsContexts::GetGpuHandle(m_sceneConstantBuffer.HeapIndex[n]);
             }
 
             // Map and initialize the constant buffer. We don't unmap this until the

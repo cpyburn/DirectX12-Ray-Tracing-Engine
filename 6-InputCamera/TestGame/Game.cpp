@@ -85,8 +85,8 @@ void Game::Render()
         return;
     }
 
-    //m_fullscreen.Render();
-	m_triangle.Render();
+    m_fullscreen.Render();
+	//m_triangle.Render();
     m_deviceResources->Render();
 
     ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();

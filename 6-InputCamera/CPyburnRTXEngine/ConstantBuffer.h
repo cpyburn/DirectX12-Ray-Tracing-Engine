@@ -10,7 +10,10 @@ namespace CPyburnRTXEngine
     public:
         ConstantBuffer()
         {
-             
+            for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
+            {
+                HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
+            }
         }
 
         ~ConstantBuffer()

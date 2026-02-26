@@ -1018,8 +1018,6 @@ namespace CPyburnRTXEngine
 
                 for (UINT n = 0; n < DX::DeviceResources::c_backBufferCount; n++)
                 {
-                    mpConstantBuffer[cbvIndex].HeapIndex[n] = GraphicsContexts::GetAvailableHeapPosition();
-
                     // Describe and create constant buffer views.
                     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
                     cbvDesc.BufferLocation = cbvGpuAddress;

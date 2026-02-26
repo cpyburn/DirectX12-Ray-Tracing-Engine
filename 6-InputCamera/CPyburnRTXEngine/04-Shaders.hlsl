@@ -86,9 +86,19 @@ void rayGen()
 
     float2 d = ((crd / dims) * 2.f - 1.f);
     float aspectRatio = dims.x / dims.y;
+    
+    //// Transform clip -> world using inverse view-projection
+    //float4 worldPosH = mul(invViewProj, clip);
+    //worldPosH /= worldPosH.w;
+    //float3 worldPos = worldPosH.xyz;
+
+    //// Ray origin from camera CB; direction from camera to worldPos
+    //RayDesc ray;
+    //ray.Origin = camPos;
+    //ray.Direction = normalize(worldPos - camPos);
 
     RayDesc ray;
-    ray.Origin = float3(0, 0, -2);
+    ray.Origin = camPos;
     ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
 
     ray.TMin = 0;

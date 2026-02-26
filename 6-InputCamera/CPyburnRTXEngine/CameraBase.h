@@ -23,7 +23,7 @@ namespace CPyburnRTXEngine
 		float m_fieldOfView = 0;
 
 		XMVECTOR m_up = { 0.0f, 1.0f, 0.0f, 0.0f };
-		XMVECTOR m_eye = { 0.0f, 1.0f, 15.0f, 0.0f };
+		XMVECTOR m_eye = { 0.0f, 1.0f, -5.0f, 0.0f };
 		XMVECTOR m_lookAt = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		CameraCbv m_cbvData = {};

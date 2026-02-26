@@ -71,7 +71,7 @@ namespace CPyburnRTXEngine
 
 		void createConstantBuffer();
 		static const UINT countOfConstantBuffers = 3;
-		ConstantBuffer<XMFLOAT4[9], DeviceResources::c_backBufferCount> mpConstantBuffer[countOfConstantBuffers];
+		ConstantBuffer<XMFLOAT4[9]> mpConstantBuffer[countOfConstantBuffers];
 
 	public:
 		TestTriangle();

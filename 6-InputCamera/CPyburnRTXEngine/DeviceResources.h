@@ -35,7 +35,7 @@ namespace DX
         static constexpr unsigned int c_EnableHDR    = 0x2;
         static constexpr unsigned int c_ReverseDepth = 0x4;
 
-        static constexpr unsigned int c_backBufferCount = 2;
+        static constexpr unsigned int c_backBufferCount = 3;
 
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
                         DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,

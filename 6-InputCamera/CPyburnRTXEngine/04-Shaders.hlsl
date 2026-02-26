@@ -106,8 +106,15 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
     // 15.4.b
     uint instance = InstanceID();
-    float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
-    payload.color = hitColor;
+    if (instance < 2)
+    {
+        float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
+        payload.color = hitColor;
+        return;
+    }
+    //float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
+    //payload.color = hitColor;
+    payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
 }
 
 // 13.1.a

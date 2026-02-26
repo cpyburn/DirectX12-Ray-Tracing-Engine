@@ -4,7 +4,7 @@
 
 namespace CPyburnRTXEngine
 {
-    template<typename T, UINT FrameCount>
+    template<typename T>
     class ConstantBuffer
     {
     public:
@@ -24,14 +24,13 @@ namespace CPyburnRTXEngine
         T CpuData{};
 
         // D3D12 requires 256-byte alignment for CBVs
-        static constexpr UINT AlignedSize =
-            (sizeof(T) + 255u) & ~255u;
+        static constexpr UINT AlignedSize = (sizeof(T) + 255u) & ~255u;
 
         // Per-frame descriptor heap positions
-        UINT HeapIndex[FrameCount]{};
+        UINT HeapIndex[DeviceResources::c_backBufferCount]{};
 
         // Per-frame GPU descriptor handles
-        CD3DX12_GPU_DESCRIPTOR_HANDLE GpuHandle[FrameCount]{};
+        CD3DX12_GPU_DESCRIPTOR_HANDLE GpuHandle[DeviceResources::c_backBufferCount]{};
 
         // Upload heap resource
         Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
@@ -47,7 +46,7 @@ namespace CPyburnRTXEngine
 
         void Release()
         {
-            for (UINT n = 0; n < FrameCount; n++)
+            for (UINT n = 0; n < DeviceResources::c_backBufferCount; n++)
             {
                 GraphicsContexts::RemoveHeapPosition(HeapIndex[n]);
             }

@@ -1,31 +1,3 @@
-/***************************************************************************
-# Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#  * Neither the name of NVIDIA CORPORATION nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-***************************************************************************/
-
 // 4.2 Ray - Tracing Shaders 04 - Shaders.hlsl
 
 // 4.3.a Ray-Generation Shader
@@ -122,61 +94,6 @@ void rayGen()
     float3 col = linearToSrgb(payload.color);
     gOutput[launchIndex.xy] = float4(col, 1);
 }
-
-// Replace the previous rayGen() with this implementation
-//[shader("raygeneration")]
-//void rayGen()
-//{
-//    // pixel / dispatch indices
-//    uint3 launchIndex = DispatchRaysIndex();
-//    // Use resolution from the Camera cbuffer (safer when windows resize)
-//    float2 dims = resolution;
-
-//    // subpixel center
-//    float2 pixel = (float2(launchIndex.xy) + 0.5f);
-
-//    // NDC in range [-1, +1]
-//    float2 ndc = (pixel / dims) * 2.0f - 1.0f;
-
-//    // Build a clip-space position at the far plane (z = 1, w = 1)
-//    float4 clip = float4(ndc.xy, 1.0f, 1.0f);
-
-//    // Transform clip -> world using inverse view-projection
-//    float4 worldPosH = mul(invViewProj, clip);
-//    worldPosH /= worldPosH.w;
-//    float3 worldPos = worldPosH.xyz;
-
-//    // Ray origin from camera CB; direction from camera to worldPos
-//    RayDesc ray;
-//    ray.Origin = camPos;
-//    ray.Direction = normalize(worldPos - camPos);
-
-//    // T range
-//    ray.TMin = 0.001; // avoid self-intersections
-//    ray.TMax = 1e8;
-
-//    // payload init
-//    RayPayload payload;
-//    payload.color = float3(0, 0, 0);
-
-//    // Trace the ray.
-//    // Keep SBT offset = 0, SBT contribution-to-hitgroup-index = 2 (as your example),
-//    // and miss index = 0 (adjust if your shader table layout differs).
-//    TraceRay(
-//        gRtScene, // acceleration structure
-//        0, // rayFlags
-//        0xFF, // instance inclusion mask
-//        0, // SBT record offset
-//        2, // SBT record stride / multiplier for hit-group index contribution
-//        0, // miss shader index
-//        ray,
-//        payload
-//    );
-
-//    // Convert to sRGB and write out
-//    float3 col = linearToSrgb(payload.color);
-//    gOutput[launchIndex.xy] = float4(col, 1.0f);
-//}
 
 // 7.2 Miss Shader
 [shader("miss")]

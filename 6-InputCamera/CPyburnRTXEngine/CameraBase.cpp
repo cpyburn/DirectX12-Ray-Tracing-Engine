@@ -23,30 +23,79 @@ namespace CPyburnRTXEngine
         m_aspectRatio = m_deviceResources->GetScreenViewport().Width / m_deviceResources->GetScreenViewport().Height;
     }
 
-	void CameraBase::Update(DX::StepTimer const& timer, GameInput* gameInput)
-	{
-        // build view and projection (Left-handed example)
-        XMMATRIX view = XMMatrixLookAtLH(m_eye, m_lookAt, m_up);
+    void CameraBase::Update(DX::StepTimer const& timer, GameInput* gameInput)
+    {
+        float dt = static_cast<float>(timer.GetElapsedSeconds());
+
+        // =========================
+        // Mouse Look (Relative Mode)
+        // =========================
+        auto mouse = gameInput->GetMouse()->GetState();
+        auto previousMouse = gameInput->GetMouseButtons().GetLastState();
+
+        // Switch modes based on left button
+        gameInput->GetMouse()->SetMode(mouse.rightButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
+
+        if (mouse.positionMode == Mouse::MODE_RELATIVE)
+        {
+            // In relative mode, x/y are already deltas
+            float deltaX = static_cast<float>(previousMouse.x);
+            float deltaY = static_cast<float>(previousMouse.y);
+
+            m_yaw += deltaX * m_mouseSensitivity;
+            m_pitch += deltaY * m_mouseSensitivity;
+
+            // Clamp pitch so we don’t flip upside down
+            m_pitch = std::clamp(m_pitch, -XM_PIDIV2 + 0.01f, XM_PIDIV2 - 0.01f);
+        }
+
+        // =========================
+        // 2. BUILD CAMERA BASIS
+        // =========================
+        XMMATRIX rotation = XMMatrixRotationRollPitchYaw(m_pitch, m_yaw, 0.0f);
+        XMVECTOR forward = XMVector3TransformNormal(XMVectorSet(0, 0, 1, 0), rotation);
+        XMVECTOR right = XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), rotation);
+        XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+
+        // =========================
+        // 3. KEYBOARD MOVEMENT
+        // =========================
+        auto keyboard = gameInput->GetKeyboard()->GetState();
+        XMVECTOR move = XMVectorZero();
+
+        if (keyboard.W)
+            move += forward;
+        if (keyboard.S)
+            move -= forward;
+        if (keyboard.A)
+            move -= right;
+        if (keyboard.D)
+            move += right;
+
+        if (!XMVector3Equal(move, XMVectorZero()))
+            move = XMVector3Normalize(move);
+
+        m_eye += move * m_movementSpeed * dt;
+
+        // =========================
+        // 4. BUILD VIEW / PROJECTION
+        // =========================
+        XMVECTOR lookAt = m_eye + forward;
+        XMMATRIX view = XMMatrixLookAtLH(m_eye, lookAt, up);
         XMMATRIX proj = XMMatrixPerspectiveFovLH(m_fieldOfView, m_aspectRatio, 0.1f, 1000.0f);
         XMMATRIX invView = XMMatrixInverse(nullptr, view);
         XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
 
-        // view * proj maps world -> clip. We need its inverse to map clip->world.
-        XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-        XMMATRIX invViewProj = XMMatrixInverse(nullptr, viewProj);
-
+        // =========================
+        // 5. UPDATE CONSTANT BUFFER
+        // =========================
         XMStoreFloat4x4(&m_cameraCbv.CpuData.gView, view);
         XMStoreFloat4x4(&m_cameraCbv.CpuData.gProj, proj);
         XMStoreFloat4x4(&m_cameraCbv.CpuData.gInvView, invView);
         XMStoreFloat4x4(&m_cameraCbv.CpuData.gInvProj, invProj);
 
-        // camera position
         XMStoreFloat3(&m_cameraCbv.CpuData.gCameraPos, m_eye);
 
-        // resolution must be set by you from your DeviceResources
-        // dst->resolution = XMFLOAT2(float(width), float(height));
-        //m_cameraCbv.CpuData.resolution = XMFLOAT2(1280.0f, 720.0f);
-
         m_cameraCbv.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
-	}
+    }
 }

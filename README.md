@@ -23,6 +23,7 @@ Requirements:
   
 We will slowly add these as we go:
 - [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) nuget
+- [cmake](https://cmake.org/download/)
 - [Directxtk 12](https://github.com/microsoft/DirectXTK/) nuget
 - [DXC](https://github.com/Microsoft/DirectXShaderCompiler) nuget
 - [Assimp](https://github.com/assimp/assimp) manual install

@@ -50,6 +50,9 @@
     <ClInclude Include="CameraBase.h">
       <Filter>Cameras</Filter>
     </ClInclude>
+    <ClInclude Include="GameInput.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -72,6 +75,9 @@
     </ClCompile>
     <ClCompile Include="CameraBase.cpp">
       <Filter>Cameras</Filter>
+    </ClCompile>
+    <ClCompile Include="GameInput.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

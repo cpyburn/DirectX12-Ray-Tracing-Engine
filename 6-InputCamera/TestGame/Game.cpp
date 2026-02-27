@@ -70,7 +70,19 @@ void Game::Update(DX::StepTimer const& timer)
     // TODO: Add your game logic here.
     m_fullscreen.Update(timer);
 	m_triangle.Update(timer);
-    m_camera.Update(timer, XMVectorZero());
+    m_camera.Update(timer);
+
+    auto keyboard = m_gameInput.GetKeyboard()->GetState();
+    if (keyboard.Left)
+    {
+        m_deviceResources->DecreaseResolutionIndex();
+        CreateWindowSizeDependentResources();
+    }
+    if (keyboard.Right)
+    {
+        m_deviceResources->IncreaseResolutionIndex();
+        CreateWindowSizeDependentResources();
+    }
 
     PIXEndEvent();
 }
@@ -86,8 +98,8 @@ void Game::Render()
         return;
     }
 
-    //m_fullscreen.Render();
-	m_triangle.Render(&m_camera);
+    m_fullscreen.Render();
+	//m_triangle.Render(&m_camera);
     m_deviceResources->Render();
 
     ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();
@@ -161,6 +173,7 @@ void Game::OnDeactivated()
 void Game::OnSuspending()
 {
     // TODO: Game is being power-suspended (or minimized).
+    m_gameInput.OnSuspending();
 }
 
 void Game::OnResuming()
@@ -168,6 +181,7 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 
     // TODO: Game is being power-resumed (or returning from minimize).
+    m_gameInput.OnResuming();
 }
 
 void Game::OnWindowMoved()
@@ -189,66 +203,6 @@ void Game::OnWindowSizeChanged(int width, int height)
     CreateWindowSizeDependentResources();
 
     // TODO: Game window is being resized.
-}
-
-void Game::OnKeyDown(UINT8 key)
-{
-	switch (key)
-	{
-    // Instrument the Space Bar to toggle between fullscreen states.
-    // The window message loop callback will receive a WM_SIZE message once the
-    // window is in the fullscreen state. At that point, the IDXGISwapChain should
-    // be resized to match the new window size.
-    //
-    // NOTE: ALT+Enter will perform a similar operation; the code below is not
-    // required to enable that key combination.
-    //case VK_SPACE:
-    //{
-    //    if (m_tearingSupport)
-    //    {
-    //        Win32Application::ToggleFullscreenWindow();
-    //    }
-    //    else
-    //    {
-    //        BOOL fullscreenState;
-    //        ThrowIfFailed(m_swapChain->GetFullscreenState(&fullscreenState, nullptr));
-    //        if (FAILED(m_swapChain->SetFullscreenState(!fullscreenState, nullptr)))
-    //        {
-    //            // Transitions to fullscreen mode can fail when running apps over
-    //            // terminal services or for some other unexpected reason.  Consider
-    //            // notifying the user in some way when this happens.
-    //            OutputDebugString(L"Fullscreen transition failed");
-    //            assert(false);
-    //        }
-    //    }
-    //    break;
-    //}
-
-    // Instrument the Right Arrow key to change the scene rendering resolution 
-    // to the next resolution option. 
-    case VK_RIGHT:
-    {
-        m_deviceResources->IncreaseResolutionIndex();
-        CreateWindowSizeDependentResources();
-    }
-    break;
-
-    // Instrument the Left Arrow key to change the scene rendering resolution 
-    // to the previous resolution option.
-    case VK_LEFT:
-    {
-		m_deviceResources->DecreaseResolutionIndex();
-        CreateWindowSizeDependentResources();
-    }
-    break;
-    
-	case VK_ESCAPE:
-		ExitGame();
-		break;
-
-	default:
-		break;
-	}
 }
 
 // Properties
@@ -284,6 +238,7 @@ void Game::CreateDeviceDependentResources()
     m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);
     m_camera.CreateDeviceDependentResources(m_deviceResources);
+    m_gameInput.CreateDeviceDependentResources(m_deviceResources);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.

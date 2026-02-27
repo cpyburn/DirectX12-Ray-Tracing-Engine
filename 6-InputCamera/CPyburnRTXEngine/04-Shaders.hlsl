@@ -78,8 +78,8 @@ struct RayPayload
 [shader("raygeneration")]
 void rayGen()
 {
-    //uint3 launchIndex = DispatchRaysIndex();
-    //uint3 launchDim = DispatchRaysDimensions();
+    uint3 launchIndex = DispatchRaysIndex();
+    uint3 launchDim = DispatchRaysDimensions();
 
     //float2 crd = float2(launchIndex.xy);
     //float2 dims = float2(launchDim.xy);
@@ -93,11 +93,8 @@ void rayGen()
 
     //ray.TMin = 0;
     //ray.TMax = 100000;
-    
-    uint2 pixel = DispatchRaysIndex().xy;
-    uint2 dims = DispatchRaysDimensions().xy;
 
-    float2 uv = (pixel + 0.5) / dims;
+    float2 uv = (launchIndex + 0.5) / launchDim;
     uv = uv * 2.0 - 1.0;
 
     // Flip Y for DX coordinate space
@@ -112,7 +109,6 @@ void rayGen()
 
     // World space direction
     float4 world = mul(gInvView, float4(view.xyz, 0.0));
-
     float3 rayDir = normalize(world.xyz);
 
     RayDesc ray;

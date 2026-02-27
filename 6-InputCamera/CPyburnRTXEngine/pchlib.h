@@ -209,6 +209,8 @@ inline void PIXEndEvent(T*) {}
 #include <dxcapi.h> // d3dcompiler nuget
 #include <Keyboard.h> // directxtk nuget
 #include <Mouse.h> // directxtk nuget
+#include <GamePad.h> // directxtk nuget
+//#include "GameInput.h"
 // CONVIENENCE classes that will used all over
 #include "DeviceResources.h" // available to all libraries
 //using namespace DX;

@@ -12,6 +12,7 @@ using namespace CPyburnRTXEngine;
 #include <FrameResource.h>
 #include <TestTriangle.h>
 #include <CameraBase.h>
+#include <GameInput.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -47,9 +48,6 @@ public:
     void OnDisplayChange();
     void OnWindowSizeChanged(int width, int height);
 
-    // todo: replace when input is added
-    void OnKeyDown(UINT8 key);
-
     // Properties
     void GetDefaultSize( int& width, int& height ) const noexcept;
 
@@ -72,6 +70,7 @@ private:
 	CPyburnRTXEngine::TestFullscreen            m_fullscreen;
 	CPyburnRTXEngine::TestTriangle              m_triangle;
     CPyburnRTXEngine::CameraBase                m_camera;
+    CPyburnRTXEngine::GameInput                 m_gameInput;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:
     // std::unique_ptr<DirectX::GraphicsMemory> m_graphicsMemory;

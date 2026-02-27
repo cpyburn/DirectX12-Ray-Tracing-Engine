@@ -127,15 +127,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     switch (message)
     {
-		// todo: remove this region when input is added
-#pragma region Remove when input is added
-    case WM_KEYDOWN:
-        if (game)
-        {
-            game->OnKeyDown(static_cast<UINT8>(wParam));
-        }
-        return 0;
-#pragma endregion
     case WM_CREATE:
         if (lParam)
         {
@@ -230,8 +221,43 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 game->OnDeactivated();
             }
+
+            Keyboard::ProcessMessage(message, wParam, lParam);
+            Mouse::ProcessMessage(message, wParam, lParam);
         }
         break;
+
+    case WM_ACTIVATE:
+    case WM_INPUT:
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MOUSEWHEEL:
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+    case WM_MOUSEHOVER:
+        if (game)
+        {
+            Mouse::ProcessMessage(message, wParam, lParam);
+        }      
+        break;
+
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        if (game)
+        {
+            Keyboard::ProcessMessage(message, wParam, lParam);
+        }
+        break;
+
+    case WM_MOUSEACTIVATE:
+        // When you click activate the window, we want Mouse to ignore it.
+        return MA_ACTIVATEANDEAT;
 
     case WM_POWERBROADCAST:
         switch (wParam)
@@ -261,6 +287,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_SYSKEYDOWN:
+        if (game)
+        {
+            Keyboard::ProcessMessage(message, wParam, lParam);
+        }
         if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
         {
             // Implements the classic ALT+ENTER fullscreen toggle

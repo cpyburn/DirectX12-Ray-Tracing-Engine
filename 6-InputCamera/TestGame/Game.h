@@ -4,14 +4,15 @@
 
 #pragma once
 
-using namespace CPyburnRTXEngine;
+//using namespace CPyburnRTXEngine;
 
 #include <DeviceResources.h>
 #include <StepTimer.h>
+
 #include <TestFullscreen.h>
 #include <FrameResource.h>
 #include <TestTriangle.h>
-#include <CameraBase.h>
+//#include <CameraBase.h>
 //#include <GameInput.h>
 
 // A basic game implementation that creates a D3D12 device and

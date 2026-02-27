@@ -23,7 +23,7 @@ namespace CPyburnRTXEngine
         m_aspectRatio = m_deviceResources->GetScreenViewport().Width / m_deviceResources->GetScreenViewport().Height;
     }
 
-	void CameraBase::Update(_In_ DX::StepTimer const& timer)
+	void CameraBase::Update(DX::StepTimer const& timer, GameInput* gameInput)
 	{
         // build view and projection (Left-handed example)
         XMMATRIX view = XMMatrixLookAtLH(m_eye, m_lookAt, m_up);

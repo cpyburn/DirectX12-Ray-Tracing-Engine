@@ -36,7 +36,7 @@ namespace CPyburnRTXEngine
 
 		virtual void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		virtual void CreateWindowSizeDependentResources();
-		virtual void Update(_In_ DX::StepTimer const& timer);
+		virtual void Update(DX::StepTimer const& timer, GameInput* gameInput);
 		//virtual void Release();
 	};
 }

@@ -43,14 +43,14 @@ Alright chums let's do this!
 2. Tutorials 3, 4, 5 will cover everything we did in these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tutorials-2). So if you get lost, go look at those.
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/873ef043-4a61-4a68-bf36-9e0ce6cacbae" />
 
-### [4-Rendering shadow rays]() 
+### [4-Rendering shadow rays](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/4-TriangleShadow) 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/5e39af24-4db7-456b-a6d4-06106b31ee04" />
 
-### [5-Buffered Top Level Acceleration Structure for rebuilding or refitting with vertex data available in shader]() 
+### [5-Buffered Top Level Acceleration Structure for rebuilding or refitting with vertex data available in shader](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/5-TriangleRefitting) 
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/ce19812a-2038-4c12-a97a-351b153390fb" />
 
-### [6-Global Root Signature, Camera, and game input using Directxtk12]() 
+### [6-Global Root Signature, Camera, and game input using Directxtk12](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/6-InputCamera) 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/ffb22ba7-e064-4991-9290-ac5a181e1880" />
 
-### [7-Textures and Terrain]() 
+### [7-Assimp and Models](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/7-Models) 
 Coming soon

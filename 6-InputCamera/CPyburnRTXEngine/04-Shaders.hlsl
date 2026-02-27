@@ -42,12 +42,12 @@ StructuredBuffer<STriVertex> BTriVertex : register(t1);
 
 cbuffer Camera : register(b0)
 {
-    float4x4 invViewProj;   // inverse view * projection matrix (maps clip -> world)
-    float3   camPos;       // camera world-space position (ray origin)
-    //float    _pad0;        // pad to 16 bytes
+    float4x4 gView;
+    float4x4 gProj;
+    float4x4 gInvView;
+    float4x4 gInvProj;
 
-    float2   resolution;   // screen resolution (width, height)
-    //float2   _pad1;        // pad to 16 bytes (keep cb size multiple of 16)
+    float3 gCameraPos;
 }
 
 // 10.1.a
@@ -78,31 +78,48 @@ struct RayPayload
 [shader("raygeneration")]
 void rayGen()
 {
-    uint3 launchIndex = DispatchRaysIndex();
-    uint3 launchDim = DispatchRaysDimensions();
+    //uint3 launchIndex = DispatchRaysIndex();
+    //uint3 launchDim = DispatchRaysDimensions();
 
-    float2 crd = float2(launchIndex.xy);
-    float2 dims = float2(launchDim.xy);
+    //float2 crd = float2(launchIndex.xy);
+    //float2 dims = float2(launchDim.xy);
 
-    float2 d = ((crd / dims) * 2.f - 1.f);
-    float aspectRatio = dims.x / dims.y;
+    //float2 d = ((crd / dims) * 2.f - 1.f);
+    //float aspectRatio = dims.x / dims.y;
     
-    //// Transform clip -> world using inverse view-projection
-    //float4 worldPosH = mul(invViewProj, clip);
-    //worldPosH /= worldPosH.w;
-    //float3 worldPos = worldPosH.xyz;
-
-    //// Ray origin from camera CB; direction from camera to worldPos
     //RayDesc ray;
     //ray.Origin = camPos;
-    //ray.Direction = normalize(worldPos - camPos);
+    //ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
+
+    //ray.TMin = 0;
+    //ray.TMax = 100000;
+    
+    uint2 pixel = DispatchRaysIndex().xy;
+    uint2 dims = DispatchRaysDimensions().xy;
+
+    float2 uv = (pixel + 0.5) / dims;
+    uv = uv * 2.0 - 1.0;
+
+    // Flip Y for DX coordinate space
+    uv.y *= -1.0;
+
+    // Reconstruct clip space position
+    float4 clip = float4(uv, 1.0, 1.0);
+
+    // View space
+    float4 view = mul(gInvProj, clip);
+    view /= view.w;
+
+    // World space direction
+    float4 world = mul(gInvView, float4(view.xyz, 0.0));
+
+    float3 rayDir = normalize(world.xyz);
 
     RayDesc ray;
-    ray.Origin = camPos;
-    ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
-
-    ray.TMin = 0;
-    ray.TMax = 100000;
+    ray.Origin = gCameraPos;
+    ray.Direction = rayDir;
+    ray.TMin = 0.001;
+    ray.TMax = 10000.0;
 
     RayPayload payload;
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2 /* 13.4 MultiplierForGeometryContributionToShaderIndex */, 0, ray, payload);

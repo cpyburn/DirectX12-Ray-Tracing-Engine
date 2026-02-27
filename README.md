@@ -20,6 +20,13 @@ Requirements:
 - Visual Studio 2022 or higher
 - Raytracing capable card or willing to impliment RTX [fallback](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3D12RaytracingFallback) 
 - x64 project
+  
+We will slowly add these as we go:
+- [WinPixEventRuntime](https://devblogs.microsoft.com/pix/winpixeventruntime/) nuget
+- [Directxtk 12](https://github.com/microsoft/DirectXTK/) nuget
+- [DXC](https://github.com/Microsoft/DirectXShaderCompiler) nuget
+- [Assimp](https://github.com/assimp/assimp) manual install
+- [Physx5](https://github.com/NVIDIA-Omniverse/PhysX) manual install
 
 A good book to read:
 [3D Game Programming with DirectX 12](https://www.amazon.com/Introduction-3D-Game-Programming-DirectX/dp/1942270062/ref=sr_1_1?crid=L5KHVXIH2G9O&dib=eyJ2IjoiMSJ9.Skg7Qn77SnWByJTez6Z5q1IUJeMVfWZ7JopNz06FEhJwgvj7_Q8cUk1D2CHY7fG-pqc3i3z6Ne481D7pRMehLgPNf7TsvM8tLvrO2gtspFQ-DtczrMtf_rQkf-dC-dNoDAg49u3Frskkr_Ro-ZWrzoleaaBuAK-DKXXR6HhI_hawSCuBh_1bUtb3X5WK56n4FtSJ9ZY7topVIfrj407yDkNvd28aXqZWAYnWIz423QE.QQfxwaL_oAgcTV377fbwiT--YGlDXLUCki-qlk8pjVo&dib_tag=se&keywords=directx+12+book&qid=1760812558&sprefix=directx+12+boo%2Caps%2C169&sr=8-1)
@@ -31,8 +38,9 @@ Alright chums let's do this!
 ### [2-Adding Fullscreen code](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen)  
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/b7f7e9a7-8f30-4b15-adcf-2ff8801f16a7" />
 
-### [3-Rendering the first ray trace triangle](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/3-FirstTriangle) 
-Note: I will not be doing any code reuse methods for the next couple of tutorials. Reason, I think bouncing around lots of methods can lose some people. After a few tutorials we will start working on code scale, quailty, and reuse.
+### [3-Rendering the first ray trace triangle with DXC](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/3-FirstTriangle) 
+1. I will not be doing any code reuse methods for the next couple of tutorials. Reason, I think bouncing around lots of methods can lose some people. After a few tutorials we will start working on code scale, quailty, and reuse.
+2. Tutorials 3, 4, 5 will cover everything we did in these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tutorials-2). So if you get lost, go look at those.
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/873ef043-4a61-4a68-bf36-9e0ce6cacbae" />
 
 ### [4-Rendering shadow rays]() 
@@ -41,7 +49,7 @@ Note: I will not be doing any code reuse methods for the next couple of tutorial
 ### [5-Buffered Top Level Acceleration Structure for rebuilding or refitting with vertex data available in shader]() 
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/ce19812a-2038-4c12-a97a-351b153390fb" />
 
-### [6-Global Root Signature, Camera, and user input]() 
+### [6-Global Root Signature, Camera, and game input using Directxtk12]() 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/ffb22ba7-e064-4991-9290-ac5a181e1880" />
 
 ### [7-Textures and Terrain]() 

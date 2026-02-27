@@ -1,9 +1,10 @@
 coming soon
 
 Notes:
+Download assimp latest version
 unzip into Engine root, same path as the BuildProcessTemplates
 assimp as follows;
-cmd into assimp and cmake as 64 bit application 
+cmd into assimp directory. Something like cd C:\Users\Chad\Downloads\assimp-master\assimp-master and cmake as 64 bit application with this command 
 cmake -G "Visual Studio 17 2022" -A x64
 Assimp.sln
 

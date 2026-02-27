@@ -42,4 +42,7 @@ Note: I will not be doing any code reuse methods for the next couple of tutorial
 <img width="1282" height="759" alt="image" src="https://github.com/user-attachments/assets/ce19812a-2038-4c12-a97a-351b153390fb" />
 
 ### [6-Global Root Signature, Camera, and user input]() 
+<img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/ffb22ba7-e064-4991-9290-ac5a181e1880" />
+
+### [7-Textures and Terrain]() 
 Coming soon

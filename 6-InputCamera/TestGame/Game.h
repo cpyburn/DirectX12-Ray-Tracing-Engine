@@ -12,7 +12,7 @@ using namespace CPyburnRTXEngine;
 #include <FrameResource.h>
 #include <TestTriangle.h>
 #include <CameraBase.h>
-#include <GameInput.h>
+//#include <GameInput.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.

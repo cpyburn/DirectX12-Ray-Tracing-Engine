@@ -68,23 +68,23 @@ void Game::Update(DX::StepTimer const& timer)
     //float elapsedTime = float(timer.GetElapsedSeconds());
 
     // TODO: Add your game logic here.
-    m_fullscreen.Update(timer);
-	m_triangle.Update(timer);
-    m_camera.Update(timer);
+    m_gameInput.Update();
+    auto keys = m_gameInput.GetKeyboardKeys();
 
-    auto keyboard = m_gameInput.GetKeyboard()->GetState();
-    auto test = m_gameInput.GetKeyboardKeys();
-
-    if (test.IsKeyPressed(Keyboard::Keys::Left))
+    if (keys.IsKeyReleased(Keyboard::Keys::Left)) //keys.lastState.IsKeyDown(Keyboard::Keys::Left) && 
     {
         m_deviceResources->DecreaseResolutionIndex();
         CreateWindowSizeDependentResources();
     }
-    if (keyboard.Right)
+    if (keys.IsKeyReleased(Keyboard::Keys::Right)) //keys.lastState.IsKeyDown(Keyboard::Keys::Right) && 
     {
         m_deviceResources->IncreaseResolutionIndex();
         CreateWindowSizeDependentResources();
     }
+
+    m_fullscreen.Update(timer);
+    m_triangle.Update(timer);
+    m_camera.Update(timer);
 
     PIXEndEvent();
 }
@@ -100,8 +100,8 @@ void Game::Render()
         return;
     }
 
-    m_fullscreen.Render();
-	//m_triangle.Render(&m_camera);
+    //m_fullscreen.Render();
+	m_triangle.Render(&m_camera);
     m_deviceResources->Render();
 
     ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(FrameResource::COMMAND_LIST_SCENE_0).Get();

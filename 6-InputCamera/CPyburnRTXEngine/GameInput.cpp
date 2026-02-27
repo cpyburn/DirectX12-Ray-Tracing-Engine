@@ -1,7 +1,6 @@
 #include "pchlib.h"
 #include "GameInput.h"
 
-
 namespace CPyburnRTXEngine
 {
 	GameInput::GameInput() :

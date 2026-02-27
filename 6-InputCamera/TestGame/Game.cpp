@@ -73,7 +73,9 @@ void Game::Update(DX::StepTimer const& timer)
     m_camera.Update(timer);
 
     auto keyboard = m_gameInput.GetKeyboard()->GetState();
-    if (keyboard.Left)
+    auto test = m_gameInput.GetKeyboardKeys();
+
+    if (test.IsKeyPressed(Keyboard::Keys::Left))
     {
         m_deviceResources->DecreaseResolutionIndex();
         CreateWindowSizeDependentResources();
@@ -163,6 +165,7 @@ void Game::Clear()
 void Game::OnActivated()
 {
     // TODO: Game is becoming active window.
+    m_gameInput.OnActivated();
 }
 
 void Game::OnDeactivated()

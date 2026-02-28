@@ -34,7 +34,7 @@ Also added the following line to gitnore
 
 assimp-master/
 
-In the CPyburnRTXEngine properties>C/C++ General>Additional Include Directories>
+In the CPyburnRTXEngine properties and TestGame properties>C/C++ General>Additional Include Directories>
 Add
 
 ..\..\assimp-master\assimp-master\include

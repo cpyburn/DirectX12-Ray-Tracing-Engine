@@ -37,4 +37,4 @@ assimp-master/
 In the CPyburnRTXEngine properties and TestGame properties>C/C++ General>Additional Include Directories>
 Add
 
-..\..\assimp-master\assimp-master\include
+..\\..\assimp-master\assimp-master\include

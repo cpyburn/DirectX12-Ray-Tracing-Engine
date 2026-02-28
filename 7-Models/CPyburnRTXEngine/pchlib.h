@@ -210,6 +210,7 @@ inline void PIXEndEvent(T*) {}
 #include <Keyboard.h> // directxtk nuget
 #include <Mouse.h> // directxtk nuget
 #include <GamePad.h> // directxtk nuget
+#include <DirectXCollision.h> // directxtk nuget
 #include "GameInput.h"
 // CONVIENENCE classes that will used all over
 #include "DeviceResources.h" // available to all libraries
@@ -287,3 +288,11 @@ inline void SetNameIndexed(ID3D12Object*, LPCWSTR, UINT)
 {
 }
 #endif
+
+inline void stringToLower(std::string& utf8Str)
+{
+    for (std::string::size_type i = 0; i < utf8Str.length(); ++i)
+    {
+        utf8Str[i] = std::tolower(utf8Str[i]);
+    }
+}

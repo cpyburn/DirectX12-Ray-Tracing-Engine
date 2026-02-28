@@ -242,6 +242,7 @@ void Game::CreateDeviceDependentResources()
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);
     m_camera.CreateDeviceDependentResources(m_deviceResources);
     m_gameInput.CreateDeviceDependentResources(m_deviceResources);
+    m_model.CreateDeviceDependentResources(m_deviceResources, "Models\\Elf-ranger.X");
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.

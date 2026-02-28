@@ -14,6 +14,7 @@
 #include <TestTriangle.h>
 //#include <CameraBase.h>
 //#include <GameInput.h>
+#include <TestAssimp.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -72,6 +73,7 @@ private:
 	CPyburnRTXEngine::TestTriangle              m_triangle;
     CPyburnRTXEngine::CameraBase                m_camera;
     CPyburnRTXEngine::GameInput                 m_gameInput;
+    CPyburnRTXEngine::TestAssimp                m_model;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:
     // std::unique_ptr<DirectX::GraphicsMemory> m_graphicsMemory;

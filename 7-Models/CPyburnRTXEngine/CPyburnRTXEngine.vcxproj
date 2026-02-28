@@ -114,7 +114,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pchlib.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\assimp-master\assimp-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -122,7 +122,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>dxgi.lib;d3d12.lib;d3dcompiler.lib;dxcompiler.lib</AdditionalDependencies>
+      <AdditionalDependencies>dxgi.lib;d3d12.lib;d3dcompiler.lib;dxcompiler.lib;assimp-vc143-mtd.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\assimp-master\assimp-master\lib\Debug</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,10 +152,12 @@
     <ClInclude Include="DeviceResources.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameInput.h" />
+    <ClInclude Include="TestAssimp.h" />
     <ClInclude Include="TestFullscreen.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
     <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="TestModel.h" />
     <ClInclude Include="TestTriangle.h" />
   </ItemGroup>
   <ItemGroup>
@@ -162,6 +165,7 @@
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameInput.cpp" />
+    <ClCompile Include="TestAssimp.cpp" />
     <ClCompile Include="TestFullscreen.cpp" />
     <ClCompile Include="GraphicsContexts.cpp" />
     <ClCompile Include="pchlib.cpp">
@@ -170,6 +174,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TestModel.cpp" />
     <ClCompile Include="TestTriangle.cpp" />
   </ItemGroup>
   <ItemGroup>

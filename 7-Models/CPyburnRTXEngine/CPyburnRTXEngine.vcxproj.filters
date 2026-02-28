@@ -53,6 +53,12 @@
     <ClInclude Include="GameInput.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="TestModel.h">
+      <Filter>Testing</Filter>
+    </ClInclude>
+    <ClInclude Include="TestAssimp.h">
+      <Filter>Testing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -78,6 +84,12 @@
     </ClCompile>
     <ClCompile Include="GameInput.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="TestModel.cpp">
+      <Filter>Testing</Filter>
+    </ClCompile>
+    <ClCompile Include="TestAssimp.cpp">
+      <Filter>Testing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

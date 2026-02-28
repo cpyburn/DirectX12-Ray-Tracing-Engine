@@ -25,6 +25,8 @@ build event post command that copies to output
 copy the following dll's to the x64 build debug folder location
 \assimp-master\assimp-master\bin\Debug
 assimp-vc142-mtd.dll (or latest version)
+
+copy ..\..\assimp-master\assimp-master\bin\Debug\assimp-vc143-mtd.dll $(OutDir)
 <img width="1171" height="820" alt="image" src="https://github.com/user-attachments/assets/e8aae8e8-0e59-49a6-9d33-a3356033d58e" />
 
 

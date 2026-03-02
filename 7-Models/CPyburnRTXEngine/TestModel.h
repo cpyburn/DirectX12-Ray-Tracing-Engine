@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AssimpFactory.h" // todo: move?
+
 namespace CPyburnRTXEngine
 {
 	class TestModel
@@ -33,6 +35,7 @@ namespace CPyburnRTXEngine
 		// Acceleration structure buffers and sizes
 		void createAccelerationStructures();
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D12Resource> mpIndicesBuffer;
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpBottomLevelAS;
 		
@@ -67,6 +70,8 @@ namespace CPyburnRTXEngine
 		void createConstantBuffer();
 		static const UINT countOfConstantBuffers = 3;
 		ConstantBuffer<XMFLOAT4[9]> mpConstantBuffer[countOfConstantBuffers];
+
+		AssimpFactory m_assimpFactory;
 
 	public:
 		TestModel();

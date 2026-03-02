@@ -152,20 +152,21 @@
     <ClInclude Include="DeviceResources.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameInput.h" />
-    <ClInclude Include="TestAssimp.h" />
+    <ClInclude Include="AssimpFactory.h" />
     <ClInclude Include="TestFullscreen.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="TestModel.h" />
     <ClInclude Include="TestTriangle.h" />
+    <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraBase.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameInput.cpp" />
-    <ClCompile Include="TestAssimp.cpp" />
+    <ClCompile Include="AssimpFactory.cpp" />
     <ClCompile Include="TestFullscreen.cpp" />
     <ClCompile Include="GraphicsContexts.cpp" />
     <ClCompile Include="pchlib.cpp">
@@ -176,6 +177,7 @@
     </ClCompile>
     <ClCompile Include="TestModel.cpp" />
     <ClCompile Include="TestTriangle.cpp" />
+    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

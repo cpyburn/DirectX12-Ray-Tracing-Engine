@@ -7,8 +7,18 @@
 
 namespace CPyburnRTXEngine
 {
-	class TestAssimp
+	class AssimpFactory
 	{
+	public:
+		struct VSVertices
+		{
+			XMFLOAT3 position;
+			XMFLOAT2 texture;
+			XMFLOAT3 normal;
+			XMFLOAT3 tangent;
+			XMFLOAT3 binormal; // todo: drop for ray tracing
+		};
+
 	private:
 		struct MeshEntry
 		{
@@ -37,14 +47,7 @@ namespace CPyburnRTXEngine
 			}
 		};
 
-		struct VSVertices
-		{
-			XMFLOAT3 position;
-			XMFLOAT2 texture;
-			XMFLOAT3 normal;
-			XMFLOAT3 tangent;
-			XMFLOAT3 binormal; // todo: drop for ray tracing
-		};
+		
 
 		std::string m_pathFileName;
 		std::string m_fileName;
@@ -54,13 +57,13 @@ namespace CPyburnRTXEngine
 		Assimp::Importer m_importer;
 
 		std::vector<MeshEntry> m_meshEntries;
-		std::vector<VSVertices> m_vertices;
-		std::vector<UINT> m_indices;
+		//std::vector<VSVertices> m_vertices;
+		//std::vector<UINT> m_indices;
 		std::vector<XMFLOAT3> m_positions;
-		std::vector<std::string> m_textureDiffuse;
-		std::vector<std::string> m_textureSPEC;
-		std::vector<std::string> m_textureNRM;
-		std::vector<std::string> m_textureDISP;
+		std::string m_textureDiffuse;
+		std::string m_textureSPEC;
+		std::string m_textureNRM;
+		std::string m_textureDISP;
 
 
 		bool m_isSkinned = false;
@@ -72,17 +75,20 @@ namespace CPyburnRTXEngine
 		void CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh);
 		void InitializeMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices);
 		void InitializeMaterials();
-		void FormatTexturePath(const std::string& path, const std::string& appendType = "");
+		std::string FormatTexturePath(const std::string& path, const aiTextureType& type);
 	public:
-		TestAssimp();
-		~TestAssimp();
+		std::vector<VSVertices> m_vertices;
+		std::vector<UINT> m_indices;
+
+		AssimpFactory();
+		~AssimpFactory();
 
 		void Initialize(const std::string& fileName,
 			unsigned int customFlags = aiProcess_Triangulate
 			//| aiProcess_MakeLeftHanded
 			| aiProcess_GenSmoothNormals
 			//| aiProcess_FlipWindingOrder
-			| aiProcess_FlipUVs
+			//| aiProcess_FlipUVs
 			| aiProcess_JoinIdenticalVertices
 			| aiProcess_CalcTangentSpace
 			// todo: remove the extra processing the shaders and then enable this

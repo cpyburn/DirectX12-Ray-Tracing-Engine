@@ -34,11 +34,11 @@ namespace CPyburnRTXEngine
     };
 
     // 15.5.a
-    struct TriVertex
-    {
-        XMFLOAT3 vertex;
-        XMFLOAT4 color;
-    };
+    //struct TriVertex
+    //{
+    //    XMFLOAT3 vertex;
+    //    XMFLOAT4 color;
+    //};
 
     void TestModel::createAccelerationStructures()
     {
@@ -56,21 +56,40 @@ namespace CPyburnRTXEngine
 
         // create createTriangleVB
         {
-            const TriVertex vertices[] =
-            {
-                XMFLOAT3(0,          1,  0), XMFLOAT4(1, 0, 0, 1),
-                XMFLOAT3(0.866f,  -0.5f, 0), XMFLOAT4(1, 1, 0, 1),
-                XMFLOAT3(-0.866f, -0.5f, 0), XMFLOAT4(1, 0, 1, 1),
-            };
-            bufDesc.Width = sizeof(vertices);
+            //const TriVertex vertices[] =
+            //{
+            //    XMFLOAT3(0,          1,  0), XMFLOAT4(1, 0, 0, 1),
+            //    XMFLOAT3(0.866f,  -0.5f, 0), XMFLOAT4(1, 1, 0, 1),
+            //    XMFLOAT3(-0.866f, -0.5f, 0), XMFLOAT4(1, 0, 1, 1),
+            //};
+            bufDesc.Width = sizeof(AssimpFactory::VSVertices) * m_assimpFactory.m_vertices.size();
 
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpVertexBuffer)));
 
             // For simplicity, we create the vertex buffer on the upload heap, but that's not required
             uint8_t* pData;
             mpVertexBuffer->Map(0, nullptr, (void**)&pData);
-            memcpy(pData, vertices, sizeof(vertices));
+            memcpy(pData, m_assimpFactory.m_vertices.data(), bufDesc.Width);
             mpVertexBuffer->Unmap(0, nullptr);
+        }
+
+        // create indices
+        {
+            //const TriVertex vertices[] =
+            //{
+            //    XMFLOAT3(0,          1,  0), XMFLOAT4(1, 0, 0, 1),
+            //    XMFLOAT3(0.866f,  -0.5f, 0), XMFLOAT4(1, 1, 0, 1),
+            //    XMFLOAT3(-0.866f, -0.5f, 0), XMFLOAT4(1, 0, 1, 1),
+            //};
+            bufDesc.Width = sizeof(UINT) * m_assimpFactory.m_indices.size();
+
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpIndicesBuffer)));
+
+            // For simplicity, we create the vertex buffer on the upload heap, but that's not required
+            uint8_t* pData;
+            mpIndicesBuffer->Map(0, nullptr, (void**)&pData);
+            memcpy(pData, m_assimpFactory.m_indices.data(), bufDesc.Width);
+            mpIndicesBuffer->Unmap(0, nullptr);
         }
 
         // create createPlaneVB
@@ -112,18 +131,27 @@ namespace CPyburnRTXEngine
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
             geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             geomDesc.Triangles.VertexBuffer.StartAddress = mpVertexBuffer->GetGPUVirtualAddress(); // triangle 
-            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(TriVertex);
+            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(AssimpFactory::VSVertices);
             geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-            geomDesc.Triangles.VertexCount = 3;
+            geomDesc.Triangles.VertexCount = m_assimpFactory.m_vertices.size();
             geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+            geomDesc.Triangles.IndexBuffer = mpIndicesBuffer->GetGPUVirtualAddress();
+            geomDesc.Triangles.IndexCount = m_assimpFactory.m_indices.size(); 
+            geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 
             // add triangle
             geomDescVector[0] = geomDesc; // triangle
 
             // add plane
+            geomDesc = {};
+            geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             geomDesc.Triangles.VertexBuffer.StartAddress = mpVertexBuffer1->GetGPUVirtualAddress(); // plane
             geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
+            geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
             geomDesc.Triangles.VertexCount = 6; // plane
+            geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
             geomDescVector[1] = geomDesc; // plane
 
             // Get the size requirements for the scratch and AS buffers
@@ -181,10 +209,14 @@ namespace CPyburnRTXEngine
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
             geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             geomDesc.Triangles.VertexBuffer.StartAddress = mpVertexBuffer->GetGPUVirtualAddress();
-            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(TriVertex);
+            geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(AssimpFactory::VSVertices);
             geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-            geomDesc.Triangles.VertexCount = 3;
+            geomDesc.Triangles.VertexCount = m_assimpFactory.m_vertices.size();
             geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+            geomDesc.Triangles.IndexBuffer = mpIndicesBuffer->GetGPUVirtualAddress();
+            geomDesc.Triangles.IndexCount = m_assimpFactory.m_indices.size();
+            geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 
             // Get the size requirements for the scratch and AS buffers
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -959,8 +991,8 @@ namespace CPyburnRTXEngine
         srvDesc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-        srvDesc.Buffer.StructureByteStride = sizeof(TriVertex); // your vertex struct size goes here
-        srvDesc.Buffer.NumElements = 3; // number of vertices go here
+        srvDesc.Buffer.StructureByteStride = sizeof(AssimpFactory::VSVertices); // your vertex struct size goes here
+        srvDesc.Buffer.NumElements = m_assimpFactory.m_vertices.size(); // number of vertices go here
         m_deviceResources->GetD3DDevice()->CreateShaderResourceView(mpVertexBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mVertexBufferSrvPosition));
         mpVertexBuffer->SetName(L"SRV VB");
     }
@@ -1003,6 +1035,7 @@ namespace CPyburnRTXEngine
 
     TestModel::TestModel()
     {
+        m_assimpFactory.Initialize("Models\\Elf-ranger.X");
     }
 
     TestModel::~TestModel()

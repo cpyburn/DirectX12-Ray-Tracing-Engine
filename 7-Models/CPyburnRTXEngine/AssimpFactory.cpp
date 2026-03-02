@@ -1,9 +1,9 @@
 #include "pchlib.h"
-#include "TestAssimp.h"
+#include "AssimpFactory.h"
 
 namespace CPyburnRTXEngine
 {
-	void TestAssimp::DoMeshTransforms(aiNode* node, XMMATRIX parentTransform)
+	void AssimpFactory::DoMeshTransforms(aiNode* node, XMMATRIX parentTransform)
 	{
 		XMMATRIX nodeTransform = XMMatrixIdentity();
 		XMMATRIX nodeT = XMMatrixSet(node->mTransformation.a1, node->mTransformation.a2, node->mTransformation.a3, node->mTransformation.a4, node->mTransformation.b1, node->mTransformation.b2, node->mTransformation.b3, node->mTransformation.b4, node->mTransformation.c1, node->mTransformation.c2, node->mTransformation.c3, node->mTransformation.c4, node->mTransformation.d1, node->mTransformation.d2, node->mTransformation.d3, node->mTransformation.d4);
@@ -25,7 +25,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void TestAssimp::CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh)
+	void AssimpFactory::CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh)
 	{
 		const aiMesh* paiMesh = m_pScene->mMeshes[i];
 
@@ -55,14 +55,14 @@ namespace CPyburnRTXEngine
 		InitializeMaterials();
 	}
 
-	void TestAssimp::InitializeMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices)
+	void AssimpFactory::InitializeMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices)
 	{
 		const aiMesh* paiMesh = m_pScene->mMeshes[i];
 
-		int startingV = vertices.size();
+		size_t startingV = vertices.size();
 		vertices.resize(startingV + paiMesh->mNumVertices);
 
-		int startingI = indices.size();
+		size_t startingI = indices.size();
 		indices.resize(startingI + paiMesh->mNumFaces * 3);
 
 		m_positions.resize(vertices.size());
@@ -136,11 +136,11 @@ namespace CPyburnRTXEngine
 		perMeshPositions.clear();
 
 		// Populate the index buffer
-		int positionCounter = 0;
-		for (unsigned int i = 0; i < paiMesh->mNumFaces; i++)
+		size_t positionCounter = 0;
+		for (size_t i = 0; i < paiMesh->mNumFaces; i++)
 		{
 			const aiFace& face = paiMesh->mFaces[i];
-			int indice = startingI + i * 3;
+			size_t indice = startingI + i * 3;
 			indices[indice] = face.mIndices[0];
 
 			indice++;
@@ -151,7 +151,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void TestAssimp::InitializeMaterials()
+	void AssimpFactory::InitializeMaterials()
 	{
 		// Initialize the materials
 		for (UINT i = 0; i < m_pScene->mNumMaterials; i++)
@@ -164,62 +164,94 @@ namespace CPyburnRTXEngine
 
 				if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
 				{
-					m_textureDiffuse.push_back(m_pathDirectory + (std::string)aiPath.data);
-				}
-
-				if (pMaterial->GetTextureCount(aiTextureType_SPECULAR) > 0)
-				{
-					aiString aiPath;
-
-					if (pMaterial->GetTexture(aiTextureType_SPECULAR, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
-					{
-						m_textureSPEC.push_back(m_pathDirectory + (std::string)aiPath.data);
-					}
-				}
-
-				if (pMaterial->GetTextureCount(aiTextureType_NORMALS) > 0)
-				{
-					aiString aiPath;
-
-					if (pMaterial->GetTexture(aiTextureType_NORMALS, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
-					{
-						m_textureNRM.push_back(m_pathDirectory + (std::string)aiPath.data);
-					}
-				}
-
-				if (pMaterial->GetTextureCount(aiTextureType_DISPLACEMENT) > 0)
-				{
-					aiString aiPath;
-
-					if (pMaterial->GetTexture(aiTextureType_DISPLACEMENT, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
-					{
-						m_textureDISP.push_back(m_pathDirectory + (std::string)aiPath.data);
-					}
+					m_textureDiffuse = FormatTexturePath(m_pathDirectory + (std::string)aiPath.data, aiTextureType_DIFFUSE);
+					m_textureSPEC = FormatTexturePath(m_pathDirectory + (std::string)aiPath.data, aiTextureType_SPECULAR);
+					m_textureNRM = FormatTexturePath(m_pathDirectory + (std::string)aiPath.data, aiTextureType_NORMALS);
+					m_textureDISP = FormatTexturePath(m_pathDirectory + (std::string)aiPath.data, aiTextureType_DISPLACEMENT);
 				}
 			}
 			else
 			{
-				m_textureDiffuse.push_back("Assets\\test.tga");
+				m_textureDiffuse = "Assets\\test.tga";
 			}
 		}
 	}
 
-	void TestAssimp::FormatTexturePath(const std::string& path, const std::string& appendType)
+	std::string AssimpFactory::FormatTexturePath(const std::string& path, const aiTextureType& type)
+	{
+		char drive[_MAX_DRIVE];
+		char dir[_MAX_DIR];
+		char fname[_MAX_FNAME];
+		char ext[_MAX_EXT];
+		_splitpath_s(path.c_str(), drive, dir, fname, ext);
+
+		// remove \r
+		std::string fnameFixed = (std::string)fname;
+		fnameFixed.erase(std::remove(fnameFixed.begin(), fnameFixed.end(), '\r'), fnameFixed.end());
+		std::string fileName = fnameFixed + (std::string)ext;
+
+		std::string newPath = "Assets\\test.tga";
+
+		// Model Texture
+		if (type == aiTextureType::aiTextureType_DIFFUSE)
+		{
+			newPath = "Assets\\" + m_pathDirectory + fileName;
+			return newPath;
+		}
+
+		if (type == aiTextureType::aiTextureType_NORMALS)
+		{
+			newPath = "Assets\\" + m_pathDirectory + fnameFixed + "_NRM" + (std::string)ext;
+			struct _stat buffer;
+			if (_stat(newPath.c_str(), &buffer) != 0)
+			{
+				newPath.append(" is missing, default normal loaded instead.\n");
+				DebugTrace((LPCSTR)newPath.c_str());
+				newPath = "Assets\\defaultn.DDS";
+			}
+			return newPath;
+		}
+
+		if (type == aiTextureType::aiTextureType_SPECULAR)
+		{
+			newPath = "Assets\\" + m_pathDirectory + fnameFixed + "_SPEC" + (std::string)ext;
+			struct _stat buffer;
+			if (_stat(newPath.c_str(), &buffer) != 0)
+			{
+				newPath.append(" is missing, default specular loaded instead.\n");
+				DebugTrace((LPCSTR)newPath.c_str());
+				newPath = "Assets\\defaults.DDS";
+			}
+			return newPath;
+		}
+
+		if (type == aiTextureType::aiTextureType_DISPLACEMENT)
+		{
+			newPath = "Assets\\" + m_pathDirectory + fnameFixed + "_DISP" + (std::string)ext;
+			struct _stat buffer;
+			if (_stat(newPath.c_str(), &buffer) != 0)
+			{
+				newPath.append(" is missing, default displacement loaded instead.\n");
+				DebugTrace((LPCSTR)newPath.c_str());
+				newPath = "Assets\\defaultd.DDS";
+			}
+			return newPath;
+		}
+
+		return newPath;
+	}
+
+	AssimpFactory::AssimpFactory()
 	{
 
 	}
 
-	TestAssimp::TestAssimp()
+	AssimpFactory::~AssimpFactory()
 	{
 
 	}
 
-	TestAssimp::~TestAssimp()
-	{
-
-	}
-
-	void TestAssimp::Initialize(const std::string& fileName, unsigned int customFlags)
+	void AssimpFactory::Initialize(const std::string& fileName, unsigned int customFlags)
 	{
 		m_pathFileName = fileName;
 

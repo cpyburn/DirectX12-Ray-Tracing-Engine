@@ -47,7 +47,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     */
 
-    m_model.Initialize("Models\\Elf-ranger.X");
+    //m_model.Initialize("Models\\Elf-ranger.X");
 }
 
 #pragma region Frame Update

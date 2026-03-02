@@ -43,10 +43,8 @@ namespace CPyburnRTXEngine
 			XMFLOAT2 texture;
 			XMFLOAT3 normal;
 			XMFLOAT3 tangent;
-			XMFLOAT3 binormal;
+			XMFLOAT3 binormal; // todo: drop for ray tracing
 		};
-
-		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
 		std::string m_pathFileName;
 		std::string m_fileName;
@@ -59,6 +57,11 @@ namespace CPyburnRTXEngine
 		std::vector<VSVertices> m_vertices;
 		std::vector<UINT> m_indices;
 		std::vector<XMFLOAT3> m_positions;
+		std::vector<std::string> m_textureDiffuse;
+		std::vector<std::string> m_textureSPEC;
+		std::vector<std::string> m_textureNRM;
+		std::vector<std::string> m_textureDISP;
+
 
 		bool m_isSkinned = false;
 		BoundingBox m_boundingBox;
@@ -67,12 +70,14 @@ namespace CPyburnRTXEngine
 
 		void DoMeshTransforms(aiNode* node, XMMATRIX parentTransform);
 		void CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh);
-		void InitMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices);
+		void InitializeMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices);
+		void InitializeMaterials();
+		void FormatTexturePath(const std::string& path, const std::string& appendType = "");
 	public:
 		TestAssimp();
 		~TestAssimp();
 
-		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources, const std::string& fileName,
+		void Initialize(const std::string& fileName,
 			unsigned int customFlags = aiProcess_Triangulate
 			//| aiProcess_MakeLeftHanded
 			| aiProcess_GenSmoothNormals

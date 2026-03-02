@@ -46,6 +46,8 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     */
+
+    m_model.Initialize("Models\\Elf-ranger.X");
 }
 
 #pragma region Frame Update
@@ -242,7 +244,6 @@ void Game::CreateDeviceDependentResources()
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);
     m_camera.CreateDeviceDependentResources(m_deviceResources);
     m_gameInput.CreateDeviceDependentResources(m_deviceResources);
-    m_model.CreateDeviceDependentResources(m_deviceResources, "Models\\Elf-ranger.X");
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.

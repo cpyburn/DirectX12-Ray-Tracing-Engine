@@ -51,10 +51,11 @@ namespace CPyburnRTXEngine
 		}
 
 		// todo: take out the m_vertices and m_indices? why have this passed in if it is local
-		InitMesh(i, mesh, m_vertices, m_indices);
+		InitializeMesh(i, mesh, m_vertices, m_indices);
+		InitializeMaterials();
 	}
 
-	void TestAssimp::InitMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices)
+	void TestAssimp::InitializeMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices)
 	{
 		const aiMesh* paiMesh = m_pScene->mMeshes[i];
 
@@ -150,6 +151,64 @@ namespace CPyburnRTXEngine
 		}
 	}
 
+	void TestAssimp::InitializeMaterials()
+	{
+		// Initialize the materials
+		for (UINT i = 0; i < m_pScene->mNumMaterials; i++)
+		{
+			const aiMaterial* pMaterial = m_pScene->mMaterials[i];
+
+			if (pMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+			{
+				aiString aiPath;
+
+				if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+				{
+					m_textureDiffuse.push_back(m_pathDirectory + (std::string)aiPath.data);
+				}
+
+				if (pMaterial->GetTextureCount(aiTextureType_SPECULAR) > 0)
+				{
+					aiString aiPath;
+
+					if (pMaterial->GetTexture(aiTextureType_SPECULAR, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+					{
+						m_textureSPEC.push_back(m_pathDirectory + (std::string)aiPath.data);
+					}
+				}
+
+				if (pMaterial->GetTextureCount(aiTextureType_NORMALS) > 0)
+				{
+					aiString aiPath;
+
+					if (pMaterial->GetTexture(aiTextureType_NORMALS, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+					{
+						m_textureNRM.push_back(m_pathDirectory + (std::string)aiPath.data);
+					}
+				}
+
+				if (pMaterial->GetTextureCount(aiTextureType_DISPLACEMENT) > 0)
+				{
+					aiString aiPath;
+
+					if (pMaterial->GetTexture(aiTextureType_DISPLACEMENT, 0, &aiPath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+					{
+						m_textureDISP.push_back(m_pathDirectory + (std::string)aiPath.data);
+					}
+				}
+			}
+			else
+			{
+				m_textureDiffuse.push_back("Assets\\test.tga");
+			}
+		}
+	}
+
+	void TestAssimp::FormatTexturePath(const std::string& path, const std::string& appendType)
+	{
+
+	}
+
 	TestAssimp::TestAssimp()
 	{
 
@@ -160,9 +219,8 @@ namespace CPyburnRTXEngine
 
 	}
 
-	void TestAssimp::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources, const std::string& fileName, unsigned int customFlags)
+	void TestAssimp::Initialize(const std::string& fileName, unsigned int customFlags)
 	{
-		m_deviceResources = deviceResources;
 		m_pathFileName = fileName;
 
 		char drive[_MAX_DRIVE];

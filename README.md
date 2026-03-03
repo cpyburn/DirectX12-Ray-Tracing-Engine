@@ -53,6 +53,6 @@ Alright chums let's do this!
 ### [6-Global Root Signature, Camera, and game input using Directxtk12](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/6-InputCamera) 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/ffb22ba7-e064-4991-9290-ac5a181e1880" />
 
-### [7-Assimp and Models](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/7-Models) 
+### [7-Loading models using Assimp](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/7-Models) 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/02a67426-4f85-4da6-8b82-3dca7023b12c" />
 

@@ -14,6 +14,9 @@ struct STriVertex
     float3 binormal; // todo: drop for ray tracing
 };
 StructuredBuffer<STriVertex> BTriVertex : register(t1);
+StructuredBuffer<uint3> gIndices : register(t2);
+Texture2D<float4> gDiffuseTexture : register(t3);
+SamplerState gSampler : register(s0);
 
 cbuffer Camera : register(b0)
 {
@@ -106,23 +109,46 @@ void miss(inout RayPayload payload)
 }
 
 // 10.1.b
+//[shader("closesthit")]
+//void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+//{
+//    float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
+//    //payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
+
+//    // 15.4.b
+//    //uint instance = InstanceID();
+//    //if (instance < 2)
+//    //{
+//    //    float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
+//    //    payload.color = hitColor;
+//    //    return;
+//    //}
+//    //float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
+//    //payload.color = hitColor;
+//    payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
+//}
+
 [shader("closesthit")]
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-    //payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
+    uint primIndex = PrimitiveIndex();
+    uint3 indices = gIndices[primIndex];
 
-    // 15.4.b
-    //uint instance = InstanceID();
-    //if (instance < 2)
-    //{
-    //    float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
-    //    payload.color = hitColor;
-    //    return;
-    //}
-    //float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
-    //payload.color = hitColor;
-    payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
+    STriVertex v0 = BTriVertex[indices.x];
+    STriVertex v1 = BTriVertex[indices.y];
+    STriVertex v2 = BTriVertex[indices.z];
+
+    float2 bary = attribs.barycentrics;
+    float3 weights = float3(1.0 - bary.x - bary.y, bary.x, bary.y);
+
+    float2 uv =
+        v0.texture * weights.x +
+        v1.texture * weights.y +
+        v2.texture * weights.z;
+
+    float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
+
+    payload.color = texColor.rgb;
 }
 
 // 13.1.a

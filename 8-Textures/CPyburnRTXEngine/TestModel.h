@@ -67,6 +67,7 @@ namespace CPyburnRTXEngine
 		UINT mUavPosition = 0;
 		UINT mSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
 		UINT mVertexBufferSrvPosition = 0;
+		UINT mIndexBufferSrvPosition = 0;
 
 		void createConstantBuffer();
 		static const UINT countOfConstantBuffers = 3;

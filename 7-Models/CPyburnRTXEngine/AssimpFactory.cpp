@@ -156,6 +156,8 @@ namespace CPyburnRTXEngine
 
 	void AssimpFactory::InitializeMaterials()
 	{
+		// NOTE: materials are hard to code for unless you work with the artist. I outlined several ways to check for materials.
+
 		// Initialize the materials
 		for (UINT i = 0; i < m_pScene->mNumMaterials; i++)
 		{
@@ -178,6 +180,80 @@ namespace CPyburnRTXEngine
 				m_textureDiffuse = "Assets\\test.tga";
 			}
 		}
+
+		// load all materials a different way, decide to use if artist adds them this way
+		std::vector<LoadedMaterial> materials = LoadAllMaterials(m_pScene);	
+
+		// last of all check for built in textures, decide to use if artist adds them this way
+		if (m_pScene->HasTextures())
+		{
+			for (unsigned int i = 0; i < m_pScene->mNumTextures; ++i)
+			{
+				aiTexture* tex = m_pScene->mTextures[i];
+
+				DebugTrace(L"WARNING:Scene has built in textures and code is not currently handling them!");
+				if (tex->mHeight == 0)
+				{
+					// Compressed texture (PNG/JPG in memory)
+					// tex->pcData is the file data
+					// tex->mWidth is data size
+				}
+				else
+				{
+					// Raw RGBA data
+				}
+			}
+		}
+	}
+
+	std::vector<AssimpFactory::LoadedMaterial> AssimpFactory::LoadAllMaterials(const aiScene* scene)
+	{
+		std::vector<LoadedMaterial> materials;
+
+		if (!scene || !scene->HasMaterials())
+			return materials;
+
+		materials.resize(scene->mNumMaterials);
+
+		for (unsigned int i = 0; i < scene->mNumMaterials; ++i)
+		{
+			aiMaterial* mat = scene->mMaterials[i];
+			LoadedMaterial& outMat = materials[i];
+
+			// Material Name
+			aiString name;
+			if (mat->Get(AI_MATKEY_NAME, name) == AI_SUCCESS)
+				outMat.name = name.C_Str();
+
+			// Helper lambda to extract textures
+			auto ExtractTextures = [&](aiTextureType type, std::vector<std::string>& container)
+				{
+					for (unsigned int t = 0; t < mat->GetTextureCount(type); ++t)
+					{
+						aiString path;
+						if (mat->GetTexture(type, t, &path) == AI_SUCCESS)
+						{
+							container.push_back(path.C_Str());
+						}
+					}
+				};
+
+			// Standard PBR types
+			ExtractTextures(aiTextureType_BASE_COLOR, outMat.albedoTextures);
+			ExtractTextures(aiTextureType_DIFFUSE, outMat.albedoTextures);
+
+			ExtractTextures(aiTextureType_NORMALS, outMat.normalTextures);
+			ExtractTextures(aiTextureType_HEIGHT, outMat.normalTextures);
+
+			ExtractTextures(aiTextureType_METALNESS, outMat.metallicTextures);
+			ExtractTextures(aiTextureType_DIFFUSE_ROUGHNESS, outMat.roughnessTextures);
+
+			ExtractTextures(aiTextureType_AMBIENT_OCCLUSION, outMat.aoTextures);
+			ExtractTextures(aiTextureType_EMISSIVE, outMat.emissiveTextures);
+			ExtractTextures(aiTextureType_OPACITY, outMat.opacityTextures);
+		}
+
+		return materials;
 	}
 
 	std::string AssimpFactory::FormatTexturePath(const std::string& path, const aiTextureType& type)

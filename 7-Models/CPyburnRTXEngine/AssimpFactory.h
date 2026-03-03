@@ -54,6 +54,19 @@ namespace CPyburnRTXEngine
 			}
 		};
 
+		struct LoadedMaterial
+		{
+			std::string name;
+
+			std::vector<std::string> albedoTextures;
+			std::vector<std::string> normalTextures;
+			std::vector<std::string> metallicTextures;
+			std::vector<std::string> roughnessTextures;
+			std::vector<std::string> aoTextures;
+			std::vector<std::string> emissiveTextures;
+			std::vector<std::string> opacityTextures;
+		};
+
 		std::string m_pathFileName;
 		std::string m_fileName;
 		std::string m_pathDirectory;
@@ -75,7 +88,11 @@ namespace CPyburnRTXEngine
 		void DoMeshTransforms(aiNode* node, XMMATRIX parentTransform);
 		void CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh);
 		void InitializeMesh(const UINT& i, MeshEntry* meshEntry);
+
+		// todo: decide if LoadAllMaterials is worth using
 		void InitializeMaterials();
+		std::vector<LoadedMaterial> LoadAllMaterials(const aiScene* scene);
+		
 		std::string FormatTexturePath(const std::string& path, const aiTextureType& type);
 	public:
 		std::vector<MeshEntry> m_meshEntries;

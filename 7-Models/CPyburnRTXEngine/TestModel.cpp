@@ -33,13 +33,6 @@ namespace CPyburnRTXEngine
         0
     };
 
-    // 15.5.a
-    //struct TriVertex
-    //{
-    //    XMFLOAT3 vertex;
-    //    XMFLOAT4 color;
-    //};
-
     void TestModel::createAccelerationStructures()
     {
         D3D12_RESOURCE_DESC bufDesc = {};
@@ -56,12 +49,6 @@ namespace CPyburnRTXEngine
 
         // create createTriangleVB
         {
-            //const TriVertex vertices[] =
-            //{
-            //    XMFLOAT3(0,          1,  0), XMFLOAT4(1, 0, 0, 1),
-            //    XMFLOAT3(0.866f,  -0.5f, 0), XMFLOAT4(1, 1, 0, 1),
-            //    XMFLOAT3(-0.866f, -0.5f, 0), XMFLOAT4(1, 0, 1, 1),
-            //};
             bufDesc.Width = sizeof(AssimpFactory::VSVertices) * m_assimpFactory.m_meshEntries[0].vertices.size();
 
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpVertexBuffer)));
@@ -75,12 +62,6 @@ namespace CPyburnRTXEngine
 
         // create indices
         {
-            //const TriVertex vertices[] =
-            //{
-            //    XMFLOAT3(0,          1,  0), XMFLOAT4(1, 0, 0, 1),
-            //    XMFLOAT3(0.866f,  -0.5f, 0), XMFLOAT4(1, 1, 0, 1),
-            //    XMFLOAT3(-0.866f, -0.5f, 0), XMFLOAT4(1, 0, 1, 1),
-            //};
             bufDesc.Width = sizeof(UINT) * m_assimpFactory.m_meshEntries[0].indices.size();
 
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpIndicesBuffer)));
@@ -1036,6 +1017,7 @@ namespace CPyburnRTXEngine
     TestModel::TestModel()
     {
         m_assimpFactory.Initialize("Models\\Elf-ranger.X");
+        //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
     }
 
     TestModel::~TestModel()

@@ -58,3 +58,4 @@ We wrapped up these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tut
 ### [7-Loading models using Assimp](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/7-Models) 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/02a67426-4f85-4da6-8b82-3dca7023b12c" />
 
+### [8-Loading textures using a texture factory and Directxtk12]() 

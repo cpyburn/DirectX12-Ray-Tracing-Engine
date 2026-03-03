@@ -61,6 +61,7 @@ namespace CPyburnRTXEngine
 		const aiScene* m_pScene = nullptr;
 		Assimp::Importer m_importer;
 
+		//std::vector<XMFLOAT3> m_positions; // will be used for phsyx later
 		std::string m_textureDiffuse;
 		std::string m_textureSPEC;
 		std::string m_textureNRM;

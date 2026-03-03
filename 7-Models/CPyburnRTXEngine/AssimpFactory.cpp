@@ -65,6 +65,9 @@ namespace CPyburnRTXEngine
 		meshEntry->vertices.resize(paiMesh->mNumVertices);
 		meshEntry->indices.resize(paiMesh->mNumFaces * 3);
 
+		//size_t startingV = m_positions.size();
+		//m_positions.resize(startingV + paiMesh->mNumVertices);
+
 		std::vector<XMFLOAT3> perMeshPositions(paiMesh->mNumVertices);
 
 		// Populate the vertex attribute vectors
@@ -84,7 +87,7 @@ namespace CPyburnRTXEngine
 			//XMMATRIX xmTransform = XMLoadFloat4x4(&meshEntry->meshTransform);
 			XMMATRIX xmTransform = meshEntry->meshTransform;
 			XMVECTOR xmTranPos = XMVector3TransformCoord(xmPosition, XMMatrixTranspose(xmTransform));
-			//XMStoreFloat3(&m_positions[i], xmTranPos);
+			//XMStoreFloat3(&m_positions[startingV + i], xmTranPos);
 			XMStoreFloat3(&perMeshPositions[i], xmTranPos);
 
 			vertice.texture = XMFLOAT2(pTexCoord->x, pTexCoord->y);

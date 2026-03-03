@@ -32,22 +32,27 @@ namespace CPyburnRTXEngine
 			UINT materialIndex = 0;
 			UINT numVerts = 0;
 			// this transform is set by the import or skinning
-			XMFLOAT4X4 meshTransform = XMFLOAT4X4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+			XMMATRIX meshTransform; //XMMATRIX(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
 			BoundingBox boundingBox;
 			BoundingSphere boundingSphere;
 
-			MeshEntry() {}
+			std::vector<VSVertices> vertices;
+			std::vector<UINT> indices;
+
+			MeshEntry() :
+				meshTransform(XMMatrixIdentity())
+			{}
 			~MeshEntry() {}
 			//MeshEntry(MeshEntry&&) noexcept {}
-			MeshEntry(const MeshEntry&) {}
+			MeshEntry(const MeshEntry&) :
+				meshTransform(XMMatrixIdentity())
+			{}
 			const MeshEntry& operator=(const MeshEntry& meshEntry)
 			{
 				return meshEntry;
 			}
 		};
-
-		
 
 		std::string m_pathFileName;
 		std::string m_fileName;
@@ -56,29 +61,23 @@ namespace CPyburnRTXEngine
 		const aiScene* m_pScene = nullptr;
 		Assimp::Importer m_importer;
 
-		std::vector<MeshEntry> m_meshEntries;
-		//std::vector<VSVertices> m_vertices;
-		//std::vector<UINT> m_indices;
-		std::vector<XMFLOAT3> m_positions;
 		std::string m_textureDiffuse;
 		std::string m_textureSPEC;
 		std::string m_textureNRM;
 		std::string m_textureDISP;
 
-
 		bool m_isSkinned = false;
 		BoundingBox m_boundingBox;
 		BoundingSphere m_boundingSphere;
-		XMFLOAT4X4 m_boundingSphereRadiusTranslation;
+		XMMATRIX m_boundingSphereRadiusTranslation;
 
 		void DoMeshTransforms(aiNode* node, XMMATRIX parentTransform);
 		void CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh);
-		void InitializeMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices);
+		void InitializeMesh(const UINT& i, MeshEntry* meshEntry);
 		void InitializeMaterials();
 		std::string FormatTexturePath(const std::string& path, const aiTextureType& type);
 	public:
-		std::vector<VSVertices> m_vertices;
-		std::vector<UINT> m_indices;
+		std::vector<MeshEntry> m_meshEntries;
 
 		AssimpFactory();
 		~AssimpFactory();
@@ -88,7 +87,7 @@ namespace CPyburnRTXEngine
 			//| aiProcess_MakeLeftHanded
 			| aiProcess_GenSmoothNormals
 			//| aiProcess_FlipWindingOrder
-			//| aiProcess_FlipUVs
+			| aiProcess_FlipUVs
 			| aiProcess_JoinIdenticalVertices
 			| aiProcess_CalcTangentSpace
 			// todo: remove the extra processing the shaders and then enable this

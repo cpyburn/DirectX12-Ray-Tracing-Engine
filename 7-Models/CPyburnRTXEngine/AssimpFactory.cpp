@@ -16,7 +16,8 @@ namespace CPyburnRTXEngine
 		for (size_t i = 0; i < node->mNumMeshes; i++)
 		{
 			UINT meshIndex = node->mMeshes[i];
-			XMStoreFloat4x4(&m_meshEntries[meshIndex].meshTransform, nodeTransform);
+			//XMStoreFloat4x4(&m_meshEntries[meshIndex].meshTransform, nodeTransform);
+			m_meshEntries[meshIndex].meshTransform = nodeTransform;
 		}
 
 		for (size_t i = 0; i < node->mNumChildren; i++)
@@ -51,21 +52,16 @@ namespace CPyburnRTXEngine
 		}
 
 		// todo: take out the m_vertices and m_indices? why have this passed in if it is local
-		InitializeMesh(i, mesh, m_vertices, m_indices);
+		InitializeMesh(i, mesh);
 		InitializeMaterials();
 	}
 
-	void AssimpFactory::InitializeMesh(const UINT& i, MeshEntry* meshEntry, std::vector<VSVertices>& vertices, std::vector<unsigned int>& indices)
+	void AssimpFactory::InitializeMesh(const UINT& i, MeshEntry* meshEntry)
 	{
 		const aiMesh* paiMesh = m_pScene->mMeshes[i];
 
-		size_t startingV = vertices.size();
-		vertices.resize(startingV + paiMesh->mNumVertices);
-
-		size_t startingI = indices.size();
-		indices.resize(startingI + paiMesh->mNumFaces * 3);
-
-		m_positions.resize(vertices.size());
+		meshEntry->vertices.resize(paiMesh->mNumVertices);
+		meshEntry->indices.resize(paiMesh->mNumFaces * 3);
 
 		std::vector<XMFLOAT3> perMeshPositions(paiMesh->mNumVertices);
 
@@ -83,9 +79,10 @@ namespace CPyburnRTXEngine
 			//perMeshPositions[i] = vertice.position;
 
 			XMVECTOR xmPosition = XMLoadFloat3(&vertice.position);
-			XMMATRIX xmTransform = XMLoadFloat4x4(&meshEntry->meshTransform);
+			//XMMATRIX xmTransform = XMLoadFloat4x4(&meshEntry->meshTransform);
+			XMMATRIX xmTransform = meshEntry->meshTransform;
 			XMVECTOR xmTranPos = XMVector3TransformCoord(xmPosition, XMMatrixTranspose(xmTransform));
-			XMStoreFloat3(&m_positions[startingV + i], xmTranPos);
+			//XMStoreFloat3(&m_positions[i], xmTranPos);
 			XMStoreFloat3(&perMeshPositions[i], xmTranPos);
 
 			vertice.texture = XMFLOAT2(pTexCoord->x, pTexCoord->y);
@@ -106,7 +103,7 @@ namespace CPyburnRTXEngine
 			else
 				vertice.binormal = XMFLOAT3(pNormal->x, pNormal->y, pNormal->z);
 
-			vertices[startingV + i] = vertice;
+			meshEntry->vertices[i] = vertice;
 		}
 
 		BoundingBox::CreateFromPoints(meshEntry->boundingBox, perMeshPositions.size(), &perMeshPositions[0], sizeof(XMFLOAT3));
@@ -131,7 +128,8 @@ namespace CPyburnRTXEngine
 		// store the radius translation for knowing where the center of the model is in other calculations
 		XMVECTOR radius = { 0, m_boundingSphere.Radius, 0 };
 		XMMATRIX xmRadiusTranslation = XMMatrixTranslationFromVector(radius);
-		XMStoreFloat4x4(&m_boundingSphereRadiusTranslation, xmRadiusTranslation);
+		//XMStoreFloat4x4(&m_boundingSphereRadiusTranslation, xmRadiusTranslation);
+		m_boundingSphereRadiusTranslation = xmRadiusTranslation;
 
 		perMeshPositions.clear();
 
@@ -140,14 +138,14 @@ namespace CPyburnRTXEngine
 		for (size_t i = 0; i < paiMesh->mNumFaces; i++)
 		{
 			const aiFace& face = paiMesh->mFaces[i];
-			size_t indice = startingI + i * 3;
-			indices[indice] = face.mIndices[0];
+			size_t indice = i * 3;
+			meshEntry->indices[indice] = face.mIndices[0];
 
 			indice++;
-			indices[indice] = face.mIndices[1];
+			meshEntry->indices[indice] = face.mIndices[1];
 
 			indice++;
-			indices[indice] = face.mIndices[2];
+			meshEntry->indices[indice] = face.mIndices[2];
 		}
 	}
 
@@ -241,7 +239,8 @@ namespace CPyburnRTXEngine
 		return newPath;
 	}
 
-	AssimpFactory::AssimpFactory()
+	AssimpFactory::AssimpFactory() :
+		m_boundingSphereRadiusTranslation(XMMatrixIdentity())
 	{
 
 	}

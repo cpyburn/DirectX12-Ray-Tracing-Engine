@@ -13,6 +13,8 @@ namespace CPyburnRTXEngine
 		std::string nameLower = name;
 		stringToLower(nameLower);
 
+		nodeTransform = parentTransform * nodeT;
+
 		for (size_t i = 0; i < node->mNumMeshes; i++)
 		{
 			UINT meshIndex = node->mMeshes[i];

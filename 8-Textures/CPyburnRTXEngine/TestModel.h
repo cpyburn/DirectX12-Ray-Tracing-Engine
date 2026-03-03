@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AssimpFactory.h" // todo: move?
+#include "Texture.h"
 
 namespace CPyburnRTXEngine
 {
@@ -72,6 +73,7 @@ namespace CPyburnRTXEngine
 		ConstantBuffer<XMFLOAT4[9]> mpConstantBuffer[countOfConstantBuffers];
 
 		AssimpFactory m_assimpFactory;
+		Texture::HeapTexture m_heapTextureDiffuse = {};
 
 	public:
 		TestModel();

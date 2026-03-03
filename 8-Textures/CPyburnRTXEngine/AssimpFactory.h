@@ -67,6 +67,7 @@ namespace CPyburnRTXEngine
 			std::vector<std::string> opacityTextures;
 		};
 
+		std::vector<MeshEntry> m_meshEntries;
 		std::string m_pathFileName;
 		std::string m_fileName;
 		std::string m_pathDirectory;
@@ -95,7 +96,8 @@ namespace CPyburnRTXEngine
 		
 		std::string FormatTexturePath(const std::string& path, const aiTextureType& type);
 	public:
-		std::vector<MeshEntry> m_meshEntries;
+		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
+		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 
 		AssimpFactory();
 		~AssimpFactory();

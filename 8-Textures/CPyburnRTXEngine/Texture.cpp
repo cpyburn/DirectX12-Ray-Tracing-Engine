@@ -10,6 +10,7 @@ namespace CPyburnRTXEngine
     std::map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_textures;
     std::map<std::string, Texture::HeapTexture> Texture::m_loadedTextures;
     std::mutex Texture::m_mutex;
+	std::shared_ptr<DX::DeviceResources> Texture::m_deviceResources = nullptr;
 
     bool Texture::TryGetTextureHeap(const std::string& spath, Texture::HeapTexture& textureHeap)
     {
@@ -136,15 +137,15 @@ namespace CPyburnRTXEngine
 				HeapTexture testTextureHeap;
 				if (TryGetTextureHeap(wstringToString(szFile), testTextureHeap))
 				{
-					return testTextureHeap;
 					m_mutex.unlock();
+					return testTextureHeap;
 				}
 			}
 
 #pragma region Get Image
 			if (extension.compare(L".dds") == 0)
 			{
-				heapTexture = LoadCustomDDSTexture(commandList, wFileName);
+				heapTexture = LoadCustomDDSTexture(commandList, szFile);
 			}
 			//else if (extension.compare(L".tga") == 0)
 			//{
@@ -152,7 +153,7 @@ namespace CPyburnRTXEngine
 			//}
 			else
 			{
-				heapTexture = LoadCustomWICTexture(commandList, wFileName);
+				heapTexture = LoadCustomWICTexture(commandList, szFile);
 			}
 #pragma endregion
 		}
@@ -203,7 +204,7 @@ namespace CPyburnRTXEngine
 		std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 
 		DX::ThrowIfFailed(
-			LoadDDSTextureFromFile(device, L"texture.dds", tex.ReleaseAndGetAddressOf(),
+			LoadDDSTextureFromFile(device, wFileName.c_str(), tex.ReleaseAndGetAddressOf(),
 				ddsData, subresources));
 
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(tex.Get(), 0,
@@ -260,7 +261,7 @@ namespace CPyburnRTXEngine
 			HeapTexture heapTexture;
 			heapTexture.heapPosition = heapPostion;
 			UINT rowPitch = static_cast<UINT>(subresources[0].RowPitch);
-			UINT slicePitch = static_cast<UINT>(subresources[0].SlicePitch);
+			UINT slicePitch = static_cast<UINT>(subresources[0].SlicePitch / subresources[0].RowPitch);
 			heapTexture.textureSize = XMINT2(rowPitch, slicePitch);
 
 			Texture::m_loadedTextures.insert(std::pair<std::string, HeapTexture>(wstringToString(wFileName), heapTexture));
@@ -301,7 +302,7 @@ namespace CPyburnRTXEngine
 		D3D12_SUBRESOURCE_DATA subresource;
 
 		DX::ThrowIfFailed(
-			LoadWICTextureFromFile(device, L"texture.bmp", tex.ReleaseAndGetAddressOf(),
+			LoadWICTextureFromFile(device, wFileName.c_str(), tex.ReleaseAndGetAddressOf(),
 				decodedData, subresource));
 
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(tex.Get(), 0, 1);
@@ -346,7 +347,7 @@ namespace CPyburnRTXEngine
 			HeapTexture heapTexture;
 			heapTexture.heapPosition = heapPostion;
 			UINT rowPitch = static_cast<UINT>(subresource.RowPitch);
-			UINT slicePitch = static_cast<UINT>(subresource.SlicePitch);
+			UINT slicePitch = static_cast<UINT>(subresource.SlicePitch / subresource.RowPitch);
 			heapTexture.textureSize = XMINT2(rowPitch, slicePitch);
 
 			Texture::m_loadedTextures.insert(std::pair<std::string, HeapTexture>(wstringToString(wFileName), heapTexture));

@@ -59,4 +59,7 @@ We wrapped up these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tut
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/02a67426-4f85-4da6-8b82-3dca7023b12c" />
 
 ### [8-Loading textures using Directxtk12]() 
-Coming soon
+<img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/fc1fae58-97e5-403a-8a9a-896280bb88bf" />
+
+### [9-Revisting the shadow ray]() 
+coming soon

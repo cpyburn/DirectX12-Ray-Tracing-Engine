@@ -1,0 +1,13 @@
+# Blender 5.0.0 MTL File: 'mountain-pack.blend'
+# www.blender.org
+
+newmtl terrain_11_mat
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd C:/terrain 11 v2_BaseColor.jpg
+map_Ns C:/terrain 11_Roughness.jpg
+map_Bump -bm 1.000000 C:/terrain 11_NormaL_GL.jpg

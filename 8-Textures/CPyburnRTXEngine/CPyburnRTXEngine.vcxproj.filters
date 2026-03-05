@@ -60,7 +60,7 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
-      <Filter>Testing</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -95,7 +95,7 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
-      <Filter>Testing</Filter>
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

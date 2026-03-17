@@ -157,6 +157,7 @@
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
     <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="TestInstances.h" />
     <ClInclude Include="TestModel.h" />
     <ClInclude Include="TestTriangle.h" />
     <ClInclude Include="Texture.h" />
@@ -175,6 +176,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TestInstances.cpp" />
     <ClCompile Include="TestModel.cpp" />
     <ClCompile Include="TestTriangle.cpp" />
     <ClCompile Include="Texture.cpp" />

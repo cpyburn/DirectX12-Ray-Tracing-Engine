@@ -5,7 +5,7 @@
 
 namespace CPyburnRTXEngine
 {
-	class TestModel
+	class TestInstances
 	{
 	private:
 		// 14.3.b bottom-level acceleration structure
@@ -46,7 +46,6 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpBottomLevelAS1;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
-		XMMATRIX m_xmIdentity[3] = {};
 
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();
@@ -69,16 +68,27 @@ namespace CPyburnRTXEngine
 		UINT mVertexBufferSrvPosition = 0;
 		UINT mIndexBufferSrvPosition = 0;
 
-		void createConstantBuffer();
-		static const UINT countOfConstantBuffers = 3;
-		ConstantBuffer<XMFLOAT4[9]> mpConstantBuffer[countOfConstantBuffers];
+		struct InstanceData
+		{
+			std::vector<XMMATRIX> instanceTransforms;
 
+			InstanceData()
+			{
+				instanceTransforms.resize(m_instanceCount, XMMatrixIdentity());
+			}
+		};
+
+		void createConstantBuffer();
+		static const UINT m_instanceCount = 3;
+		InstanceData m_instanceData = {};
+		ConstantBuffer<InstanceData> mpConstantBuffer;
+		
 		AssimpFactory m_assimpFactory;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
 	public:
-		TestModel();
-		~TestModel();
+		TestInstances();
+		~TestInstances();
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
 		void Update(DX::StepTimer const& timer);

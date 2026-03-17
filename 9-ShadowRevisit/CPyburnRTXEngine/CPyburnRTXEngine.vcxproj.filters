@@ -59,8 +59,11 @@
     <ClInclude Include="AssimpFactory.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
+    <ClInclude Include="TestInstances.h">
       <Filter>Testing</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -94,8 +97,11 @@
     <ClCompile Include="AssimpFactory.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
+    <ClCompile Include="TestInstances.cpp">
       <Filter>Testing</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,5 @@
 #include "pchlib.h"
-#include "TestModel.h"
+#include "TestInstances.h"
 
 namespace CPyburnRTXEngine
 {
@@ -33,7 +33,7 @@ namespace CPyburnRTXEngine
         0
     };
 
-    void TestModel::createAccelerationStructures()
+    void TestInstances::createAccelerationStructures()
     {
         D3D12_RESOURCE_DESC bufDesc = {};
         bufDesc.Alignment = 0;
@@ -271,14 +271,14 @@ namespace CPyburnRTXEngine
         m_deviceResources->WaitForGpu();
     }
 
-    void TestModel::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
+    void TestInstances::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
     {
         // First, get the size of the TLAS buffers and create them
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
         inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
         // 14.1.b
         inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-        inputs.NumDescs = countOfConstantBuffers; // 3 instances
+        inputs.NumDescs = m_instanceCount; // 3 instances
         inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
@@ -319,7 +319,7 @@ namespace CPyburnRTXEngine
 
             // The instance desc should be inside a buffer, create and map the buffer
             bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers; // 3 instances
+            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * m_instanceCount; // 3 instances
 
             //ComPtr<ID3D12Resource> pInstanceDescResource;
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
@@ -327,25 +327,25 @@ namespace CPyburnRTXEngine
 
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
         mpTopLevelAS[currentFrame].pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
-        ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * countOfConstantBuffers); // 3 instances
+        ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * m_instanceCount); // 3 instances
 
         // 11.3.b Create the desc for the triangle/plane instance
         pInstanceDesc[0].InstanceID = 0;
         pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0;
         pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        XMMATRIX transpose = XMMatrixTranspose(m_xmIdentity[0]);
+        XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[0]);
         memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
         pInstanceDesc[0].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress(); // plane blas
         pInstanceDesc[0].InstanceMask = 0xFF;
 
         // 8.0.d
-        for (UINT i = 1; i < countOfConstantBuffers; i++)
+        for (UINT i = 1; i < m_instanceCount; i++)
         {
             pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
             // 13.3.a
             pInstanceDesc[i].InstanceContributionToHitGroupIndex = (i * 2) + 2;  // The indices are relative to to the start of the hit-table entries specified in Raytrace(), so we need 4 and 6
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            XMMATRIX transpose = XMMatrixTranspose(m_xmIdentity[i]);
+            XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[i]);
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
             pInstanceDesc[i].AccelerationStructure = mpBottomLevelAS1->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
@@ -377,7 +377,7 @@ namespace CPyburnRTXEngine
         commandList->ResourceBarrier(1, &uavBarrier);
     }
 
-    void TestModel::createRtPipelineState()
+    void TestInstances::createRtPipelineState()
     {
         //  1 for the DXIL library
         //  1 for hit-group triangle
@@ -770,7 +770,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&mpPipelineState)));
     }
 
-    std::vector<uint8_t> TestModel::LoadBinaryFile(const wchar_t* path)
+    std::vector<uint8_t> TestInstances::LoadBinaryFile(const wchar_t* path)
     {
         std::ifstream file(path, std::ios::binary | std::ios::ate);
         if (!file)
@@ -784,7 +784,7 @@ namespace CPyburnRTXEngine
         return data;
     }
 
-    Microsoft::WRL::ComPtr<IDxcBlob> TestModel::CompileDXRLibrary(const wchar_t* filename)
+    Microsoft::WRL::ComPtr<IDxcBlob> TestInstances::CompileDXRLibrary(const wchar_t* filename)
     {
         auto sourceData = LoadBinaryFile(filename);
 
@@ -839,7 +839,7 @@ namespace CPyburnRTXEngine
         return dxil;
     }
 
-    uint8_t* TestModel::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
+    uint8_t* TestInstances::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
     {
         uint8_t* pDataEntry = pData + (entry * mShaderTableEntrySize);
         memcpy(pDataEntry, pRtsoProps->GetShaderIdentifier(exportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
@@ -854,7 +854,7 @@ namespace CPyburnRTXEngine
         return pDataEntry;
     }
 
-    void TestModel::createShaderTable()
+    void TestInstances::createShaderTable()
     {
         /** The shader-table layout is as follows:
             Entry 0 - Ray-gen program
@@ -909,7 +909,7 @@ namespace CPyburnRTXEngine
         shaderTableEntryHelper(2, pRtsoProps.Get(), pData, kShadowMiss);
 
         // Entry 3 - Triangle 0, primary ray. ProgramID and constant-buffer data
-        uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer[0].Resource);
+        uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
         // 15.3.a + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
         *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 2) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
@@ -926,7 +926,7 @@ namespace CPyburnRTXEngine
         shaderTableEntryHelper(6, pRtsoProps.Get(), pData, kShadowHitGroup);
 
         // Entry 7 - Triangle 1, primary ray. ProgramID and constant-buffer data
-        uint8_t* pEntry7 = shaderTableEntryHelper(7, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer[1].Resource);
+        uint8_t* pEntry7 = shaderTableEntryHelper(7, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
         // 15.3.b + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
         *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 2) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
@@ -936,7 +936,7 @@ namespace CPyburnRTXEngine
         shaderTableEntryHelper(8, pRtsoProps.Get(), pData, kShadowHitGroup);
 
         // Entry 9 - Triangle 2, primary ray. ProgramID and constant-buffer data
-        uint8_t* pEntry9 = shaderTableEntryHelper(9, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer[2].Resource);
+        uint8_t* pEntry9 = shaderTableEntryHelper(9, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
         // 15.3.c + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
         *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 2) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
@@ -950,7 +950,7 @@ namespace CPyburnRTXEngine
     }
 
     // todo: handle this in a more elegant way when we implement resizing
-    void TestModel::createShaderResources()
+    void TestInstances::createShaderResources()
     {
         // Create the output resource. The dimensions and format should match the swap-chain
         D3D12_RESOURCE_DESC resDesc = {};
@@ -998,54 +998,28 @@ namespace CPyburnRTXEngine
         mpIndicesBuffer->SetName(L"SRV IX");
     }
 
-    void TestModel::createConstantBuffer()
+    void TestInstances::createConstantBuffer()
     {
-        XMFLOAT4 bufferData[] =
+        mpConstantBuffer.CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestModel Cbv");
+
+        for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
-            // A
-            XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
-            XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
-            XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
-
-            // B
-            XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
-            XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f),
-            XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
-
-            // C
-            XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f),
-            XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f),
-            XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f),
-        };
-
-        // Create the constant buffer.
-        {
-            for (UINT cbvIndex = 0; cbvIndex < countOfConstantBuffers; cbvIndex++)
-            {
-                mpConstantBuffer[cbvIndex].CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestModel Cbv");
-
-                memcpy(mpConstantBuffer[cbvIndex].CpuData, &bufferData[cbvIndex * countOfConstantBuffers], sizeof(XMFLOAT4) * countOfConstantBuffers);
-
-                for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
-                {
-                    mpConstantBuffer[cbvIndex].CopyToGpu(i);
-                }
-            }
+            mpConstantBuffer.CopyToGpu(i);
         }
     }
 
-    TestModel::TestModel()
+    TestInstances::TestInstances()
     {
         m_assimpFactory.Initialize("Models\\Elf-ranger.X");
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
     }
 
-    TestModel::~TestModel()
+    TestInstances::~TestInstances()
     {
         Release();
     }
 
-    void TestModel::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+    void TestInstances::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
     {
         m_deviceResources = deviceResources;
 
@@ -1065,33 +1039,33 @@ namespace CPyburnRTXEngine
         createShaderTable(); // Tutorial 05
     }
 
-    void TestModel::CreateWindowSizeDependentResources()
+    void TestInstances::CreateWindowSizeDependentResources()
     {
         createShaderResources();
     }
 
-    void TestModel::Update(DX::StepTimer const& timer)
+    void TestInstances::Update(DX::StepTimer const& timer)
     {
 		float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
-		XMMATRIX orthoLH = XMMatrixIdentity();
+		//XMMATRIX orthoLH = XMMatrixIdentity();
         //XMMATRIX orthoLH = XMMatrixOrthographicLH(static_cast<float>(m_deviceResources->GetResolution().Width), static_cast<float>(m_deviceResources->GetResolution().Height), 0.0f, 100.0f);
         
         XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
-        XMVECTOR vec2 = XMVectorSet(2, 0, 0, 0);
+        //XMVECTOR vec2 = XMVectorSet(2, 0, 0, 0);
 
 		XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
 
         // 3 instances
-        m_xmIdentity[0] = XMMatrixIdentity(); // Identity matrix
-        m_xmIdentity[1] = XMMatrixRotationY(rotation) * translation1;
-        m_xmIdentity[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
-        //xmIdentity[3] = XMMatrixIdentity();
+        m_instanceData.instanceTransforms[0] = XMMatrixIdentity(); // Identity matrix
+        m_instanceData.instanceTransforms[1] = XMMatrixRotationY(rotation) * translation1;
+        m_instanceData.instanceTransforms[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
 
-
+        mpConstantBuffer.CpuData = m_instanceData;
+        mpConstantBuffer.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
     }
 
-    void TestModel::Render(CameraBase* camera)
+    void TestInstances::Render(CameraBase* camera)
     {
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
@@ -1166,7 +1140,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    void TestModel::Release()
+    void TestInstances::Release()
     {
         mpVertexBuffer.Reset();
         //mpTopLevelAS.Release(); // todo:
@@ -1175,9 +1149,9 @@ namespace CPyburnRTXEngine
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();
         mpOutputResource.Reset();
-        for (UINT cbvIndex = 0; cbvIndex < countOfConstantBuffers; cbvIndex++)
+        //for (UINT cbvIndex = 0; cbvIndex < m_instanceCount; cbvIndex++)
         {
-            mpConstantBuffer[cbvIndex].Release();
+            mpConstantBuffer.Release();
         }
 
         GraphicsContexts::RemoveHeapPosition(mUavPosition);

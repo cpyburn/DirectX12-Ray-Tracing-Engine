@@ -13,7 +13,8 @@
 #include <FrameResource.h>
 //#include <TestTriangle.h>
 //#include <AssimpFactory.h>
-#include <TestModel.h>
+//#include <TestModel.h>
+#include <TestInstances.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -69,7 +70,7 @@ private:
     DX::StepTimer                               m_timer;
 
 	CPyburnRTXEngine::TestFullscreen            m_fullscreen;
-	CPyburnRTXEngine::TestModel              m_triangle;
+	CPyburnRTXEngine::TestInstances             m_triangle;
     CPyburnRTXEngine::CameraBase                m_camera;
     CPyburnRTXEngine::GameInput                 m_gameInput;
     //CPyburnRTXEngine::AssimpFactory                m_model;

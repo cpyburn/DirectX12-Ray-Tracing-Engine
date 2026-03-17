@@ -262,7 +262,7 @@ namespace CPyburnRTXEngine
 			heapTexture.heapPosition = heapPostion;
 			UINT rowPitch = static_cast<UINT>(subresources[0].RowPitch);
 			UINT slicePitch = static_cast<UINT>(subresources[0].SlicePitch / subresources[0].RowPitch);
-			heapTexture.textureSize = XMINT2(rowPitch, slicePitch);
+			heapTexture.textureSize = XMINT2(rowPitch / 4 /*RGBA*/, slicePitch);
 
 			Texture::m_loadedTextures.insert(std::pair<std::string, HeapTexture>(wstringToString(wFileName), heapTexture));
 			Texture::m_textures.insert(std::pair<UINT, Microsoft::WRL::ComPtr<ID3D12Resource> >(heapPostion, tex));
@@ -348,7 +348,7 @@ namespace CPyburnRTXEngine
 			heapTexture.heapPosition = heapPostion;
 			UINT rowPitch = static_cast<UINT>(subresource.RowPitch);
 			UINT slicePitch = static_cast<UINT>(subresource.SlicePitch / subresource.RowPitch);
-			heapTexture.textureSize = XMINT2(rowPitch, slicePitch);
+			heapTexture.textureSize = XMINT2(rowPitch / 4 /*RGBA*/, slicePitch);
 
 			Texture::m_loadedTextures.insert(std::pair<std::string, HeapTexture>(wstringToString(wFileName), heapTexture));
 			Texture::m_textures.insert(std::pair<UINT, Microsoft::WRL::ComPtr<ID3D12Resource> >(heapPostion, tex));

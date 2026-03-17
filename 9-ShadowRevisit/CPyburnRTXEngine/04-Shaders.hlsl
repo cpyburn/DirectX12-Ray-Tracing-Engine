@@ -31,9 +31,7 @@ cbuffer Camera : register(b0)
 // 10.1.a
 cbuffer PerFrame : register(b1)
 {
-    float3 A;
-    float3 B;
-    float3 C;
+    float4x4 gInstances[3];
 }
 
 float3 linearToSrgb(float3 c)
@@ -147,7 +145,12 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v2.texture * weights.z;
 
     float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
+    
+    //float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
+    //float3 colorTest = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
 
+    //payload.color = texColor.rgb * colorTest;
+    
     payload.color = texColor.rgb;
 }
 

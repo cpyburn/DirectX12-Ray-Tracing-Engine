@@ -396,7 +396,7 @@ namespace CPyburnRTXEngine
 
 #pragma region DXIL library
         // DXIL library
-        std::wstring shaderFilePath = GetAssetFullPath(L"04-Shaders.hlsl");
+        std::wstring shaderFilePath = GetAssetFullPath(L"09-Shaders.hlsl");
         Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
 
         const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kPlaneChs /* 12.3.e */, kClosestHitShader, kShadowMiss /* 12.3.b */, kShadowChs /* 12.3.b */ };

@@ -535,11 +535,11 @@ namespace CPyburnRTXEngine
         std::vector<D3D12_DESCRIPTOR_RANGE> rangeHit;
         std::vector<D3D12_ROOT_PARAMETER> rootParamsHit;
 
-        rootParamsHit.resize(1 + 1); // cbv + (srv + diffuseSRV)
+        rootParamsHit.resize(1); // (srv + diffuseSRV)
         // CBV
-        rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        rootParamsHit[0].Descriptor.RegisterSpace = 0; 
-        rootParamsHit[0].Descriptor.ShaderRegister = 1; // b1
+        //rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        //rootParamsHit[0].Descriptor.RegisterSpace = 0; 
+        //rootParamsHit[0].Descriptor.ShaderRegister = 1; // b1
         // SRV vertex
         rangeHit.resize(1 + 1 + 1); // srv vertex + srv index + diffuseSRV
         rangeHit[0].BaseShaderRegister = 1; // gOutput used the first t() register in the shader
@@ -561,11 +561,11 @@ namespace CPyburnRTXEngine
         rangeHit[2].OffsetInDescriptorsFromTableStart = 2;
 
         // SRVs
-        rootParamsHit[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        rootParamsHit[1].DescriptorTable.NumDescriptorRanges = 3;
-        rootParamsHit[1].DescriptorTable.pDescriptorRanges = rangeHit.data();
+        rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        rootParamsHit[0].DescriptorTable.NumDescriptorRanges = 3;
+        rootParamsHit[0].DescriptorTable.pDescriptorRanges = rangeHit.data();
 
-		descHit.NumParameters = 1 + 1; // cbv + (srv vertex + srv index + diffuseSRV)
+		descHit.NumParameters = 1; // (srv vertex + srv index + diffuseSRV)
         descHit.pParameters = rootParamsHit.data();
         descHit.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
@@ -733,11 +733,16 @@ namespace CPyburnRTXEngine
 
 #pragma region Global root signature (with camera CBV)
         // Global root signature: camera CBV at b0
-        D3D12_ROOT_PARAMETER globalParams[1] = {};
+        D3D12_ROOT_PARAMETER globalParams[2] = {};
         globalParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         globalParams[0].Descriptor.ShaderRegister = 0; // b0
         globalParams[0].Descriptor.RegisterSpace = 0;
         globalParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+        globalParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        globalParams[1].Descriptor.ShaderRegister = 1; // b1
+        globalParams[1].Descriptor.RegisterSpace = 0;
+        globalParams[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
         D3D12_ROOT_SIGNATURE_DESC globalDesc = {};
         globalDesc.NumParameters = _countof(globalParams);
@@ -870,9 +875,9 @@ namespace CPyburnRTXEngine
         */
 
         const size_t kShaderId = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-        const size_t kCbvSize = sizeof(D3D12_GPU_VIRTUAL_ADDRESS); // 8
+        //const size_t kCbvSize = sizeof(D3D12_GPU_VIRTUAL_ADDRESS); // 8
         const size_t kSrvSize = sizeof(uint64_t); // descriptor pointer you store
-        mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, static_cast<uint32_t>(kShaderId + kCbvSize + (kSrvSize * 3 /*vertexSRV indexSRV and diffuseSRV*/)));
+        mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, static_cast<uint32_t>(kShaderId + (kSrvSize * 3 /*vertexSRV indexSRV and diffuseSRV*/)));
         uint32_t shaderTableSize = mShaderTableEntrySize * 11;
 
         // For simplicity, we create the shader-table on the upload heap. You can also create it on the default heap
@@ -911,9 +916,9 @@ namespace CPyburnRTXEngine
         // Entry 3 - Triangle 0, primary ray. ProgramID and constant-buffer data
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
         // 15.3.a + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
-        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 2) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 3) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 0) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -928,9 +933,9 @@ namespace CPyburnRTXEngine
         // Entry 7 - Triangle 1, primary ray. ProgramID and constant-buffer data
         uint8_t* pEntry7 = shaderTableEntryHelper(7, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
         // 15.3.b + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
-        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 2) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 3) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 0) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
 
         // Entry 8 - Triangle 1, shadow ray. ProgramID only
         shaderTableEntryHelper(8, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -938,9 +943,9 @@ namespace CPyburnRTXEngine
         // Entry 9 - Triangle 2, primary ray. ProgramID and constant-buffer data
         uint8_t* pEntry9 = shaderTableEntryHelper(9, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
         // 15.3.c + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
-        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS)) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 2) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) * 3) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 0) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
 
         // Entry 10 - Triangle 2, shadow ray. ProgramID only
         shaderTableEntryHelper(10, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -1116,6 +1121,7 @@ namespace CPyburnRTXEngine
             // 6.4.e Bind the empty root signature
             m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
             m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
+            m_sceneCommandList->SetComputeRootConstantBufferView(1, mpConstantBuffer.Resource->GetGPUVirtualAddress());
 
             // 6.4.f Set Pipeline
             m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());

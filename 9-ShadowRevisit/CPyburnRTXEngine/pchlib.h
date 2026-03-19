@@ -293,7 +293,7 @@ inline void stringToLower(std::string& utf8Str)
 {
     for (std::string::size_type i = 0; i < utf8Str.length(); ++i)
     {
-        utf8Str[i] = std::tolower(utf8Str[i]);
+        utf8Str[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(utf8Str[i])));
     }
 }
 

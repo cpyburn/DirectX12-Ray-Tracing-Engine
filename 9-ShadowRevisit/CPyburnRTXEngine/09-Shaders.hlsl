@@ -28,10 +28,15 @@ cbuffer Camera : register(b0)
     float3 gCameraPos;
 }
 
+struct InstanceData
+{
+    float4x4 Instances[3];
+};
+
 // 10.1.a
 cbuffer PerFrame : register(b1)
 {
-    float4x4 gInstances[3];
+    InstanceData gInstanceData;
 }
 
 float3 linearToSrgb(float3 c)

@@ -28,15 +28,15 @@ cbuffer Camera : register(b0)
     float3 gCameraPos;
 }
 
-struct InstanceData
+struct EnvironmentData
 {
-    float4x4 instance;
+    float3 lightDirection;
 };
 
 // 10.1.a
-cbuffer Instances : register(b1)
+cbuffer Environment : register(b1)
 {
-    InstanceData gInstanceData[3];
+    EnvironmentData gEnvironmentData;
 }
 
 float3 linearToSrgb(float3 c)
@@ -135,8 +135,7 @@ void miss(inout RayPayload payload)
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     // instance index (from the TLAS)
-    uint instanceIndex = InstanceID();
-    InstanceData inst = gInstanceData[instanceIndex];
+    //uint instanceIndex = InstanceID();
     
     uint primIndex = PrimitiveIndex();
     uint3 indices = gIndices[primIndex];
@@ -185,7 +184,7 @@ void planeChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes
     RayDesc ray;
     ray.Origin = posW;
     // 13.5.c
-    ray.Direction = normalize(float3(0.5, 0.5, -0.5));
+    ray.Direction = normalize(gEnvironmentData.lightDirection);
     // 13.5.d
     ray.TMin = 0.01;
     ray.TMax = 100000;

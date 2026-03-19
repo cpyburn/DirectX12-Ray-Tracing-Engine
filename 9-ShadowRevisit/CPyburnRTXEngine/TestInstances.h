@@ -68,21 +68,22 @@ namespace CPyburnRTXEngine
 		UINT mVertexBufferSrvPosition = 0;
 		UINT mIndexBufferSrvPosition = 0;
 
+		struct EnvironmentData
+		{
+			XMFLOAT3 lightDirection = XMFLOAT3(0.5f, 0.5f, -0.5f);
+		};
+		EnvironmentData m_environmentData = {};
+		ConstantBuffer<EnvironmentData> m_EnvironmentCb;
+
 		struct InstanceData
 		{
-			std::vector<XMMATRIX> instanceTransforms;
-
-			InstanceData()
-			{
-				instanceTransforms.resize(m_instanceCount, XMMatrixIdentity());
-			}
+			XMMATRIX world = XMMatrixIdentity();
 		};
+		std::vector<InstanceData> m_instanceData;
 
 		void createConstantBuffer();
 		static const UINT m_instanceCount = 3;
-		InstanceData m_instanceData = {};
-		ConstantBuffer<InstanceData> mpConstantBuffer;
-		
+				
 		AssimpFactory m_assimpFactory;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 

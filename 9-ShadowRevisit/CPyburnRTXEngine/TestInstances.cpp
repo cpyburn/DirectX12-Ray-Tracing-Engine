@@ -345,7 +345,7 @@ namespace CPyburnRTXEngine
             // 13.3.a
             pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace(), so we need 4 and 6
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[i]);
+            XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
             pInstanceDesc[i].AccelerationStructure = mpBottomLevelAS1->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
@@ -987,11 +987,11 @@ namespace CPyburnRTXEngine
 
     void TestInstances::createConstantBuffer()
     {
-        mpConstantBuffer.CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestModel Cbv");
+        m_EnvironmentCb.CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestModel Cbv");
 
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
-            mpConstantBuffer.CopyToGpu(i);
+            m_EnvironmentCb.CopyToGpu(i);
         }
     }
 
@@ -999,6 +999,8 @@ namespace CPyburnRTXEngine
     {
         m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X");
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
+
+        m_instanceData.resize(m_instanceCount);
     }
 
     TestInstances::~TestInstances()
@@ -1044,12 +1046,14 @@ namespace CPyburnRTXEngine
 		XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
 
         // 3 instances
-        m_instanceData.instanceTransforms[0] = XMMatrixIdentity(); // Identity matrix
-        m_instanceData.instanceTransforms[1] = XMMatrixRotationY(rotation) * translation1;
-        m_instanceData.instanceTransforms[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
+        m_instanceData[0].world = XMMatrixIdentity(); // Identity matrix
+        m_instanceData[1].world = XMMatrixRotationY(rotation) * translation1;
+        m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
 
-        mpConstantBuffer.CpuData = m_instanceData;
-        mpConstantBuffer.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
+
+        XMFLOAT3 lightDir = XMFLOAT3(0.5f, 0.5f, -0.5f);
+        m_EnvironmentCb.CpuData.lightDirection = lightDir;
+        m_EnvironmentCb.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
     }
 
     void TestInstances::Render(CameraBase* camera)
@@ -1103,7 +1107,7 @@ namespace CPyburnRTXEngine
             // 6.4.e Bind the empty root signature
             m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
             m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
-            m_sceneCommandList->SetComputeRootConstantBufferView(1, mpConstantBuffer.Resource->GetGPUVirtualAddress());
+            m_sceneCommandList->SetComputeRootConstantBufferView(1, m_EnvironmentCb.Resource->GetGPUVirtualAddress());
 
             // 6.4.f Set Pipeline
             m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());
@@ -1139,7 +1143,7 @@ namespace CPyburnRTXEngine
         mpOutputResource.Reset();
         //for (UINT cbvIndex = 0; cbvIndex < m_instanceCount; cbvIndex++)
         {
-            mpConstantBuffer.Release();
+            m_EnvironmentCb.Release();
         }
 
         GraphicsContexts::RemoveHeapPosition(mUavPosition);

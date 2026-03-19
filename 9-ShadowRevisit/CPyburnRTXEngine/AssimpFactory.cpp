@@ -269,50 +269,50 @@ namespace CPyburnRTXEngine
 		fnameFixed.erase(std::remove(fnameFixed.begin(), fnameFixed.end(), '\r'), fnameFixed.end());
 		std::string fileName = fnameFixed + (std::string)ext;
 
-		std::string newPath = "Assets\\test.tga";
+		std::string newPath = "..\\..\\Assets\\test.tga";
 
 		// Model Texture
 		if (type == aiTextureType::aiTextureType_DIFFUSE)
 		{
-			newPath = "Assets\\" + m_pathDirectory + fileName;
+			newPath = m_pathDirectory + fileName;
 			return newPath;
 		}
 
 		if (type == aiTextureType::aiTextureType_NORMALS)
 		{
-			newPath = "Assets\\" + m_pathDirectory + fnameFixed + "_NRM" + (std::string)ext;
+			newPath = m_pathDirectory + fnameFixed + "_NRM" + (std::string)ext;
 			struct _stat buffer;
 			if (_stat(newPath.c_str(), &buffer) != 0)
 			{
 				newPath.append(" is missing, default normal loaded instead.\n");
 				DebugTrace((LPCSTR)newPath.c_str());
-				newPath = "Assets\\defaultn.DDS";
+				newPath = "..\\..\\Assets\\defaultn.DDS";
 			}
 			return newPath;
 		}
 
 		if (type == aiTextureType::aiTextureType_SPECULAR)
 		{
-			newPath = "Assets\\" + m_pathDirectory + fnameFixed + "_SPEC" + (std::string)ext;
+			newPath = m_pathDirectory + fnameFixed + "_SPEC" + (std::string)ext;
 			struct _stat buffer;
 			if (_stat(newPath.c_str(), &buffer) != 0)
 			{
 				newPath.append(" is missing, default specular loaded instead.\n");
 				DebugTrace((LPCSTR)newPath.c_str());
-				newPath = "Assets\\defaults.DDS";
+				newPath = "..\\..\\Assets\\defaults.DDS";
 			}
 			return newPath;
 		}
 
 		if (type == aiTextureType::aiTextureType_DISPLACEMENT)
 		{
-			newPath = "Assets\\" + m_pathDirectory + fnameFixed + "_DISP" + (std::string)ext;
+			newPath = m_pathDirectory + fnameFixed + "_DISP" + (std::string)ext;
 			struct _stat buffer;
 			if (_stat(newPath.c_str(), &buffer) != 0)
 			{
 				newPath.append(" is missing, default displacement loaded instead.\n");
 				DebugTrace((LPCSTR)newPath.c_str());
-				newPath = "Assets\\defaultd.DDS";
+				newPath = "..\\..\\Assets\\defaultd.DDS";
 			}
 			return newPath;
 		}

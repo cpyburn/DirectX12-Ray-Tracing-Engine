@@ -64,7 +64,7 @@ namespace CPyburnRTXEngine
 		void createShaderResources();
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpOutputResource;
 		UINT mUavPosition = 0;
-		UINT mSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
+		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
 		UINT mVertexBufferSrvPosition = 0;
 		UINT mIndexBufferSrvPosition = 0;
 

@@ -352,6 +352,7 @@ namespace CPyburnRTXEngine
         }
 
         pInstanceDesc[0].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress(); // plane blas
+        pInstanceDesc[0].InstanceContributionToHitGroupIndex = 2; // plane hit group is after the 2 triangle hit groups in the shader table, so it needs to be 2
 
         // Unmap
         mpTopLevelAS[currentFrame].pInstanceDescResource->Unmap(0, nullptr);
@@ -393,7 +394,7 @@ namespace CPyburnRTXEngine
         //  1 for pipeline config
         //  1 for the global root signature
 
-        D3D12_STATE_SUBOBJECT subobjects[16] = {};
+        D3D12_STATE_SUBOBJECT subobjects[14] = {};
         uint32_t index = 0;
 
 #pragma region DXIL library
@@ -470,66 +471,66 @@ namespace CPyburnRTXEngine
 
 
 #pragma region Ray Root Signature
-        // Create the root-signature
-        D3D12_ROOT_SIGNATURE_DESC descRay{};
-        std::vector<D3D12_DESCRIPTOR_RANGE> rangeRay;
-        std::vector<D3D12_ROOT_PARAMETER> rootParamsRay;
+        //// Create the root-signature
+        //D3D12_ROOT_SIGNATURE_DESC descRay{};
+        //std::vector<D3D12_DESCRIPTOR_RANGE> rangeRay;
+        //std::vector<D3D12_ROOT_PARAMETER> rootParamsRay;
 
-        rangeRay.resize(2);
-        // gOutput
-        rangeRay[0].BaseShaderRegister = 0;
-        rangeRay[0].NumDescriptors = 1;
-        rangeRay[0].RegisterSpace = 0;
-        rangeRay[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-        rangeRay[0].OffsetInDescriptorsFromTableStart = 0;
+        //rangeRay.resize(2);
+        //// gOutput
+        //rangeRay[0].BaseShaderRegister = 0;
+        //rangeRay[0].NumDescriptors = 1;
+        //rangeRay[0].RegisterSpace = 0;
+        //rangeRay[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        //rangeRay[0].OffsetInDescriptorsFromTableStart = 0;
 
-        // gRtScene
-        rangeRay[1].BaseShaderRegister = 0;
-        rangeRay[1].NumDescriptors = 1;
-        rangeRay[1].RegisterSpace = 0;
-        rangeRay[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeRay[1].OffsetInDescriptorsFromTableStart = 1;
+        //// gRtScene
+        //rangeRay[1].BaseShaderRegister = 0;
+        //rangeRay[1].NumDescriptors = 1;
+        //rangeRay[1].RegisterSpace = 0;
+        //rangeRay[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        //rangeRay[1].OffsetInDescriptorsFromTableStart = 1;
 
-        rootParamsRay.resize(1);
-        rootParamsRay[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        rootParamsRay[0].DescriptorTable.NumDescriptorRanges = 2;
-        rootParamsRay[0].DescriptorTable.pDescriptorRanges = rangeRay.data();
+        //rootParamsRay.resize(1);
+        //rootParamsRay[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        //rootParamsRay[0].DescriptorTable.NumDescriptorRanges = 2;
+        //rootParamsRay[0].DescriptorTable.pDescriptorRanges = rangeRay.data();
 
-        // Create the desc
-        descRay.NumParameters = 1;
-        descRay.pParameters = rootParamsRay.data();
-        descRay.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+        //// Create the desc
+        //descRay.NumParameters = 1;
+        //descRay.pParameters = rootParamsRay.data();
+        //descRay.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
-        // create ray-gen root-signature and associate it with the ray-gen shader
-        Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobRay;
-        Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobRay;
-        HRESULT hrRay = D3D12SerializeRootSignature(&descRay, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobRay, &pErrorBlobRay);
-        if (FAILED(hrRay))
-        {
-            if (pErrorBlobRay)
-            {
-                OutputDebugStringA((char*)pErrorBlobRay->GetBufferPointer());
-            }
-            throw std::runtime_error("Failed to serialize root signature");
-        }
+        //// create ray-gen root-signature and associate it with the ray-gen shader
+        //Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobRay;
+        //Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobRay;
+        //HRESULT hrRay = D3D12SerializeRootSignature(&descRay, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobRay, &pErrorBlobRay);
+        //if (FAILED(hrRay))
+        //{
+        //    if (pErrorBlobRay)
+        //    {
+        //        OutputDebugStringA((char*)pErrorBlobRay->GetBufferPointer());
+        //    }
+        //    throw std::runtime_error("Failed to serialize root signature");
+        //}
 
-        Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigRay;
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobRay->GetBufferPointer(), pSigBlobRay->GetBufferSize(), IID_PPV_ARGS(&pRootSigRay)));
+        //Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigRay;
+        //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobRay->GetBufferPointer(), pSigBlobRay->GetBufferSize(), IID_PPV_ARGS(&pRootSigRay)));
 
-        ID3D12RootSignature* pRootSigRayPtr = pRootSigRay.Get();
-        subobjects[index].pDesc = &pRootSigRayPtr;
-        subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
+        //ID3D12RootSignature* pRootSigRayPtr = pRootSigRay.Get();
+        //subobjects[index].pDesc = &pRootSigRayPtr;
+        //subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
 #pragma endregion
 
 #pragma region Ray root associations
-        // Associate the ray-gen root signature with the ray-gen shader
-        D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationRay = {};
-        associationRay.NumExports = 1;
-        associationRay.pExports = &kRayGenShader;
-        associationRay.pSubobjectToAssociate = &subobjects[index - 1];
-        subobjects[index] = {};
-        subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-        subobjects[index++].pDesc = &associationRay;
+        //// Associate the ray-gen root signature with the ray-gen shader
+        //D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationRay = {};
+        //associationRay.NumExports = 1;
+        //associationRay.pExports = &kRayGenShader;
+        //associationRay.pSubobjectToAssociate = &subobjects[index - 1];
+        //subobjects[index] = {};
+        //subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+        //subobjects[index++].pDesc = &associationRay;
 #pragma endregion
 
 #pragma region Hit triangle root signature
@@ -537,30 +538,27 @@ namespace CPyburnRTXEngine
         std::vector<D3D12_DESCRIPTOR_RANGE> rangeHit;
         std::vector<D3D12_ROOT_PARAMETER> rootParamsHit;
 
-        rootParamsHit.resize(1); // (srv + diffuseSRV)
-        // CBV
-        //rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        //rootParamsHit[0].Descriptor.RegisterSpace = 0; 
-        //rootParamsHit[0].Descriptor.ShaderRegister = 1; // b1
-        // SRV vertex
         rangeHit.resize(1 + 1 + 1); // srv vertex + srv index + diffuseSRV
-        rangeHit[0].BaseShaderRegister = 1; // gOutput used the first t() register in the shader
+        rootParamsHit.resize(1); // (srv + diffuseSRV)
+
+        // SRV vertex
+        rangeHit[0].BaseShaderRegister = 0; // gOutput used the first t() register in the shader
         rangeHit[0].NumDescriptors = 1;
-        rangeHit[0].RegisterSpace = 0;
+        rangeHit[0].RegisterSpace = 1;
         rangeHit[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[0].OffsetInDescriptorsFromTableStart = 0;
+        rangeHit[0].OffsetInDescriptorsFromTableStart = 1;
         // SRV index
-        rangeHit[1].BaseShaderRegister = 2; // gOutput used the first t() register in the shader
+        rangeHit[1].BaseShaderRegister = 1; // gOutput used the first t() register in the shader
         rangeHit[1].NumDescriptors = 1;
-        rangeHit[1].RegisterSpace = 0;
+        rangeHit[1].RegisterSpace = 1;
         rangeHit[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[1].OffsetInDescriptorsFromTableStart = 1;
+        rangeHit[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
         // SRV diffuse
-        rangeHit[2].BaseShaderRegister = 3; // gOutput used the first t() register in the shader
+        rangeHit[2].BaseShaderRegister = 2; // gOutput used the first t() register in the shader
         rangeHit[2].NumDescriptors = 1;
-        rangeHit[2].RegisterSpace = 0;
+        rangeHit[2].RegisterSpace = 1;
         rangeHit[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[2].OffsetInDescriptorsFromTableStart = 2;
+        rangeHit[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
         // SRVs
         rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -625,7 +623,7 @@ namespace CPyburnRTXEngine
         rangePlaneHit.resize(1);
         rangePlaneHit[0].BaseShaderRegister = 0;
         rangePlaneHit[0].NumDescriptors = 1;
-        rangePlaneHit[0].RegisterSpace = 0;
+        rangePlaneHit[0].RegisterSpace = 1;
         rangePlaneHit[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         rangePlaneHit[0].OffsetInDescriptorsFromTableStart = 0;
 
@@ -733,18 +731,42 @@ namespace CPyburnRTXEngine
         subobjects[index++].pDesc = &config;
 #pragma endregion
 
-#pragma region Global root signature (with camera CBV)
-        // Global root signature: camera CBV at b0
-        D3D12_ROOT_PARAMETER globalParams[2] = {};
+#pragma region Global root signature
+        D3D12_DESCRIPTOR_RANGE globalRanges[2] = {};
+
+        // u0 = output UAV
+        globalRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        globalRanges[0].NumDescriptors = 1;
+        globalRanges[0].BaseShaderRegister = 0;
+        globalRanges[0].RegisterSpace = 0;
+        globalRanges[0].OffsetInDescriptorsFromTableStart = 0;
+
+        // t0 = TLAS SRV
+        globalRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        globalRanges[1].NumDescriptors = 1;
+        globalRanges[1].BaseShaderRegister = 0;
+        globalRanges[1].RegisterSpace = 0;
+        globalRanges[1].OffsetInDescriptorsFromTableStart = 1;
+
+        D3D12_ROOT_PARAMETER globalParams[3] = {};
+
+        // b0 camera
         globalParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        globalParams[0].Descriptor.ShaderRegister = 0; // b0
+        globalParams[0].Descriptor.ShaderRegister = 0;
         globalParams[0].Descriptor.RegisterSpace = 0;
         globalParams[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+        // b1 environment
         globalParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        globalParams[1].Descriptor.ShaderRegister = 1; // b1
+        globalParams[1].Descriptor.ShaderRegister = 1;
         globalParams[1].Descriptor.RegisterSpace = 0;
         globalParams[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+        // descriptor table: u0 + t0
+        globalParams[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        globalParams[2].DescriptorTable.NumDescriptorRanges = 2;
+        globalParams[2].DescriptorTable.pDescriptorRanges = globalRanges;
+        globalParams[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
         D3D12_ROOT_SIGNATURE_DESC globalDesc = {};
         globalDesc.NumParameters = _countof(globalParams);
@@ -753,14 +775,21 @@ namespace CPyburnRTXEngine
 
         Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobGlobal;
         Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobGlobal;
-        HRESULT hrGlobal = D3D12SerializeRootSignature(&globalDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobGlobal, &pErrorBlobGlobal);
+        HRESULT hrGlobal = D3D12SerializeRootSignature(
+            &globalDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobGlobal, &pErrorBlobGlobal);
+
         if (FAILED(hrGlobal))
         {
             if (pErrorBlobGlobal) OutputDebugStringA((char*)pErrorBlobGlobal->GetBufferPointer());
             throw std::runtime_error("Failed to serialize global root signature");
         }
 
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobGlobal->GetBufferPointer(), pSigBlobGlobal->GetBufferSize(), IID_PPV_ARGS(&mpEmptyRootSig))); // mpEmptyRootSig now holds global RS
+        DX::ThrowIfFailed(
+            m_deviceResources->GetD3DDevice()->CreateRootSignature(
+                0,
+                pSigBlobGlobal->GetBufferPointer(),
+                pSigBlobGlobal->GetBufferSize(),
+                IID_PPV_ARGS(&mpEmptyRootSig)));
 
         ID3D12RootSignature* pRootSigGlobalPtr = mpEmptyRootSig.Get();
         subobjects[index].pDesc = &pRootSigGlobalPtr;
@@ -880,7 +909,7 @@ namespace CPyburnRTXEngine
         //const size_t kCbvSize = sizeof(D3D12_GPU_VIRTUAL_ADDRESS); // 8
         const size_t kSrvSize = sizeof(uint64_t); // descriptor pointer you store
         mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, static_cast<uint32_t>(kShaderId + (kSrvSize * 3 /*vertexSRV indexSRV and diffuseSRV*/)));
-        uint32_t shaderTableSize = mShaderTableEntrySize * 11;
+        uint32_t shaderTableSize = mShaderTableEntrySize * 7;
 
         // For simplicity, we create the shader-table on the upload heap. You can also create it on the default heap
         D3D12_RESOURCE_DESC bufDesc = {};
@@ -917,17 +946,16 @@ namespace CPyburnRTXEngine
 
         // Entry 3 - Triangle 0, primary ray. ProgramID and constant-buffer data
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
-        // 15.3.a + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
-        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 0) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
+        *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 3) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
 
         // Entry 5 - Plane, primary ray. ProgramID only and the TLAS SRV
         uint8_t* pEntry5 = shaderTableEntryHelper(5, pRtsoProps.Get(), pData, kPlaneHitGroup);
-        *(uint64_t*)(pEntry5 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(mSrvPosition[0]).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mSrvPosition[0];
+        *(uint64_t*)(pEntry5 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(mTlasSrvPosition[0]).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mSrvPosition[0];
 
         // Entry 6 - Plane, shadow ray
         shaderTableEntryHelper(6, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -966,7 +994,7 @@ namespace CPyburnRTXEngine
             srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             srvDesc.RaytracingAccelerationStructure.Location = mpTopLevelAS[i].pResult->GetGPUVirtualAddress();
 
-            m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mSrvPosition[i]));
+            m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mTlasSrvPosition[i]));
         }
 
         D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -997,7 +1025,7 @@ namespace CPyburnRTXEngine
 
     TestInstances::TestInstances()
     {
-        m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X");
+        
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
 
         m_instanceData.resize(m_instanceCount);
@@ -1016,10 +1044,12 @@ namespace CPyburnRTXEngine
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
-            mSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
+            mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
         mVertexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         mIndexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+        // want the heap positions to be contiguous
+        m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X");
 
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09
@@ -1108,6 +1138,7 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
             m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
             m_sceneCommandList->SetComputeRootConstantBufferView(1, m_EnvironmentCb.Resource->GetGPUVirtualAddress());
+            m_sceneCommandList->SetComputeRootDescriptorTable(2, GraphicsContexts::GetGpuHandle(mUavPosition));
 
             // 6.4.f Set Pipeline
             m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());
@@ -1149,7 +1180,7 @@ namespace CPyburnRTXEngine
         GraphicsContexts::RemoveHeapPosition(mUavPosition);
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
-            GraphicsContexts::RemoveHeapPosition(mSrvPosition[i]);
+            GraphicsContexts::RemoveHeapPosition(mTlasSrvPosition[i]);
         }
         GraphicsContexts::RemoveHeapPosition(mVertexBufferSrvPosition);
     }

@@ -1,8 +1,8 @@
 // 4.2 Ray - Tracing Shaders 04 - Shaders.hlsl
 
 // 4.3.a Ray-Generation Shader
-RaytracingAccelerationStructure gRtScene : register(t0);
-RWTexture2D<float4> gOutput : register(u0);
+RaytracingAccelerationStructure gRtScene : register(t0, space0);
+RWTexture2D<float4> gOutput : register(u0, space0);
 
 // 15.4.a
 struct STriVertex
@@ -13,12 +13,12 @@ struct STriVertex
     float3 tangent;
     float3 binormal; // todo: drop for ray tracing
 };
-StructuredBuffer<STriVertex> BTriVertex : register(t1);
-StructuredBuffer<uint3> gIndices : register(t2);
-Texture2D<float4> gDiffuseTexture : register(t3);
+StructuredBuffer<STriVertex> BTriVertex : register(t0, space1);
+StructuredBuffer<uint3> gIndices : register(t1, space1);
+Texture2D<float4> gDiffuseTexture : register(t2, space1);
 SamplerState gSampler : register(s0);
 
-cbuffer Camera : register(b0)
+cbuffer Camera : register(b0, space0)
 {
     float4x4 gView;
     float4x4 gProj;
@@ -34,7 +34,7 @@ struct EnvironmentData
 };
 
 // 10.1.a
-cbuffer Environment : register(b1)
+cbuffer Environment : register(b1, space0)
 {
     EnvironmentData gEnvironmentData;
 }
@@ -131,6 +131,12 @@ void miss(inout RayPayload payload)
 //    payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
 //}
 
+// 13.1.a
+struct ShadowPayload
+{
+    bool hit;
+};
+
 [shader("closesthit")]
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
@@ -159,14 +165,28 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
     //payload.color = texColor.rgb * colorTest;
     
-    payload.color = texColor.rgb;
-}
+    float hitT = RayTCurrent();
+    float3 rayDirW = WorldRayDirection();
+    float3 rayOriginW = WorldRayOrigin();
 
-// 13.1.a
-struct ShadowPayload
-{
-    bool hit;
-};
+    // 13.5.b Find the world-space hit position
+    float3 posW = rayOriginW + hitT * rayDirW;
+    
+    // Fire a shadow ray. The direction is hard-coded here, but can be fetched from a constant-buffer
+    RayDesc ray;
+    ray.Origin = posW;
+    // 13.5.c
+    ray.Direction = normalize(gEnvironmentData.lightDirection);
+    // 13.5.d
+    ray.TMin = 0.01;
+    ray.TMax = 100000;
+    // 13.5.e
+    ShadowPayload shadowPayload;
+    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, ray, shadowPayload);
+    // 13.5.f
+    float factor = shadowPayload.hit ? 0.1 : 1.0;
+    payload.color = texColor.rgb * factor;
+}
 
 // 12.1.a
 [shader("closesthit")]

@@ -345,8 +345,7 @@ namespace CPyburnRTXEngine
             // 13.3.a
             pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace(), so we need 4 and 6
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            //XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[i]);
-            XMMATRIX transpose = XMMatrixIdentity();
+            XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[i]);
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
             pInstanceDesc[i].AccelerationStructure = mpBottomLevelAS1->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
@@ -917,7 +916,7 @@ namespace CPyburnRTXEngine
         shaderTableEntryHelper(2, pRtsoProps.Get(), pData, kShadowMiss);
 
         // Entry 3 - Triangle 0, primary ray. ProgramID and constant-buffer data
-        uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
+        uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
         // 15.3.a + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
         *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 0) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         *(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
@@ -1045,9 +1044,9 @@ namespace CPyburnRTXEngine
 		XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
 
         // 3 instances
-        m_instanceData.instanceTransforms[0] = XMMatrixTranspose(XMMatrixIdentity()); // Identity matrix
-        m_instanceData.instanceTransforms[1] = XMMatrixTranspose(XMMatrixRotationY(rotation) * translation1);
-        m_instanceData.instanceTransforms[2] = XMMatrixTranspose(XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation));
+        m_instanceData.instanceTransforms[0] = XMMatrixIdentity(); // Identity matrix
+        m_instanceData.instanceTransforms[1] = XMMatrixRotationY(rotation) * translation1;
+        m_instanceData.instanceTransforms[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
 
         mpConstantBuffer.CpuData = m_instanceData;
         mpConstantBuffer.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());

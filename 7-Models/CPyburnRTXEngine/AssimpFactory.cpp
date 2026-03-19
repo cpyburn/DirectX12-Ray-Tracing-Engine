@@ -344,7 +344,7 @@ namespace CPyburnRTXEngine
 		m_pathDirectory = dir;
 		m_fileName = std::string(fname);
 
-		m_pScene = m_importer.ReadFile("Assets\\" + m_pathFileName, customFlags);
+		m_pScene = m_importer.ReadFile(m_pathFileName, customFlags);
 
 		if (!m_pScene || m_pScene->mNumMeshes == 0)
 		{

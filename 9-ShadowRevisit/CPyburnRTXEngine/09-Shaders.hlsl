@@ -30,13 +30,17 @@ cbuffer Camera : register(b0)
 
 struct InstanceData
 {
-    float4x4 Instances[3];
+    float4x4 world; // 64 bytes (4x4 floats)
+    //uint materialIndex; // 4 bytes 
+    //uint vertexOffset; // 4 bytes 
+    //uint indexOffset; // 4 bytes 
+    //uint padding; // 4 bytes padding to 16-byte alignment
 };
 
 // 10.1.a
-cbuffer PerFrame : register(b1)
+cbuffer Instances : register(b1)
 {
-    InstanceData gInstanceData;
+    InstanceData gInstanceData[3];
 }
 
 float3 linearToSrgb(float3 c)
@@ -134,6 +138,10 @@ void miss(inout RayPayload payload)
 [shader("closesthit")]
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    // instance index (from the TLAS)
+    uint instanceIndex = InstanceID();
+    InstanceData inst = gInstanceData[instanceIndex];
+    
     uint primIndex = PrimitiveIndex();
     uint3 indices = gIndices[primIndex];
 
@@ -148,15 +156,40 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v0.texture * weights.x +
         v1.texture * weights.y +
         v2.texture * weights.z;
+    
+    float3 localPos =
+        v0.vertex * weights.x +
+        v1.vertex * weights.y +
+        v2.vertex * weights.z;
 
+    // transform to world space using instance transform
+    float4 worldPos4 = mul(float4(localPos, 1.0), inst.world);
+    float3 worldPos = worldPos4.xyz / worldPos4.w; // usually w==1
+    
+    // interpolate and transform normal (treat as direction, w=0)
+    float3 localNormal =
+        v0.normal * weights.x +
+        v1.normal * weights.y +
+        v2.normal * weights.z;
+    // transform normal by world matrix (ignore translation). Using float3x3 is okay:
+    float3 worldNormal = normalize(mul((float3x3) inst.world, localNormal));
+
+    // simple shading: sample texture and use lambert with a directional light
     float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
+
+    // simple lighting
+    float3 lightDir = normalize(float3(0.5, 0.5, -0.5));
+    float NdotL = max(dot(worldNormal, lightDir), 0.0);
+    float3 lit = texColor.rgb * (0.2 + 0.8 * NdotL);
+    
+    payload.color = lit;
     
     //float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     //float3 colorTest = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
 
     //payload.color = texColor.rgb * colorTest;
     
-    payload.color = texColor.rgb;
+    //payload.color = texColor.rgb;
 }
 
 // 13.1.a

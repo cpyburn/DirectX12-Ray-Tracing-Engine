@@ -1036,8 +1036,8 @@ namespace CPyburnRTXEngine
 
     TestModel::TestModel()
     {
-        //m_assimpFactory.Initialize("Models\\Elf-ranger.X");
-        m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
+        m_assimpFactory.Initialize("..\\..\\assets\\Models\\Elf-ranger.X");
+        //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
     }
 
     TestModel::~TestModel()

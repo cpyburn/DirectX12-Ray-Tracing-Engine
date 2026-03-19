@@ -330,26 +330,29 @@ namespace CPyburnRTXEngine
         ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * m_instanceCount); // 3 instances
 
         // 11.3.b Create the desc for the triangle/plane instance
-        pInstanceDesc[0].InstanceID = 0;
-        pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0;
-        pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[0]);
-        memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
-        pInstanceDesc[0].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress(); // plane blas
-        pInstanceDesc[0].InstanceMask = 0xFF;
+        //pInstanceDesc[0].InstanceID = 0;
+        //pInstanceDesc[0].InstanceContributionToHitGroupIndex = 0;
+        //pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+        //XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[0]);
+        //memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
+        //
+        //pInstanceDesc[0].InstanceMask = 0xFF;
 
         // 8.0.d
-        for (UINT i = 1; i < m_instanceCount; i++)
+        for (UINT i = 0; i < m_instanceCount; i++)
         {
             pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
             // 13.3.a
-            pInstanceDesc[i].InstanceContributionToHitGroupIndex = (i * 2) + 2;  // The indices are relative to to the start of the hit-table entries specified in Raytrace(), so we need 4 and 6
+            pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace(), so we need 4 and 6
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[i]);
+            //XMMATRIX transpose = XMMatrixTranspose(m_instanceData.instanceTransforms[i]);
+            XMMATRIX transpose = XMMatrixIdentity();
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
             pInstanceDesc[i].AccelerationStructure = mpBottomLevelAS1->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
         }
+
+        pInstanceDesc[0].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress(); // plane blas
 
         // Unmap
         mpTopLevelAS[currentFrame].pInstanceDescResource->Unmap(0, nullptr);
@@ -930,26 +933,6 @@ namespace CPyburnRTXEngine
         // Entry 6 - Plane, shadow ray
         shaderTableEntryHelper(6, pRtsoProps.Get(), pData, kShadowHitGroup);
 
-        // Entry 7 - Triangle 1, primary ray. ProgramID and constant-buffer data
-        uint8_t* pEntry7 = shaderTableEntryHelper(7, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
-        // 15.3.b + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
-        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 0) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry7 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-
-        // Entry 8 - Triangle 1, shadow ray. ProgramID only
-        shaderTableEntryHelper(8, pRtsoProps.Get(), pData, kShadowHitGroup);
-
-        // Entry 9 - Triangle 2, primary ray. ProgramID and constant-buffer data
-        uint8_t* pEntry9 = shaderTableEntryHelper(9, pRtsoProps.Get(), pData, kHitGroup, mpConstantBuffer.Resource);
-        // 15.3.c + sizeof(D3D12_GPU_VIRTUAL_ADDRESS) because SRV is after the CBV
-        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 0) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-        *(uint64_t*)(pEntry9 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
-
-        // Entry 10 - Triangle 2, shadow ray. ProgramID only
-        shaderTableEntryHelper(10, pRtsoProps.Get(), pData, kShadowHitGroup);
-
         // Unmap
         mpShaderTable->Unmap(0, nullptr);
     }
@@ -1015,7 +998,7 @@ namespace CPyburnRTXEngine
 
     TestInstances::TestInstances()
     {
-        m_assimpFactory.Initialize("Models\\Elf-ranger.X");
+        m_assimpFactory.Initialize("..\\..\\assets\\Models\\Elf-ranger.X");
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
     }
 
@@ -1062,9 +1045,9 @@ namespace CPyburnRTXEngine
 		XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
 
         // 3 instances
-        m_instanceData.instanceTransforms[0] = XMMatrixIdentity(); // Identity matrix
-        m_instanceData.instanceTransforms[1] = XMMatrixRotationY(rotation) * translation1;
-        m_instanceData.instanceTransforms[2] = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
+        m_instanceData.instanceTransforms[0] = XMMatrixTranspose(XMMatrixIdentity()); // Identity matrix
+        m_instanceData.instanceTransforms[1] = XMMatrixTranspose(XMMatrixRotationY(rotation) * translation1);
+        m_instanceData.instanceTransforms[2] = XMMatrixTranspose(XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation));
 
         mpConstantBuffer.CpuData = m_instanceData;
         mpConstantBuffer.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
@@ -1116,7 +1099,7 @@ namespace CPyburnRTXEngine
             raytraceDesc.HitGroupTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + hitOffset;
             raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
             // 12.3.d
-            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 8;    // 13.3.d 8 hit-entries
+            raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 4;    // 13.3.d 8 hit-entries
 
             // 6.4.e Bind the empty root signature
             m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());

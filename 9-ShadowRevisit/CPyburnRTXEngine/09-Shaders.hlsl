@@ -107,9 +107,6 @@ struct ShadowPayload
 [shader("closesthit")]
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    // instance index (from the TLAS)
-    //uint instanceIndex = InstanceID();
-    
     uint primIndex = PrimitiveIndex();
     uint3 indices = gIndices[primIndex];
 
@@ -126,28 +123,47 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v2.texture * weights.z;
 
     float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
-    
-    float hitT = RayTCurrent();
-    float3 rayDirW = WorldRayDirection();
-    float3 rayOriginW = WorldRayOrigin();
 
-    // 13.5.b Find the world-space hit position
+    // Interpolate the normal from the vertex buffer
+    float3 normalOS =
+        v0.normal * weights.x +
+        v1.normal * weights.y +
+        v2.normal * weights.z;
+
+    normalOS = normalize(normalOS);
+
+    // Convert object-space normal to world-space normal
+    // This is correct for rotations/translations. If you add non-uniform scaling later,
+    // use the inverse-transpose version instead.
+    float3 normalWS = normalize(mul((float3x3) ObjectToWorld3x4(), normalOS));
+
+    float hitT = RayTCurrent();
+    float3 rayOriginW = WorldRayOrigin();
+    float3 rayDirW = WorldRayDirection();
     float3 posW = rayOriginW + hitT * rayDirW;
-    
-    // Fire a shadow ray. The direction is hard-coded here, but can be fetched from a constant-buffer
+
+    float3 lightDir = normalize(gEnvironmentData.lightDirection);
+
+    // Flip this sign if your light direction convention is the opposite
+    float ndotl = saturate(dot(normalWS, lightDir));
+
+    // Push the shadow ray off the surface along the normal to reduce acne
     RayDesc ray;
-    ray.Origin = posW;
-    // 13.5.c
-    ray.Direction = normalize(gEnvironmentData.lightDirection);
-    // 13.5.d
+    ray.Origin = posW + normalWS * 0.01;
+    ray.Direction = lightDir;
     ray.TMin = 0.01;
-    ray.TMax = 100000;
-    // 13.5.e
+    ray.TMax = 100000.0;
+
     ShadowPayload shadowPayload;
-    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, ray, shadowPayload);
-    // 13.5.f
-    float factor = shadowPayload.hit ? 0.1 : 1.0;
-    payload.color = texColor.rgb * factor;
+    TraceRay(gRtScene, 0, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+    float shadow = shadowPayload.hit ? 0.1 : 1.0;
+
+    // Simple lit shading using the normal
+    float3 ambient = 0.15 * texColor.rgb;
+    float3 diffuse = ndotl * texColor.rgb;
+
+    payload.color = (ambient + diffuse) * shadow;
 }
 
 // 12.1.a

@@ -920,9 +920,9 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3D12StateObjectProperties> pRtsoProps;
         DX::ThrowIfFailed(mpPipelineState->QueryInterface(IID_PPV_ARGS(&pRtsoProps)));
 
-        // Entry 0 - ray-gen program ID and descriptor data
+        // Entry 0 - ray-gen program ID and descriptor data MOVED TO GLOBAL ROOT SIGNATURE
         uint8_t* pEntry0 = shaderTableEntryHelper(0, pRtsoProps.Get(), pData, kRayGenShader);
-        *(uint64_t*)(pEntry0 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(mUavPosition).ptr; // heapStart + GraphicsContexts::c_descriptorSize * mUavPosition;
+        //*(uint64_t*)(pEntry0 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(mUavPosition).ptr; // heapStart + GraphicsContexts::c_descriptorSize * mUavPosition;
 
         // Entry 1 - primary ray miss
         shaderTableEntryHelper(1, pRtsoProps.Get(), pData, kMissShader);

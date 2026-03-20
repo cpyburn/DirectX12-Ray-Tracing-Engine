@@ -87,6 +87,9 @@ namespace CPyburnRTXEngine
 		AssimpFactory m_assimpFactory;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandList;
+
 	public:
 		TestInstances();
 		~TestInstances();

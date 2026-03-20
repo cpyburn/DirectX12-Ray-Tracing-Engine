@@ -96,19 +96,14 @@ namespace CPyburnRTXEngine
             m_planeVertexBuffer->Unmap(0, nullptr);
         }
 
-
-        // Single-use command allocator and command list for creating resources.
-        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
-
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
 
         // load model images
         {
             if (m_assimpFactory.GetMeshEntries().size() > 0)
             {
-                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), commandList.Get());
+                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), m_commandList.Get());
             }
         }
 
@@ -155,18 +150,18 @@ namespace CPyburnRTXEngine
             asDesc.DestAccelerationStructureData = pResult->GetGPUVirtualAddress();
             asDesc.ScratchAccelerationStructureData = pScratch->GetGPUVirtualAddress();
 
-            commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+            m_commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
 
             // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
             D3D12_RESOURCE_BARRIER uavBarrier = {};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             uavBarrier.UAV.pResource = pResult.Get();
-            commandList->ResourceBarrier(1, &uavBarrier);
+            m_commandList->ResourceBarrier(1, &uavBarrier);
 
             // Close the resource creation command list and execute it to begin the vertex buffer copy into
             // the default heap.
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+            DX::ThrowIfFailed(m_commandList->Close());
+            ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
             m_deviceResources->WaitForGpu();
 
@@ -174,8 +169,8 @@ namespace CPyburnRTXEngine
             mpBottomLevelAS = pResult;
         }
 
-        DX::ThrowIfFailed(commandAllocator->Reset());
-        DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+        DX::ThrowIfFailed(m_commandAllocator->Reset());
+        DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
         {
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
@@ -218,18 +213,18 @@ namespace CPyburnRTXEngine
             asDesc.DestAccelerationStructureData = pResult->GetGPUVirtualAddress();
             asDesc.ScratchAccelerationStructureData = pScratch->GetGPUVirtualAddress();
 
-            commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+            m_commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
 
             // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
             D3D12_RESOURCE_BARRIER uavBarrier = {};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             uavBarrier.UAV.pResource = pResult.Get();
-            commandList->ResourceBarrier(1, &uavBarrier);
+            m_commandList->ResourceBarrier(1, &uavBarrier);
 
             // Close the resource creation command list and execute it to begin the vertex buffer copy into
             // the default heap.
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+            DX::ThrowIfFailed(m_commandList->Close());
+            ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
             m_deviceResources->WaitForGpu();
 
@@ -237,19 +232,19 @@ namespace CPyburnRTXEngine
             mpBottomLevelAS1 = pResult;
         }
 
-        DX::ThrowIfFailed(commandAllocator->Reset());
-        DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+        DX::ThrowIfFailed(m_commandAllocator->Reset());
+        DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
 
         // Top Level AS
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
-            RefitOrRebuildTLAS(commandList.Get(), i, false);
+            RefitOrRebuildTLAS(m_commandList.Get(), i, false);
         }
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
         // the default heap.
-        DX::ThrowIfFailed(commandList->Close());
-        ID3D12CommandList* ppCommandLists[] = { commandList.Get()};
+        DX::ThrowIfFailed(m_commandList->Close());
+        ID3D12CommandList* ppCommandLists[] = { m_commandList.Get()};
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         m_deviceResources->WaitForGpu();
     }

@@ -46,6 +46,7 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpBottomLevelAS1;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
+		void RefitOrRebuildTLASNext();
 
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();
@@ -89,6 +90,7 @@ namespace CPyburnRTXEngine
 
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandList;
+		bool m_TlasUpdated = false;
 
 	public:
 		TestInstances();

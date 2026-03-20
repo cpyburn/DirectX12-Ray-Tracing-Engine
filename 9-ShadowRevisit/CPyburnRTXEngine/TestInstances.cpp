@@ -355,6 +355,29 @@ namespace CPyburnRTXEngine
         commandList->ResourceBarrier(1, &uavBarrier);
     }
 
+    void TestInstances::RefitOrRebuildTLASNext()
+    {
+        m_TlasUpdated = false;
+        auto task = Concurrency::create_task([this]()
+		{
+            // Build the TLAS for the next frame while the current frame is being rendered.
+            UINT currentFrame = m_deviceResources->GetCurrentFrameIndex();
+            UINT nextFrame = (currentFrame + 1) % DX::DeviceResources::c_backBufferCount;
+
+            DX::ThrowIfFailed(m_commandAllocator->Reset());
+            DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+
+            RefitOrRebuildTLAS(m_commandList.Get(), nextFrame, true);
+
+            DX::ThrowIfFailed(m_commandList->Close());
+            ID3D12CommandList* lists[] = { m_commandList.Get() };
+            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(1, lists);
+            m_deviceResources->WaitForGpu();
+            m_TlasUpdated = true;
+		});
+		 task.wait();
+    }
+
     void TestInstances::createRtPipelineState()
     {
         //  1 for the DXIL library
@@ -1077,8 +1100,11 @@ namespace CPyburnRTXEngine
 
             // refitting
             {
-                //float elapsedTime = float(timer.GetElapsedSeconds());
-                RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true);
+                if (!m_TlasUpdated)
+                {
+                    RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true); // if the next one is not ready, fall back here, but if this happens, you should consider a different architecture as it means you are not able to keep up with the updates
+                }
+                RefitOrRebuildTLASNext(); // always have the next one ready for rendering if possible (tlas buffering)
             }
 
             ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };

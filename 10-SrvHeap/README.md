@@ -1,0 +1,1 @@
+Up until now we have been doing a little bit of wonky stuff, like adding a triangle geom in with the plane geom, in real practice, you may do something like this to make 1 static model, but usually each model would have its on BLAS. We are going to head that direction with this tutorial.

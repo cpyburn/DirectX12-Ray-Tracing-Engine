@@ -35,14 +35,14 @@ namespace CPyburnRTXEngine
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 		// Acceleration structure buffers and sizes
 		void createAccelerationStructures();
-		Microsoft::WRL::ComPtr<ID3D12Resource> mpVertexBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> mpIndicesBuffer;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBuffer;
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpBottomLevelAS;
 		
 		UINT64 mTlasSize = 0;
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> mpVertexBuffer1;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeVertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpBottomLevelAS1;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
@@ -82,7 +82,7 @@ namespace CPyburnRTXEngine
 		std::vector<InstanceData> m_instanceData;
 
 		void createConstantBuffer();
-		static const UINT m_instanceCount = 3;
+		static const UINT m_instanceCount = 4;
 				
 		AssimpFactory m_assimpFactory;
 		Texture::HeapTexture m_heapTextureDiffuse = {};

@@ -62,19 +62,6 @@ void rayGen()
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
 
-    //float2 crd = float2(launchIndex.xy);
-    //float2 dims = float2(launchDim.xy);
-
-    //float2 d = ((crd / dims) * 2.f - 1.f);
-    //float aspectRatio = dims.x / dims.y;
-    
-    //RayDesc ray;
-    //ray.Origin = camPos;
-    //ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
-
-    //ray.TMin = 0;
-    //ray.TMax = 100000;
-
     float2 uv = (launchIndex + 0.5) / launchDim;
     uv = uv * 2.0 - 1.0;
 
@@ -111,26 +98,6 @@ void miss(inout RayPayload payload)
     payload.color = float3(0.4, 0.6, 0.2);
 }
 
-// 10.1.b
-//[shader("closesthit")]
-//void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
-//{
-//    float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-//    //payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
-
-//    // 15.4.b
-//    //uint instance = InstanceID();
-//    //if (instance < 2)
-//    //{
-//    //    float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
-//    //    payload.color = hitColor;
-//    //    return;
-//    //}
-//    //float3 hitColor = BTriVertex[instance].color * barycentrics.x + BTriVertex[instance].color * barycentrics.y + BTriVertex[instance].color * barycentrics.z;
-//    //payload.color = hitColor;
-//    payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
-//}
-
 // 13.1.a
 struct ShadowPayload
 {
@@ -159,11 +126,6 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v2.texture * weights.z;
 
     float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
-    
-    //float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-    //float3 colorTest = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
-
-    //payload.color = texColor.rgb * colorTest;
     
     float hitT = RayTCurrent();
     float3 rayDirW = WorldRayDirection();
@@ -213,7 +175,7 @@ void planeChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 1 /* ray index*/, 0, 1, ray, shadowPayload);
     // 13.5.f
     float factor = shadowPayload.hit ? 0.1 : 1.0;
-    payload.color = float4(0.9f, 0.9f, 0.9f, 1.0f) * factor;
+    payload.color = float3(0.9f, 0.9f, 0.9f) * factor;
 }
 
 // 13.1.b

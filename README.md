@@ -65,5 +65,5 @@ We wrapped up these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tut
 Adding a shadow ray to the models and adding a NEXT/FUTURE buffer to the TLAS. The TLAS will always be ready for the render pipeline.
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/38a5ee25-8f13-4dcb-810c-aa29edc22ba9" />
 
-### [10-Srv heap](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/9-ShadowRevisit) 
+### [10-Srv heap](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/10-SrvHeap) 
 Creating a single Srv heap with continuous textures for scaling textures in HLSL

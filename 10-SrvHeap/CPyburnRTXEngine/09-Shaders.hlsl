@@ -15,7 +15,12 @@ struct STriVertex
 };
 StructuredBuffer<STriVertex> BTriVertex : register(t0, space1);
 StructuredBuffer<uint3> gIndices : register(t1, space1);
-Texture2D<float4> gDiffuseTexture : register(t2, space1);
+struct MaterialData
+{
+    uint baseColorTexIndex;
+};
+//StructuredBuffer<MaterialData> gMaterials : register(t2, space1);
+Texture2D<float4> gTextures[] : register(t3, space1);
 SamplerState gSampler : register(s0);
 
 cbuffer Camera : register(b0, space0)
@@ -122,7 +127,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v1.texture * weights.y +
         v2.texture * weights.z;
 
-    float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
+    //float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
+    float4 texColor = gTextures[NonUniformResourceIndex(0)].SampleLevel(gSampler, uv, 0);
 
     // Interpolate the normal from the vertex buffer
     float3 normalOS =

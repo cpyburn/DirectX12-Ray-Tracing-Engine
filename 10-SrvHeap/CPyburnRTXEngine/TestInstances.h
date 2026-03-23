@@ -64,10 +64,13 @@ namespace CPyburnRTXEngine
 
 		void createShaderResources();
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpOutputResource;
+
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
 		UINT mVertexBufferSrvPosition = 0;
 		UINT mIndexBufferSrvPosition = 0;
+		AssimpFactory m_assimpFactory;
+		Texture::HeapTexture m_heapTextureDiffuse = {};
 
 		struct EnvironmentData
 		{
@@ -85,9 +88,6 @@ namespace CPyburnRTXEngine
 		void createConstantBuffer();
 		static const UINT m_instanceCount = 4;
 				
-		AssimpFactory m_assimpFactory;
-		Texture::HeapTexture m_heapTextureDiffuse = {};
-
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandList;
 		bool m_TlasUpdated = false;

@@ -58,8 +58,12 @@ We wrapped up these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tut
 ### [7-Loading models using Assimp](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/7-Models) 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/02a67426-4f85-4da6-8b82-3dca7023b12c" />
 
-### [8-Loading textures using Directxtk12]() 
+### [8-Loading textures using Directxtk12](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/8-Textures) 
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/fc1fae58-97e5-403a-8a9a-896280bb88bf" />
 
-### [9-Revisting the shadow ray]() 
-coming soon
+### [9-Revisting the shadow ray](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/9-ShadowRevisit) 
+Adding a shadow ray to the models and adding a NEXT/FUTURE buffer to the TLAS. The TLAS will always be ready for the render pipeline.
+<img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/38a5ee25-8f13-4dcb-810c-aa29edc22ba9" />
+
+### [10-Srv heap](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/10-SrvHeap) 
+Creating a single Srv heap with continuous textures for scaling textures in HLSL

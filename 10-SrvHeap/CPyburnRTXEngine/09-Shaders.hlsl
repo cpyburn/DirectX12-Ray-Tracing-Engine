@@ -19,7 +19,7 @@ struct MaterialData
 {
     uint baseColorTexIndex;
 };
-//StructuredBuffer<MaterialData> gMaterials : register(t2, space1);
+StructuredBuffer<MaterialData> gMaterials : register(t2, space1);
 Texture2D<float4> gTextures[] : register(t3, space1);
 SamplerState gSampler : register(s0);
 

@@ -47,6 +47,8 @@ namespace CPyburnRTXEngine
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
 		void RefitOrRebuildTLASNext();
+		void WaitForFrameSlot(UINT frameIndex);
+		UINT GetReadyFrameIndex() const;
 
 		// Ray tracing pipeline state and root signature
 		void createRtPipelineState();
@@ -88,9 +90,12 @@ namespace CPyburnRTXEngine
 		void createConstantBuffer();
 		static const UINT m_instanceCount = 4;
 				
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandList;
-		bool m_TlasUpdated = false;
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator[DX::DeviceResources::c_backBufferCount];
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandList[DX::DeviceResources::c_backBufferCount];
+		std::atomic_uint64_t m_fenceValues[DX::DeviceResources::c_backBufferCount] = {};
+		Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
+		Microsoft::WRL::Wrappers::Event m_fenceEvent;
+		std::atomic_uint64_t m_nextFenceValue = 1;
 
 	public:
 		TestInstances();

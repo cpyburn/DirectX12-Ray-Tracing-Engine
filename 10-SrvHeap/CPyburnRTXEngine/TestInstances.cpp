@@ -96,14 +96,33 @@ namespace CPyburnRTXEngine
             m_planeVertexBuffer->Unmap(0, nullptr);
         }
 
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator)));
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator.Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
+        for (size_t i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
+        {
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator[i])));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator[i].Get(), nullptr, IID_PPV_ARGS(&m_commandList[i])));
+
+            if (i > 0)
+            {
+                m_commandList[i]->Close();
+            }
+        }
+
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
+        m_fence->SetName(L"Test Instances Fence");
+
+        m_fenceEvent.Attach(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
+        if (!m_fenceEvent.IsValid())
+        {
+            throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
+        }
+
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
         // load model images
         {
             if (m_assimpFactory.GetMeshEntries().size() > 0)
             {
-                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), m_commandList.Get());
+                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), commandList.Get());
             }
         }
 
@@ -150,18 +169,18 @@ namespace CPyburnRTXEngine
             asDesc.DestAccelerationStructureData = pResult->GetGPUVirtualAddress();
             asDesc.ScratchAccelerationStructureData = pScratch->GetGPUVirtualAddress();
 
-            m_commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+            commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
 
             // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
             D3D12_RESOURCE_BARRIER uavBarrier = {};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             uavBarrier.UAV.pResource = pResult.Get();
-            m_commandList->ResourceBarrier(1, &uavBarrier);
+            commandList->ResourceBarrier(1, &uavBarrier);
 
             // Close the resource creation command list and execute it to begin the vertex buffer copy into
             // the default heap.
-            DX::ThrowIfFailed(m_commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+            DX::ThrowIfFailed(commandList->Close());
+            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
             m_deviceResources->WaitForGpu();
 
@@ -169,8 +188,8 @@ namespace CPyburnRTXEngine
             mpBottomLevelAS = pResult;
         }
 
-        DX::ThrowIfFailed(m_commandAllocator->Reset());
-        DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+        DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
+        DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         {
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
@@ -213,18 +232,18 @@ namespace CPyburnRTXEngine
             asDesc.DestAccelerationStructureData = pResult->GetGPUVirtualAddress();
             asDesc.ScratchAccelerationStructureData = pScratch->GetGPUVirtualAddress();
 
-            m_commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+            commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
 
             // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
             D3D12_RESOURCE_BARRIER uavBarrier = {};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             uavBarrier.UAV.pResource = pResult.Get();
-            m_commandList->ResourceBarrier(1, &uavBarrier);
+            commandList->ResourceBarrier(1, &uavBarrier);
 
             // Close the resource creation command list and execute it to begin the vertex buffer copy into
             // the default heap.
-            DX::ThrowIfFailed(m_commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+            DX::ThrowIfFailed(commandList->Close());
+            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
             m_deviceResources->WaitForGpu();
 
@@ -232,19 +251,19 @@ namespace CPyburnRTXEngine
             mpBottomLevelAS1 = pResult;
         }
 
-        DX::ThrowIfFailed(m_commandAllocator->Reset());
-        DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+        DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
+        DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         // Top Level AS
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
-            RefitOrRebuildTLAS(m_commandList.Get(), i, false);
+            RefitOrRebuildTLAS(commandList.Get(), i, false);
         }
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
         // the default heap.
-        DX::ThrowIfFailed(m_commandList->Close());
-        ID3D12CommandList* ppCommandLists[] = { m_commandList.Get()};
+        DX::ThrowIfFailed(commandList->Close());
+        ID3D12CommandList* ppCommandLists[] = { commandList.Get()};
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         m_deviceResources->WaitForGpu();
     }
@@ -357,25 +376,56 @@ namespace CPyburnRTXEngine
 
     void TestInstances::RefitOrRebuildTLASNext()
     {
-        m_TlasUpdated = false;
-        auto task = Concurrency::create_task([this]()
+        // Build the TLAS for the next frame while the current frame is being rendered.
+        UINT currentFrame = m_deviceResources->GetCurrentFrameIndex();
+        UINT nextFrame = (currentFrame + 1) % DX::DeviceResources::c_backBufferCount;
+
+        auto task = Concurrency::create_task([this, nextFrame]()
 		{
-            // Build the TLAS for the next frame while the current frame is being rendered.
-            UINT currentFrame = m_deviceResources->GetCurrentFrameIndex();
-            UINT nextFrame = (currentFrame + 1) % DX::DeviceResources::c_backBufferCount;
+            WaitForFrameSlot(nextFrame);
 
-            DX::ThrowIfFailed(m_commandAllocator->Reset());
-            DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
+            DX::ThrowIfFailed(m_commandAllocator[nextFrame]->Reset());
+            DX::ThrowIfFailed(m_commandList[nextFrame]->Reset(m_commandAllocator[nextFrame].Get(), nullptr));
 
-            RefitOrRebuildTLAS(m_commandList.Get(), nextFrame, true);
+            RefitOrRebuildTLAS(m_commandList[nextFrame].Get(), nextFrame, true);
 
-            DX::ThrowIfFailed(m_commandList->Close());
-            ID3D12CommandList* lists[] = { m_commandList.Get() };
+            DX::ThrowIfFailed(m_commandList[nextFrame]->Close());
+            ID3D12CommandList* lists[] = { m_commandList[nextFrame].Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(1, lists);
-            m_deviceResources->WaitForGpu();
-            m_TlasUpdated = true;
+            // set a fence to check before we render the next frame to make sure the TLAS update is finished
+            //m_deviceResources->WaitForGpu(); // we don't want to stall the CPU/GPU here, so we will check the fence in the main loop before rendering the next frame
+
+            const UINT64 fenceValue = m_nextFenceValue.fetch_add(1);
+            DX::ThrowIfFailed(m_deviceResources->GetCommandQueue()->Signal(m_fence.Get(), fenceValue));
+            m_fenceValues[nextFrame].store(fenceValue);
 		});
-		 task.wait();
+    }
+
+    void TestInstances::WaitForFrameSlot(UINT frameIndex)
+    {
+        const UINT64 fenceValue = m_fenceValues[frameIndex].load();
+        if (fenceValue != 0 && m_fence->GetCompletedValue() < fenceValue)
+        {
+            DX::ThrowIfFailed(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent.Get()));
+            WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
+        }
+    }
+
+    UINT TestInstances::GetReadyFrameIndex() const
+    {
+        const UINT current = m_deviceResources->GetCurrentFrameIndex();
+
+        // Prefer current frame if ready.
+        if (m_fence->GetCompletedValue() >= m_fenceValues[current].load())
+            return current;
+
+        // Fall back to the previous frame slot.
+        const UINT prev = (current + DX::DeviceResources::c_backBufferCount - 1) % DX::DeviceResources::c_backBufferCount;
+        if (m_fence->GetCompletedValue() >= m_fenceValues[prev].load())
+            return prev;
+
+        // If neither is ready, return current or handle the failure however you want.
+        return prev;
     }
 
     void TestInstances::createRtPipelineState()
@@ -1108,10 +1158,11 @@ namespace CPyburnRTXEngine
 
             // refitting
             {
-                if (!m_TlasUpdated)
-                {
-                    RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true); // if the next one is not ready, fall back here, but if this happens, you should consider a different architecture as it means you are not able to keep up with the updates
-                }
+                //if (!m_TlasUpdated[m_deviceResources->GetCurrentFrameIndex()])
+                //{
+                //    RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true); // if the next one is not ready, fall back here, but if this happens, you should consider a different architecture as it means you are not able to keep up with the updates
+                //}
+
                 RefitOrRebuildTLASNext(); // always have the next one ready for rendering if possible (tlas buffering)
             }
 
@@ -1154,7 +1205,8 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
             m_sceneCommandList->SetComputeRootConstantBufferView(1, m_EnvironmentCb.Resource->GetGPUVirtualAddress());
             m_sceneCommandList->SetComputeRootDescriptorTable(2, GraphicsContexts::GetGpuHandle(mUavPosition));
-            m_sceneCommandList->SetComputeRootDescriptorTable(3, GraphicsContexts::GetGpuHandle(mTlasSrvPosition[m_deviceResources->GetCurrentFrameIndex()]));
+            UINT tlasFrame = GetReadyFrameIndex();
+            m_sceneCommandList->SetComputeRootDescriptorTable(3, GraphicsContexts::GetGpuHandle(mTlasSrvPosition[tlasFrame]));
 
             // 6.4.f Set Pipeline
             m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());

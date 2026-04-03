@@ -1,6 +1,8 @@
 # DirectX12 Ray Tracing Engine
 We are going to create a Ray Tracing engine from scratch in DirectX12 using Visual Studio Pro.
 
+My goals are to create an RTS/RPG RTX engine and teach anyone that wants to learn, along the way.
+
 Please post all issues in GitHub issues for the repo. If something isn't clear or is confusing, you can also post that in the issues and I will do my best to make it clear.
 
 I am also looking for a few people to join my team to create a ray tracing RTS similar to warcraft3 with heros, set up a kick starter, and a discord server. 

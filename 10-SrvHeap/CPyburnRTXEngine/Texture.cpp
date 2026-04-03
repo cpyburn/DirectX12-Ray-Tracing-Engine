@@ -225,17 +225,6 @@ namespace CPyburnRTXEngine
 				nullptr,
 				IID_PPV_ARGS(uploadRes.GetAddressOf())));
 
-		UpdateSubresources(commandList, tex.Get(), uploadRes.Get(),
-			0, 0, static_cast<UINT>(subresources.size()), subresources.data());
-
-		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(tex.Get(),
-			D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		commandList->ResourceBarrier(1, &barrier);
-
-		DX::ThrowIfFailed(commandList->Close());
-		m_deviceResources->GetCommandQueue()->ExecuteCommandLists(1,
-			CommandListCast(&commandList));
-
 		tex->SetName(wFileName.c_str());
 		uploadRes->SetName(wFileName.c_str());
 

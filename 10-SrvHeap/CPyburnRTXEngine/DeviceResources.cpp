@@ -949,7 +949,7 @@ void DX::DeviceResources::Render()
     ThrowIfFailed(m_postCommandList->Close());
 }
 
-void DX::DeviceResources::IncreaseResolutionIndex()
+void DX::DeviceResources::IncreaseResolutionIndex() noexcept
 {
     m_resolutionIndex = (m_resolutionIndex + 1) % m_resolutionOptionsCount;
 
@@ -960,7 +960,7 @@ void DX::DeviceResources::IncreaseResolutionIndex()
     LoadSceneResolutionDependentResources();
 }
 
-void DX::DeviceResources::DecreaseResolutionIndex()
+void DX::DeviceResources::DecreaseResolutionIndex() noexcept
 {
     if (m_resolutionIndex == 0)
     {
@@ -978,7 +978,7 @@ void DX::DeviceResources::DecreaseResolutionIndex()
     LoadSceneResolutionDependentResources();
 }
 
-void DeviceResources::UpdatePostViewAndScissor()
+void DeviceResources::UpdatePostViewAndScissor() noexcept
 {
     float viewWidthRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width) / m_outputSize.right;
     float viewHeightRatio = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height) / m_outputSize.bottom;
@@ -1084,7 +1084,7 @@ void DeviceResources::LoadSceneResolutionDependentResources()
     m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
 }
 
-void DeviceResources::UpdateTitle()
+void DeviceResources::UpdateTitle() noexcept
 {
     // Update resolutions shown in app title.
     wchar_t updatedTitle[256];
@@ -1092,11 +1092,6 @@ void DeviceResources::UpdateTitle()
     DebugTrace(updatedTitle);
 
     SetWindowText(m_window, updatedTitle);
-}
-
-void DX::DeviceResources::CreateFullscreenPostProcessingResources()
-{
-
 }
 
 // Sets the color space for the swap chain in order to handle HDR output.

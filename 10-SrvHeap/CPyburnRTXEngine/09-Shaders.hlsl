@@ -128,7 +128,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v2.texture * weights.z;
 
     //float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
-    float4 texColor = gTextures[NonUniformResourceIndex(0)].SampleLevel(gSampler, uv, 0);
+    MaterialData material = gMaterials[InstanceID()];
+    float4 texColor = gTextures[NonUniformResourceIndex(material.baseColorTexIndex)].SampleLevel(gSampler, uv, 0);
 
     // Interpolate the normal from the vertex buffer
     float3 normalOS =

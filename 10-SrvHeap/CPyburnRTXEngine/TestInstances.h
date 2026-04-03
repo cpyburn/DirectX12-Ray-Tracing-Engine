@@ -71,6 +71,7 @@ namespace CPyburnRTXEngine
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
 		UINT mVertexBufferSrvPosition = 0;
 		UINT mIndexBufferSrvPosition = 0;
+		UINT mMaterialBufferSrvPosition = 0;
 		AssimpFactory m_assimpFactory;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
@@ -96,6 +97,13 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
 		Microsoft::WRL::Wrappers::Event m_fenceEvent;
 		std::atomic_uint64_t m_nextFenceValue = 1;
+
+		struct MaterialData
+		{
+			UINT baseColorTexIndex = 0;
+		};
+		std::vector<MaterialData> m_materialData;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_materialDataBuffer;
 
 	public:
 		TestInstances();

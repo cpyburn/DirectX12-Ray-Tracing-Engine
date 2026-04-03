@@ -117,8 +117,8 @@ namespace DX
         void Render();
 		Resolution GetResolution() const noexcept { return m_resolutionOptions[m_resolutionIndex]; }
         ID3D12Resource* GetIntermediateRenderTarget() const noexcept { return m_intermediateRenderTarget.Get(); }
-		void IncreaseResolutionIndex();
-		void DecreaseResolutionIndex();
+		void IncreaseResolutionIndex() noexcept;
+		void DecreaseResolutionIndex() noexcept;
     private:
         struct PostVertex
         {
@@ -130,8 +130,8 @@ namespace DX
         CD3DX12_RECT m_postScissorRect;
         Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateRenderTarget;
         static const float ClearColor[4];
-        UINT m_rtvHeapIntermediateRenderTargetPosition;
-        UINT m_cbvHeapIntermediateRenderTargetPosition;
+        UINT m_rtvHeapIntermediateRenderTargetPosition = 0;
+        UINT m_cbvHeapIntermediateRenderTargetPosition = 0;
         std::unique_ptr<CPyburnRTXEngine::GraphicsContexts> m_graphicsContexts;
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;
@@ -144,11 +144,9 @@ namespace DX
         static const UINT m_resolutionOptionsCount;
         static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
 
-        void UpdatePostViewAndScissor();
-        //void LoadSizeDependentResources();
+        void UpdatePostViewAndScissor() noexcept;
         void LoadSceneResolutionDependentResources();
-        void UpdateTitle();
-        void CreateFullscreenPostProcessingResources();
+        void UpdateTitle() noexcept;
 #pragma endregion
 
         void MoveToNextFrame();
@@ -161,7 +159,7 @@ namespace DX
         // Direct3D objects.
         Microsoft::WRL::ComPtr<ID3D12Device5>               m_d3dDevice;
         Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_commandQueue;
-        std::unique_ptr<CPyburnRTXEngine::FrameResource>						m_frameResource[c_backBufferCount];
+        std::unique_ptr<CPyburnRTXEngine::FrameResource>	m_frameResource[c_backBufferCount];
 
         // Swap chain objects.
         Microsoft::WRL::ComPtr<IDXGIFactory4>               m_dxgiFactory;

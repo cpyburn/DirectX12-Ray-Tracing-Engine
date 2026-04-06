@@ -38,12 +38,12 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBuffer;
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
-		Microsoft::WRL::ComPtr<ID3D12Resource> mpBottomLevelAS;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 		
 		UINT64 mTlasSize = 0;
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeVertexBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> mpBottomLevelAS1;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleBlas;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
 		void RefitOrRebuildTLASNext();

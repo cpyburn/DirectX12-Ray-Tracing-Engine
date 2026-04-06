@@ -71,15 +71,53 @@ namespace CPyburnRTXEngine
 
         // create createTriangleVB
         {
-            bufDesc.Width = sizeof(AssimpFactory::VSVertices) * m_assimpFactory.GetMeshEntries()[0].vertices.size();
+            const UINT bufferSize = static_cast<UINT>(sizeof(AssimpFactory::VSVertices) * m_assimpFactory.GetMeshEntries()[0].vertices.size());
 
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_triangleVertexBuffer)));
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                D3D12_HEAP_FLAG_NONE,
+                &bufferDesc,
+                D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+                nullptr,
+                IID_PPV_ARGS(&m_triangleVertexBuffer)));
 
-            // For simplicity, we create the vertex buffer on the upload heap, but that's not required
-            uint8_t* pData;
-            m_triangleVertexBuffer->Map(0, nullptr, (void**)&pData);
-            memcpy(pData, m_assimpFactory.GetMeshEntries()[0].vertices.data(), bufDesc.Width);
-            m_triangleVertexBuffer->Unmap(0, nullptr);
+            Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                D3D12_HEAP_FLAG_NONE,
+                &bufferDesc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&m_triangleVertexBufferUpload)));
+
+            m_triangleVertexBuffer->SetName(L"Model Buffer");
+
+            // Upload the index buffer to the GPU.
+            {
+                D3D12_SUBRESOURCE_DATA verticeData = {};
+                verticeData.pData = &m_assimpFactory.GetMeshEntries()[0].vertices[0];
+                verticeData.RowPitch = 0;
+                verticeData.SlicePitch = 0;
+
+                CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_triangleVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+
+                UpdateSubresources(commandList.Get(), m_triangleVertexBuffer.Get(), m_triangleVertexBufferUpload.Get(), 0, 0, 1, &verticeData);
+
+                indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_triangleVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+            }
+
+            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
+            DX::ThrowIfFailed(commandList->Close());
+            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+            m_deviceResources->WaitForGpu();
+
+            DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
+            DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
         }
 
         // create indices
@@ -130,16 +168,6 @@ namespace CPyburnRTXEngine
 
             DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
             DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
-
-            //bufDesc.Width = sizeof(UINT)* m_assimpFactory.GetMeshEntries()[0].indices.size();
-
-            //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_triangleIndicesBuffer)));
-
-            //// For simplicity, we create the vertex buffer on the upload heap, but that's not required
-            //uint8_t* pData;
-            //m_triangleIndicesBuffer->Map(0, nullptr, (void**)&pData);
-            //memcpy(pData, m_assimpFactory.GetMeshEntries()[0].indices.data(), bufDesc.Width);
-            //m_triangleIndicesBuffer->Unmap(0, nullptr);
         }
 
         // create materials
@@ -189,6 +217,7 @@ namespace CPyburnRTXEngine
                 commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
             }
 
+            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
             DX::ThrowIfFailed(commandList->Close());
             ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
             m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
@@ -197,8 +226,6 @@ namespace CPyburnRTXEngine
             DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
             DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
         }
-
-
 
         // create createPlaneVB
         {
@@ -212,15 +239,54 @@ namespace CPyburnRTXEngine
                 XMFLOAT3(100, -1,  -2),
                 XMFLOAT3(100, -1,  100),
             };
-            bufDesc.Width = sizeof(vertices);
 
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_planeVertexBuffer)));
+            const UINT bufferSize = static_cast<UINT>(sizeof(vertices));
 
-            // For simplicity, we create the vertex buffer on the upload heap, but that's not required
-            uint8_t* pData;
-            m_planeVertexBuffer->Map(0, nullptr, (void**)&pData);
-            memcpy(pData, vertices, sizeof(vertices));
-            m_planeVertexBuffer->Unmap(0, nullptr);
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                D3D12_HEAP_FLAG_NONE,
+                &bufferDesc,
+                D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+                nullptr,
+                IID_PPV_ARGS(&m_planeVertexBuffer)));
+
+            Microsoft::WRL::ComPtr<ID3D12Resource> m_planeVertexBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                D3D12_HEAP_FLAG_NONE,
+                &bufferDesc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&m_planeVertexBufferUpload)));
+
+            m_planeVertexBuffer->SetName(L"Plane Buffer");
+
+            // Upload the index buffer to the GPU.
+            {
+                D3D12_SUBRESOURCE_DATA verticeData = {};
+                verticeData.pData = &vertices[0];
+                verticeData.RowPitch = 0;
+                verticeData.SlicePitch = 0;
+
+                CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_planeVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+
+                UpdateSubresources(commandList.Get(), m_planeVertexBuffer.Get(), m_planeVertexBufferUpload.Get(), 0, 0, 1, &verticeData);
+
+                indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_planeVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+            }
+
+            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
+            DX::ThrowIfFailed(commandList->Close());
+            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+            m_deviceResources->WaitForGpu();
+
+            DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
+            DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
         }
 
         // load model images
@@ -228,6 +294,8 @@ namespace CPyburnRTXEngine
             if (m_assimpFactory.GetMeshEntries().size() > 0)
             {
                 m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), commandList.Get());
+                // todo: always a good idea to release the upload if isn't going to be used anymore
+                //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
             }
         }
 
@@ -290,7 +358,7 @@ namespace CPyburnRTXEngine
             m_deviceResources->WaitForGpu();
 
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            mpBottomLevelAS = pResult;
+            m_planeBlas = pResult;
         }
 
         DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
@@ -353,7 +421,7 @@ namespace CPyburnRTXEngine
             m_deviceResources->WaitForGpu();
 
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            mpBottomLevelAS1 = pResult;
+            m_triangleBlas = pResult;
         }
 
         DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
@@ -437,7 +505,7 @@ namespace CPyburnRTXEngine
         pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
         XMMATRIX transpose = XMMatrixTranspose(m_instanceData[0].world);
         memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
-        pInstanceDesc[0].AccelerationStructure = mpBottomLevelAS->GetGPUVirtualAddress(); // plane blas
+        pInstanceDesc[0].AccelerationStructure = m_planeBlas->GetGPUVirtualAddress(); // plane blas
         pInstanceDesc[0].InstanceMask = 0xFF;
 
         // triangles
@@ -449,7 +517,7 @@ namespace CPyburnRTXEngine
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
             XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
-            pInstanceDesc[i].AccelerationStructure = mpBottomLevelAS1->GetGPUVirtualAddress(); // triangle blas
+            pInstanceDesc[i].AccelerationStructure = m_triangleBlas->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
         }
 
@@ -1346,7 +1414,7 @@ namespace CPyburnRTXEngine
     {
         m_triangleVertexBuffer.Reset();
         //mpTopLevelAS.Release(); // todo:
-        mpBottomLevelAS.Reset();
+        m_planeBlas.Reset();
         mpPipelineState.Reset();
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();

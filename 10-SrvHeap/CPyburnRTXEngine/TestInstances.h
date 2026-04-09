@@ -33,7 +33,9 @@ namespace CPyburnRTXEngine
 		};
 
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
-		// Acceleration structure buffers and sizes
+
+		void CreateCommandObjects();
+		void CreateModelBuffers();
 		void createAccelerationStructures();
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBuffer;

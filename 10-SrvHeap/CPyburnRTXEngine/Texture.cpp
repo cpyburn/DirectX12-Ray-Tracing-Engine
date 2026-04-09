@@ -447,9 +447,10 @@ namespace CPyburnRTXEngine
         bool didErase = GraphicsContexts::RemoveHeapPosition(position);
         if (!didErase)
         {
-            return;
+			DebugTrace(("Failed to remove heap position " + std::to_string(position) + " from GraphicsContexts.").c_str());
         }
-
+		ReleaseUploadByHeapPosition(position);
+		
         m_mutex.lock();
         for (auto textureIter = m_loadedTextures.begin(); textureIter != m_loadedTextures.end(); textureIter++)
         {

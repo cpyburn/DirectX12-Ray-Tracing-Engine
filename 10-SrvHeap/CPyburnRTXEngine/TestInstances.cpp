@@ -15,25 +15,7 @@ namespace CPyburnRTXEngine
     static const WCHAR* kShadowMiss = L"shadowMiss";
     static const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
 
-    static const D3D12_HEAP_PROPERTIES kUploadHeapProps =
-    {
-        D3D12_HEAP_TYPE_UPLOAD,
-        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-        D3D12_MEMORY_POOL_UNKNOWN,
-        0,
-        0,
-    };
-
-    static const D3D12_HEAP_PROPERTIES kDefaultHeapProps =
-    {
-        D3D12_HEAP_TYPE_DEFAULT,
-        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-        D3D12_MEMORY_POOL_UNKNOWN,
-        0,
-        0
-    };
-
-    void TestInstances::createAccelerationStructures()
+    void TestInstances::CreateCommandObjects()
     {
         for (size_t i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -54,7 +36,210 @@ namespace CPyburnRTXEngine
         {
             throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
         }
+    }
 
+    void TestInstances::CreateModelBuffers()
+    {
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
+
+        // create createTriangleVB
+        const UINT bufferSizeModel = static_cast<UINT>(sizeof(AssimpFactory::VSVertices) * m_assimpFactory.GetMeshEntries()[0].vertices.size());
+        CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescModel,
+            D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(&m_triangleVertexBuffer)));
+
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescModel,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_triangleVertexBufferUpload)));
+
+        m_triangleVertexBuffer->SetName(L"Model Buffer");
+
+        // Upload the index buffer to the GPU.
+        {
+            D3D12_SUBRESOURCE_DATA verticeData = {};
+            verticeData.pData = &m_assimpFactory.GetMeshEntries()[0].vertices[0];
+            verticeData.RowPitch = 0;
+            verticeData.SlicePitch = 0;
+
+            CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
+                CD3DX12_RESOURCE_BARRIER::Transition(m_triangleVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+
+            UpdateSubresources(commandList.Get(), m_triangleVertexBuffer.Get(), m_triangleVertexBufferUpload.Get(), 0, 0, 1, &verticeData);
+
+            indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_triangleVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+        }
+
+        // create indices
+        const UINT bufferSizeIndices = static_cast<UINT>(sizeof(UINT) * m_assimpFactory.GetMeshEntries()[0].indices.size());
+
+        CD3DX12_RESOURCE_DESC bufferDescIndices = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeIndices);
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescIndices,
+            D3D12_RESOURCE_STATE_INDEX_BUFFER,
+            nullptr,
+            IID_PPV_ARGS(&m_triangleIndicesBuffer)));
+
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBufferUpload;
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescIndices,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_triangleIndicesBufferUpload)));
+
+        m_triangleIndicesBuffer->SetName(L"Index Buffer Resource");
+
+        // Upload the index buffer to the GPU.
+        {
+            D3D12_SUBRESOURCE_DATA indexData = {};
+            indexData.pData = m_assimpFactory.GetMeshEntries()[0].indices.data();
+            indexData.RowPitch = 0;
+            indexData.SlicePitch = 0;
+
+            CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
+                CD3DX12_RESOURCE_BARRIER::Transition(m_triangleIndicesBuffer.Get(), D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+
+            UpdateSubresources(commandList.Get(), m_triangleIndicesBuffer.Get(), m_triangleIndicesBufferUpload.Get(), 0, 0, 1, &indexData);
+
+            indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_triangleIndicesBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+        }
+
+        // create materials
+        m_materialData.resize(m_instanceCount);
+        m_materialData[0].baseColorTexIndex = 1;
+        m_materialData[1].baseColorTexIndex = 0;
+        m_materialData[2].baseColorTexIndex = 0;
+        m_materialData[3].baseColorTexIndex = 1;
+
+        const UINT bufferSizeMaterial = static_cast<UINT>(sizeof(MaterialData) * m_materialData.size());
+
+        CD3DX12_RESOURCE_DESC bufferDescMaterials = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeMaterial);
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescMaterials,
+            D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(&m_materialDataBuffer)));
+
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_materialDataBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescMaterials,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_materialDataBufferUpload)));
+
+        m_materialDataBuffer->SetName(L"Material Buffer");
+
+        // Upload the index buffer to the GPU.
+        {
+            D3D12_SUBRESOURCE_DATA materialData = {};
+            materialData.pData = &m_materialData[0];
+            materialData.RowPitch = 0;
+            materialData.SlicePitch = 0;
+
+            CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
+                CD3DX12_RESOURCE_BARRIER::Transition(m_materialDataBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+
+            UpdateSubresources(commandList.Get(), m_materialDataBuffer.Get(), m_materialDataBufferUpload.Get(), 0, 0, 1, &materialData);
+
+            indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_materialDataBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+        }
+
+        // create createPlaneVB
+        const XMFLOAT3 vertices[] =
+        {
+            XMFLOAT3(-100, -1,  -2),
+            XMFLOAT3(100, -1,  100),
+            XMFLOAT3(-100, -1,  100),
+
+            XMFLOAT3(-100, -1,  -2),
+            XMFLOAT3(100, -1,  -2),
+            XMFLOAT3(100, -1,  100),
+        };
+
+        const UINT bufferSizePlane = static_cast<UINT>(sizeof(vertices));
+
+        CD3DX12_RESOURCE_DESC bufferDescPlane = CD3DX12_RESOURCE_DESC::Buffer(bufferSizePlane);
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescPlane,
+            D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(&m_planeVertexBuffer)));
+
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_planeVertexBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDescPlane,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&m_planeVertexBufferUpload)));
+
+        m_planeVertexBuffer->SetName(L"Plane Buffer");
+
+        // Upload the index buffer to the GPU.
+        {
+            D3D12_SUBRESOURCE_DATA verticeData = {};
+            verticeData.pData = &vertices[0];
+            verticeData.RowPitch = 0;
+            verticeData.SlicePitch = 0;
+
+            CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
+                CD3DX12_RESOURCE_BARRIER::Transition(m_planeVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+
+            UpdateSubresources(commandList.Get(), m_planeVertexBuffer.Get(), m_planeVertexBufferUpload.Get(), 0, 0, 1, &verticeData);
+
+            indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_planeVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+            commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
+        }
+
+        // load model images
+        {
+            if (m_assimpFactory.GetMeshEntries().size() > 0)
+            {
+                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), commandList.Get());
+                // todo: always a good idea to release the upload if isn't going to be used anymore
+                //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
+            }
+        }
+
+        // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
+        DX::ThrowIfFailed(commandList->Close());
+        ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+        m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+        m_deviceResources->WaitForGpu();
+
+        DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
+        DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
+    }
+
+    void TestInstances::createAccelerationStructures()
+    {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
         D3D12_RESOURCE_DESC bufDesc = {};
@@ -68,236 +253,6 @@ namespace CPyburnRTXEngine
         bufDesc.MipLevels = 1;
         bufDesc.SampleDesc.Count = 1;
         bufDesc.SampleDesc.Quality = 0;
-
-        // create createTriangleVB
-        {
-            const UINT bufferSize = static_cast<UINT>(sizeof(AssimpFactory::VSVertices) * m_assimpFactory.GetMeshEntries()[0].vertices.size());
-
-            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                D3D12_HEAP_FLAG_NONE,
-                &bufferDesc,
-                D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
-                nullptr,
-                IID_PPV_ARGS(&m_triangleVertexBuffer)));
-
-            Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &bufferDesc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_triangleVertexBufferUpload)));
-
-            m_triangleVertexBuffer->SetName(L"Model Buffer");
-
-            // Upload the index buffer to the GPU.
-            {
-                D3D12_SUBRESOURCE_DATA verticeData = {};
-                verticeData.pData = &m_assimpFactory.GetMeshEntries()[0].vertices[0];
-                verticeData.RowPitch = 0;
-                verticeData.SlicePitch = 0;
-
-                CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
-                    CD3DX12_RESOURCE_BARRIER::Transition(m_triangleVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-
-                UpdateSubresources(commandList.Get(), m_triangleVertexBuffer.Get(), m_triangleVertexBufferUpload.Get(), 0, 0, 1, &verticeData);
-
-                indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_triangleVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-            }
-
-            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-            m_deviceResources->WaitForGpu();
-
-            DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
-            DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
-        }
-
-        // create indices
-        {
-            const UINT bufferSize = static_cast<UINT>(sizeof(UINT) * m_assimpFactory.GetMeshEntries()[0].indices.size());
-
-            CD3DX12_RESOURCE_DESC indexBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                D3D12_HEAP_FLAG_NONE,
-                &indexBufferDesc,
-                D3D12_RESOURCE_STATE_INDEX_BUFFER,
-                nullptr,
-                IID_PPV_ARGS(&m_triangleIndicesBuffer)));
-
-            Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBufferUpload;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &indexBufferDesc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_triangleIndicesBufferUpload)));
-
-            m_triangleIndicesBuffer->SetName(L"Index Buffer Resource");
-
-            // Upload the index buffer to the GPU.
-            {
-                D3D12_SUBRESOURCE_DATA indexData = {};
-                indexData.pData = m_assimpFactory.GetMeshEntries()[0].indices.data();
-                indexData.RowPitch = 0;
-                indexData.SlicePitch = 0;
-
-                CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
-                    CD3DX12_RESOURCE_BARRIER::Transition(m_triangleIndicesBuffer.Get(), D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_COPY_DEST);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-
-                UpdateSubresources(commandList.Get(), m_triangleIndicesBuffer.Get(), m_triangleIndicesBufferUpload.Get(), 0, 0, 1, &indexData);
-
-                indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_triangleIndicesBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-            }
-
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-            m_deviceResources->WaitForGpu();
-
-            DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
-            DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
-        }
-
-        // create materials
-        {
-            m_materialData.resize(m_instanceCount);
-            m_materialData[0].baseColorTexIndex = 1;
-            m_materialData[1].baseColorTexIndex = 0;
-            m_materialData[2].baseColorTexIndex = 0;
-            m_materialData[3].baseColorTexIndex = 1;
-
-            const UINT bufferSize = static_cast<UINT>(sizeof(MaterialData) * m_materialData.size());
-
-            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                D3D12_HEAP_FLAG_NONE,
-                &bufferDesc,
-                D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
-                nullptr,
-                IID_PPV_ARGS(&m_materialDataBuffer)));
-
-            Microsoft::WRL::ComPtr<ID3D12Resource> m_materialDataBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &bufferDesc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_materialDataBufferUpload)));
-
-            m_materialDataBuffer->SetName(L"Material Buffer");
-
-            // Upload the index buffer to the GPU.
-            {
-                D3D12_SUBRESOURCE_DATA materialData = {};
-                materialData.pData = &m_materialData[0];
-                materialData.RowPitch = 0;
-                materialData.SlicePitch = 0;
-
-                CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
-                    CD3DX12_RESOURCE_BARRIER::Transition(m_materialDataBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-
-                UpdateSubresources(commandList.Get(), m_materialDataBuffer.Get(), m_materialDataBufferUpload.Get(), 0, 0, 1, &materialData);
-
-                indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_materialDataBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-            }
-
-            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-            m_deviceResources->WaitForGpu();
-
-            DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
-            DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
-        }
-
-        // create createPlaneVB
-        {
-            const XMFLOAT3 vertices[] =
-            {
-                XMFLOAT3(-100, -1,  -2),
-                XMFLOAT3(100, -1,  100),
-                XMFLOAT3(-100, -1,  100),
-
-                XMFLOAT3(-100, -1,  -2),
-                XMFLOAT3(100, -1,  -2),
-                XMFLOAT3(100, -1,  100),
-            };
-
-            const UINT bufferSize = static_cast<UINT>(sizeof(vertices));
-
-            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                D3D12_HEAP_FLAG_NONE,
-                &bufferDesc,
-                D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
-                nullptr,
-                IID_PPV_ARGS(&m_planeVertexBuffer)));
-
-            Microsoft::WRL::ComPtr<ID3D12Resource> m_planeVertexBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-                D3D12_HEAP_FLAG_NONE,
-                &bufferDesc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_planeVertexBufferUpload)));
-
-            m_planeVertexBuffer->SetName(L"Plane Buffer");
-
-            // Upload the index buffer to the GPU.
-            {
-                D3D12_SUBRESOURCE_DATA verticeData = {};
-                verticeData.pData = &vertices[0];
-                verticeData.RowPitch = 0;
-                verticeData.SlicePitch = 0;
-
-                CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
-                    CD3DX12_RESOURCE_BARRIER::Transition(m_planeVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-
-                UpdateSubresources(commandList.Get(), m_planeVertexBuffer.Get(), m_planeVertexBufferUpload.Get(), 0, 0, 1, &verticeData);
-
-                indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_planeVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
-                commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
-            }
-
-            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-            m_deviceResources->WaitForGpu();
-
-            DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
-            DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
-        }
-
-        // load model images
-        {
-            if (m_assimpFactory.GetMeshEntries().size() > 0)
-            {
-                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), commandList.Get());
-                // todo: always a good idea to release the upload if isn't going to be used anymore
-                //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
-            }
-        }
 
         // Bottom Level AS
         {
@@ -330,11 +285,11 @@ namespace CPyburnRTXEngine
             bufDesc.Width = info.ScratchDataSizeInBytes;
 
             Microsoft::WRL::ComPtr<ID3D12Resource> pScratch;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             Microsoft::WRL::ComPtr<ID3D12Resource> pResult;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
 
             // Create the bottom-level AS
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -393,11 +348,11 @@ namespace CPyburnRTXEngine
             bufDesc.Width = info.ScratchDataSizeInBytes;
 
             Microsoft::WRL::ComPtr<ID3D12Resource> pScratch;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             Microsoft::WRL::ComPtr<ID3D12Resource> pResult;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
 
             // Create the bottom-level AS
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -436,7 +391,7 @@ namespace CPyburnRTXEngine
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
         // the default heap.
         DX::ThrowIfFailed(commandList->Close());
-        ID3D12CommandList* ppCommandLists[] = { commandList.Get()};
+        ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         m_deviceResources->WaitForGpu();
     }
@@ -480,11 +435,11 @@ namespace CPyburnRTXEngine
         else
         {
             //ComPtr<ID3D12Resource> pScratch;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             //ComPtr<ID3D12Resource> pResult;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
             mTlasSize = info.ResultDataMaxSizeInBytes;
 
             // The instance desc should be inside a buffer, create and map the buffer
@@ -492,7 +447,7 @@ namespace CPyburnRTXEngine
             bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * m_instanceCount; // 3 instances
 
             //ComPtr<ID3D12Resource> pInstanceDescResource;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
         }
 
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
@@ -893,9 +848,7 @@ namespace CPyburnRTXEngine
             //subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
             //subobjects[index++].pDesc = &associationPlaneHit;
 #pragma endregion
-        
-
-
+       
 #pragma region Empty root signature
         D3D12_ROOT_SIGNATURE_DESC emptyDescMiss = {};
         emptyDescMiss.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
@@ -1158,7 +1111,7 @@ namespace CPyburnRTXEngine
         bufDesc.SampleDesc.Quality = 0;
         bufDesc.Width = shaderTableSize;
 
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kUploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
 
         // Map the buffer
         uint8_t* pData;
@@ -1213,7 +1166,7 @@ namespace CPyburnRTXEngine
         resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
         resDesc.MipLevels = 1;
         resDesc.SampleDesc.Count = 1;
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&kDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
 
         // Create the UAV. Based on the root signature we created it should be the first entry
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -1280,7 +1233,7 @@ namespace CPyburnRTXEngine
     {
         m_deviceResources = deviceResources;
 
-        // reserve the uav position and srv position for reuse if window is resized
+        // reserve the uav position and srv position
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -1289,9 +1242,12 @@ namespace CPyburnRTXEngine
         mVertexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         mIndexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         mMaterialBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        // want the heap positions to be contiguous
+        // want the heap positions to be contiguous, so load models after reserving the positions
         m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X");
 
+        
+        CreateCommandObjects();
+        CreateModelBuffers();
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09
         createRtPipelineState(); // Tutorial 04

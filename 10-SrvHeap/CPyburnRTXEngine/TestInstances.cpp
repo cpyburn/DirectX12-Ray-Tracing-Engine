@@ -122,11 +122,11 @@ namespace CPyburnRTXEngine
         }
 
         // create materials
-        m_materialData.resize(m_instanceCount);
-        m_materialData[0].baseColorTexIndex = 1;
-        m_materialData[1].baseColorTexIndex = 0;
-        m_materialData[2].baseColorTexIndex = 0;
-        m_materialData[3].baseColorTexIndex = 1;
+        m_materialData.resize(m_instanceData.size());
+        for (size_t i = 0; i < m_instanceData.size(); i++)
+        {
+            m_materialData[i].baseColorTexIndex = static_cast<UINT>(i);
+        }
 
         const UINT bufferSizeMaterial = static_cast<UINT>(sizeof(MaterialData) * m_materialData.size());
 
@@ -403,7 +403,7 @@ namespace CPyburnRTXEngine
         inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
         // 14.1.b
         inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-        inputs.NumDescs = m_instanceCount; // 3 instances
+        inputs.NumDescs = static_cast<UINT>(m_instanceData.size());
         inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
@@ -444,7 +444,7 @@ namespace CPyburnRTXEngine
 
             // The instance desc should be inside a buffer, create and map the buffer
             bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * m_instanceCount; // 3 instances
+            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size());
 
             //ComPtr<ID3D12Resource> pInstanceDescResource;
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
@@ -452,7 +452,7 @@ namespace CPyburnRTXEngine
 
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
         mpTopLevelAS[currentFrame].pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
-        ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * m_instanceCount); // 3 instances
+        ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size()));
 
         // plane
         pInstanceDesc[0].InstanceID = 0;
@@ -464,7 +464,7 @@ namespace CPyburnRTXEngine
         pInstanceDesc[0].InstanceMask = 0xFF;
 
         // triangles
-        for (UINT i = 1; i < m_instanceCount; i++)
+        for (size_t i = 1; i < m_instanceData.size(); i++)
         {
             pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
             // 13.3.a
@@ -1221,7 +1221,11 @@ namespace CPyburnRTXEngine
         
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
 
-        m_instanceData.resize(m_instanceCount);
+        m_instanceData.resize(10);
+        for (size_t i = 0; i < m_instanceData.size(); i++)
+        {
+            m_instanceData[i].world = XMMatrixTranslation(2 * i, 0, 0);
+        }
     }
 
     TestInstances::~TestInstances()
@@ -1273,7 +1277,6 @@ namespace CPyburnRTXEngine
 		XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
 
         // 3 instances
-        m_instanceData[0].world = XMMatrixIdentity(); // Identity matrix
         m_instanceData[1].world = XMMatrixRotationY(rotation) * translation1;
         m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
 

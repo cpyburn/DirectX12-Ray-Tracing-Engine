@@ -91,7 +91,6 @@ namespace CPyburnRTXEngine
 		std::vector<InstanceData> m_instanceData;
 
 		void createConstantBuffer();
-		static const UINT m_instanceCount = 4;
 				
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator[DX::DeviceResources::c_backBufferCount];
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandList[DX::DeviceResources::c_backBufferCount];

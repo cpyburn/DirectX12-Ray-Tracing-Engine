@@ -65,7 +65,7 @@
     <ClInclude Include="Texture.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="DefaultBuffer.h">
+    <ClInclude Include="BufferHelpers.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>

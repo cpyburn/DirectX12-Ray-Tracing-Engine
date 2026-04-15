@@ -149,6 +149,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="AnimationPlayer.h" />
     <ClInclude Include="CameraBase.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="d3dx12.h" />
@@ -157,6 +159,7 @@
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameInput.h" />
     <ClInclude Include="AssimpFactory.h" />
+    <ClInclude Include="Random.h" />
     <ClInclude Include="TestFullscreen.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
@@ -167,6 +170,7 @@
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationPlayer.cpp" />
     <ClCompile Include="CameraBase.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="FrameResource.cpp" />

@@ -68,6 +68,15 @@
     <ClInclude Include="BufferHelpers.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationPlayer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Random.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -104,6 +113,9 @@
       <Filter>Testing</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationPlayer.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

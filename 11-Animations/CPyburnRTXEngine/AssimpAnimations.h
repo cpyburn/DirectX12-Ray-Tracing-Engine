@@ -1,12 +1,11 @@
 #pragma once
 
 #include "AssimpFactory.h"
+#include "Animation.h"
 
 namespace CPyburnRTXEngine
 {
-	class AssimpFactory; // forward declaration
-
-	class AssimpAnimations : AssimpFactory
+	class AssimpAnimations : public AssimpFactory
 	{
 	private:
 		struct Bone
@@ -98,7 +97,12 @@ namespace CPyburnRTXEngine
 		void ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void ReadSkeletonBones(float animationTime, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<VertexBoneData>& bones);
+
+		void LoadJSON();
 	public:
+		static std::map<UINT, std::string> AnimationTypes;
+		static std::map<UINT, std::map<UINT, std::map<std::string, Animation>>> Animations;
+		
 		AssimpAnimations();
 		~AssimpAnimations();
 

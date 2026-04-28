@@ -1,0 +1,21 @@
+[
+  { "id": 0, "name": "not used" },
+  { "id": 1, "name": "idle" },
+  { "id": 2, "name": "walk" },
+  { "id": 3, "name": "walk backwards" },
+  { "id": 4, "name": "run" },
+  { "id": 5, "name": "jump" },
+  { "id": 6, "name": "die" },
+  { "id": 7, "name": "take hit" },
+  { "id": 8, "name": "idle action" },
+  { "id": 9, "name": "kick" },
+  { "id": 10, "name": "standard melee" },
+  { "id": 11, "name": "bow draw" },
+  { "id": 12, "name": "idle bow" },
+  { "id": 13, "name": "action bow" },
+  { "id": 14, "name": "bow withdraw" },
+  { "id": 15, "name": "sword draw" },
+  { "id": 16, "name": "idle sword" },
+  { "id": 17, "name": "action sword" },
+  { "id": 18, "name": "sword withdraw" }
+]

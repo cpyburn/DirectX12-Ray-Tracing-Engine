@@ -3,6 +3,9 @@
 
 namespace CPyburnRTXEngine
 {
+	std::map<UINT, std::string> AssimpAnimations::AnimationTypes;
+	std::map<UINT, std::map<UINT, std::map<std::string, Animation>>> AssimpAnimations::Animations;
+	
 	void AssimpAnimations::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
 	{
 		if (pNodeAnim->mNumScalingKeys == 1)
@@ -241,7 +244,7 @@ namespace CPyburnRTXEngine
 			XMFLOAT3X3 rotation(rotationQ.GetMatrix().a1, rotationQ.GetMatrix().b1, rotationQ.GetMatrix().c1,
 				rotationQ.GetMatrix().a2, rotationQ.GetMatrix().b2, rotationQ.GetMatrix().c2,
 				rotationQ.GetMatrix().a3, rotationQ.GetMatrix().b3, rotationQ.GetMatrix().c3);
-			XMMATRIX rotationM = (XMLoadFloat3x3(&rotation));
+			XMMATRIX rotationM = XMLoadFloat3x3(&rotation);
 
 			aiVector3D translation;
 			CalcInterpolatedPosition(translation, animationTime, pBone->pNodeAnim);
@@ -314,6 +317,36 @@ namespace CPyburnRTXEngine
 		}
 	}
 
+	void AssimpAnimations::LoadJSON()
+	{
+		// see if animations have already been loaded
+		if (Animations.size() > 0)
+		{
+			return;
+		} 
+
+		rapidjson::Document doc = LoadJsonDocument("../../Assets/JSON/AnimationTypes.json");
+
+		if (!doc.IsArray()) {
+			std::cerr << "JSON is not an array!" << std::endl;
+			return;
+		}
+
+		for (SizeType i = 0; i < doc.Size(); i++) {
+			const Value& anim = doc[i];
+
+			if (anim.HasMember("id") && anim["id"].IsInt() &&
+				anim.HasMember("name") && anim["name"].IsString()) {
+
+				UINT id = anim["id"].GetInt();
+				std::string name = anim["name"].GetString();
+
+				std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+				AnimationTypes[id] = name;
+			}
+		}
+	}
+
 	AssimpAnimations::AssimpAnimations() : AssimpFactory()
 	{
 
@@ -352,6 +385,8 @@ namespace CPyburnRTXEngine
 		{
 			DebugTrace("Does not have bones");
 		}
+
+		LoadJSON();
 	}
 
 	void AssimpAnimations::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)

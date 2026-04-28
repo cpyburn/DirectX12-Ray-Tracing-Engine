@@ -307,3 +307,38 @@ inline std::string wstringToString(const std::wstring& wstr)
 
     //return string(utf16Str.begin(), utf16Str.end());
 }
+
+
+// load json includes
+#include <iostream>
+#include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+using namespace rapidjson;
+
+inline Document LoadJsonDocument(const std::string& filePath)
+{
+    Document document;
+
+	FILE* fp = nullptr;
+	fopen_s(&fp, filePath.c_str(), "r");
+	if (fp == nullptr)
+	{
+        DebugTrace(("Failed to open JSON file: " + filePath).c_str());
+        return document;
+	}
+
+    std::vector<char> readBuffer(65536);
+    FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+
+	document.ParseStream(is);
+
+    fclose(fp);
+
+	if (document.HasParseError())
+	{
+        DebugTrace(("Failed to parse JSON file: " + filePath).c_str());
+        return document;
+	}
+
+	return document;
+}

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AssimpFactory.h" // todo: move?
+#include "AssimpAnimations.h" // todo: move?
 #include "Texture.h"
 
 namespace CPyburnRTXEngine
@@ -74,7 +74,7 @@ namespace CPyburnRTXEngine
 		UINT mVertexBufferSrvPosition = 0;
 		UINT mIndexBufferSrvPosition = 0;
 		UINT mMaterialBufferSrvPosition = 0;
-		AssimpFactory m_assimpFactory;
+		AssimpAnimations m_assimpAnimations;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
 		struct EnvironmentData

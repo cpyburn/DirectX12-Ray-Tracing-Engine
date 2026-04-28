@@ -44,8 +44,8 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_triangleVertexBuffer = BufferHelpers<AssimpFactory::VSVertices>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].vertices.size()), &m_assimpFactory.GetMeshEntries()[0].vertices[0], commandList, m_commandAllocator[0], L"Model Buffer");
-        m_triangleIndicesBuffer = BufferHelpers<UINT>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].indices.size()), &m_assimpFactory.GetMeshEntries()[0].indices[0], commandList, m_commandAllocator[0], L"Index Buffer");
+        m_triangleVertexBuffer = BufferHelpers<AssimpFactory::VSVertices>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), &m_assimpAnimations.GetMeshEntries()[0].vertices[0], commandList, m_commandAllocator[0], L"Model Buffer");
+        m_triangleIndicesBuffer = BufferHelpers<UINT>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()), &m_assimpAnimations.GetMeshEntries()[0].indices[0], commandList, m_commandAllocator[0], L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -72,9 +72,9 @@ namespace CPyburnRTXEngine
 
         // load model images
         {
-            if (m_assimpFactory.GetMeshEntries().size() > 0)
+            if (m_assimpAnimations.GetMeshEntries().size() > 0)
             {
-                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpFactory.GetTextureDiffuse(), commandList.Get());
+                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpAnimations.GetTextureDiffuse(), commandList.Get());
                 // todo: always a good idea to release the upload if isn't going to be used anymore
                 //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
             }
@@ -98,7 +98,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferHelpers<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer, commandList, m_commandAllocator[0]);
-            m_triangleBlas = BufferHelpers<AssimpFactory::VSVertices>::CreateBlas(m_deviceResources, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer, commandList, m_commandAllocator[0], m_triangleIndicesBuffer, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].indices.size()));
+            m_triangleBlas = BufferHelpers<AssimpFactory::VSVertices>::CreateBlas(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer, commandList, m_commandAllocator[0], m_triangleIndicesBuffer, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
 
         // Top Level AS
@@ -910,12 +910,12 @@ namespace CPyburnRTXEngine
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
         srvDesc.Buffer.StructureByteStride = sizeof(AssimpFactory::VSVertices); // your vertex struct size goes here
-        srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].vertices.size()); // number of vertices go here
+        srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()); // number of vertices go here
         m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleVertexBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mVertexBufferSrvPosition));
         m_triangleVertexBuffer->SetName(L"SRV VB");
 
         srvDesc.Buffer.StructureByteStride = sizeof(UINT); // your vertex struct size goes here
-        srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].indices.size()); // number of vertices go here
+        srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()); // number of vertices go here
         m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleIndicesBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mIndexBufferSrvPosition));
         m_triangleIndicesBuffer->SetName(L"SRV IX");
 
@@ -966,9 +966,8 @@ namespace CPyburnRTXEngine
         mIndexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         mMaterialBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         // want the heap positions to be contiguous, so load models after reserving the positions
-        m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X"); // tutorial 10
+        m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X"); // tutorial 10
 
-        
         CreateCommandObjects();
         CreateModelBuffers();
         createAccelerationStructures(); // Tutorial 03

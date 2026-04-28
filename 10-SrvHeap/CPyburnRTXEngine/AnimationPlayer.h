@@ -15,7 +15,7 @@ namespace CPyburnRTXEngine
 		struct AnimationClip
 		{
 			std::string name;
-			Animation::AnimationType animationType;
+			Animation::AnimationType animationType = Animation::AnimationType::none;
 			Animation* animation = nullptr; // pointer to anination
 			float time = 0;
 			std::vector<XMMATRIX> bones;
@@ -97,7 +97,7 @@ namespace CPyburnRTXEngine
 					throw "missing this type of animation";
 				}
 
-				int randomInt = s_RNG.NextInt(0, animationByString->size() - 1);
+				int randomInt = s_RNG.NextInt(0, static_cast<int>(animationByString->size()) - 1);
 
 				auto it = animationByString->begin();
 				std::advance(it, randomInt);

@@ -674,30 +674,30 @@ namespace CPyburnRTXEngine
 			CreateSingleMeshEntry(i, numVertices, numIndices, mesh);
 		}
 
-		//bool hasBones = false;
-		//// Initialize the meshes in the scene one by one
-		//for (UINT i = 0; i < m_meshEntries.size(); i++)
-		//{
-		//	if (m_meshEntries[i].hasBones)
-		//	{
-		//		hasBones = true;
-		//		const aiMesh* paiMesh = m_pScene->mMeshes[i];
-		//		m_bones.resize(m_bones.size() + m_meshEntries[i].numVerts);
-		//		LoadBones(i, paiMesh, m_bones);
-		//	}
-		//}
+		bool hasBones = false;
+		// Initialize the meshes in the scene one by one
+		for (UINT i = 0; i < m_meshEntries.size(); i++)
+		{
+			if (m_meshEntries[i].hasBones)
+			{
+				hasBones = true;
+				const aiMesh* paiMesh = m_pScene->mMeshes[i];
+				m_bones.resize(m_bones.size() + m_meshEntries[i].numVerts);
+				LoadBones(i, paiMesh, m_bones);
+			}
+		}
 
-		//if (!hasBones)
-		//{
-		//	DebugTrace("Does not have bones");
-		//}
-		//else
-		//{
-		//	CreateSkeletonBones(m_pScene->mRootNode, &m_rootBone);
+		if (hasBones)
+		{
+			CreateSkeletonBones(m_pScene->mRootNode, &m_rootBone);
 
-		//	m_ticksPerSecond = (float)(m_pScene->mAnimations[0]->mTicksPerSecond != 0 ? m_pScene->mAnimations[0]->mTicksPerSecond : 25.0f);
-		//	m_duration = (float)m_pScene->mAnimations[0]->mDuration;
-		//}
+			m_ticksPerSecond = (float)(m_pScene->mAnimations[0]->mTicksPerSecond != 0 ? m_pScene->mAnimations[0]->mTicksPerSecond : 25.0f);
+			m_duration = (float)m_pScene->mAnimations[0]->mDuration;
+		}
+		else
+		{
+			DebugTrace("Does not have bones");
+		}
 	}
 
 	void AssimpFactory::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)

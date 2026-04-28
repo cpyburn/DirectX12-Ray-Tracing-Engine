@@ -1,11 +1,11 @@
 #include "pchlib.h"
 #include "AnimationPlayer.h"
 
-#include "AssimpFactory.h"
+#include "AssimpAnimations.h"
 
 namespace CPyburnRTXEngine
 {
-	AnimationPlayer::AnimationPlayer(AssimpFactory* skinnedMesh) :
+	AnimationPlayer::AnimationPlayer(AssimpAnimations* skinnedMesh) :
 		m_skinnedMesh(skinnedMesh)
 	{
 		m_currentClip.bones.resize(MAX_BONES);

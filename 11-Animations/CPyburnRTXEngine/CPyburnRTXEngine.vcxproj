@@ -126,7 +126,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>dxgi.lib;d3d12.lib;d3dcompiler.lib;dxcompiler.lib;assimp-vc143-mtd.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\assimp-master\assimp-master\lib\Debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\assimp-master\assimp-master\lib\Debug;..\..\include\rapidjson</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationPlayer.h" />
+    <ClInclude Include="AssimpAnimations.h" />
     <ClInclude Include="CameraBase.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="d3dx12.h" />
@@ -160,6 +161,7 @@
     <ClInclude Include="GameInput.h" />
     <ClInclude Include="AssimpFactory.h" />
     <ClInclude Include="Random.h" />
+    <ClInclude Include="TestAnimations.h" />
     <ClInclude Include="TestFullscreen.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
@@ -171,11 +173,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AnimationPlayer.cpp" />
+    <ClCompile Include="AssimpAnimations.cpp" />
     <ClCompile Include="CameraBase.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameInput.cpp" />
     <ClCompile Include="AssimpFactory.cpp" />
+    <ClCompile Include="TestAnimations.cpp" />
     <ClCompile Include="TestFullscreen.cpp" />
     <ClCompile Include="GraphicsContexts.cpp" />
     <ClCompile Include="pchlib.cpp">

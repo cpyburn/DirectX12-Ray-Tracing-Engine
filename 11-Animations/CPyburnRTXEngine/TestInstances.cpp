@@ -966,7 +966,7 @@ namespace CPyburnRTXEngine
         mIndexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         mMaterialBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         // want the heap positions to be contiguous, so load models after reserving the positions
-        m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X");
+        m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf-ranger.X"); // tutorial 10
 
         
         CreateCommandObjects();

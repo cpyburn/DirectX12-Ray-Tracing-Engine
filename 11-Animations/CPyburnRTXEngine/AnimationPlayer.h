@@ -5,7 +5,7 @@
 
 namespace CPyburnRTXEngine
 {
-	class AssimpFactory; // forward declaration
+	class AssimpAnimations; // forward declaration
 
 	class AnimationPlayer
 	{
@@ -33,7 +33,7 @@ namespace CPyburnRTXEngine
 		float m_animationSpeed = 1.0; //0.01f is almost noticeable 
 		RandomNumberGenerator s_RNG;
 
-		AssimpFactory* m_skinnedMesh = nullptr; // pointer to model
+		AssimpAnimations* m_skinnedMesh = nullptr; // pointer to model
 		std::map<UINT, std::map<std::string, Animation>>* m_animationsByModelId; // pointer to the map
 
 		AnimationClip m_currentClip;
@@ -43,7 +43,7 @@ namespace CPyburnRTXEngine
 		void BlendClip(const std::string& clipName, bool repeat = true, bool forward = true);
 
 	public:
-		AnimationPlayer(AssimpFactory* skinnedMesh);
+		AnimationPlayer(AssimpAnimations* skinnedMesh);
 		~AnimationPlayer();
 
 		void PlayClipByAnimationType(const Animation::AnimationType& animationType, bool repeat = true, bool forward = true);

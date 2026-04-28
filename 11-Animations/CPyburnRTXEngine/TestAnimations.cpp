@@ -1,5 +1,5 @@
 #include "pchlib.h"
-#include "TestInstances.h"
+#include "TestAnimations.h"
 
 #include "BufferHelpers.h"
 
@@ -17,7 +17,7 @@ namespace CPyburnRTXEngine
     static const WCHAR* kShadowMiss = L"shadowMiss";
     static const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
 
-    void TestInstances::CreateCommandObjects()
+    void TestAnimations::CreateCommandObjects()
     {
         for (size_t i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -40,7 +40,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    void TestInstances::CreateModelBuffers()
+    void TestAnimations::CreateModelBuffers()
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
@@ -90,7 +90,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
     }
 
-    void TestInstances::createAccelerationStructures()
+    void TestAnimations::createAccelerationStructures()
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
@@ -115,7 +115,7 @@ namespace CPyburnRTXEngine
         m_deviceResources->WaitForGpu();
     }
 
-    void TestInstances::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
+    void TestAnimations::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
     {
         // First, get the size of the TLAS buffers and create them
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -221,7 +221,7 @@ namespace CPyburnRTXEngine
         commandList->ResourceBarrier(1, &uavBarrier);
     }
 
-    void TestInstances::RefitOrRebuildTLASNext()
+    void TestAnimations::RefitOrRebuildTLASNext()
     {
         // Build the TLAS for the next frame while the current frame is being rendered.
         UINT currentFrame = m_deviceResources->GetCurrentFrameIndex();
@@ -248,7 +248,7 @@ namespace CPyburnRTXEngine
 		});
     }
 
-    void TestInstances::WaitForFrameSlot(UINT frameIndex)
+    void TestAnimations::WaitForFrameSlot(UINT frameIndex)
     {
         const UINT64 fenceValue = m_fenceValues[frameIndex].load();
         if (fenceValue != 0 && m_fence->GetCompletedValue() < fenceValue)
@@ -258,7 +258,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    UINT TestInstances::GetReadyFrameIndex() const
+    UINT TestAnimations::GetReadyFrameIndex() const
     {
         const UINT current = m_deviceResources->GetCurrentFrameIndex();
 
@@ -275,7 +275,7 @@ namespace CPyburnRTXEngine
         return prev;
     }
 
-    void TestInstances::createRtPipelineState()
+    void TestAnimations::createRtPipelineState()
     {
         //  1 for the DXIL library
         //  1 for hit-group triangle
@@ -711,7 +711,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&mpPipelineState)));
     }
 
-    std::vector<uint8_t> TestInstances::LoadBinaryFile(const wchar_t* path)
+    std::vector<uint8_t> TestAnimations::LoadBinaryFile(const wchar_t* path)
     {
         std::ifstream file(path, std::ios::binary | std::ios::ate);
         if (!file)
@@ -725,7 +725,7 @@ namespace CPyburnRTXEngine
         return data;
     }
 
-    Microsoft::WRL::ComPtr<IDxcBlob> TestInstances::CompileDXRLibrary(const wchar_t* filename)
+    Microsoft::WRL::ComPtr<IDxcBlob> TestAnimations::CompileDXRLibrary(const wchar_t* filename)
     {
         auto sourceData = LoadBinaryFile(filename);
 
@@ -780,7 +780,7 @@ namespace CPyburnRTXEngine
         return dxil;
     }
 
-    uint8_t* TestInstances::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
+    uint8_t* TestAnimations::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
     {
         uint8_t* pDataEntry = pData + (entry * mShaderTableEntrySize);
         memcpy(pDataEntry, pRtsoProps->GetShaderIdentifier(exportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
@@ -795,7 +795,7 @@ namespace CPyburnRTXEngine
         return pDataEntry;
     }
 
-    void TestInstances::createShaderTable()
+    void TestAnimations::createShaderTable()
     {
         /** The shader-table layout is as follows:
             Entry 0 - Ray-gen program
@@ -872,7 +872,7 @@ namespace CPyburnRTXEngine
     }
 
     // todo: handle this in a more elegant way when we implement resizing
-    void TestInstances::createShaderResources()
+    void TestAnimations::createShaderResources()
     {
         // Create the output resource. The dimensions and format should match the swap-chain
         D3D12_RESOURCE_DESC resDesc = {};
@@ -925,7 +925,7 @@ namespace CPyburnRTXEngine
         m_materialDataBuffer->SetName(L"SRV Material");
     }
 
-    void TestInstances::createConstantBuffer()
+    void TestAnimations::createConstantBuffer()
     {
         m_EnvironmentCb.CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestModel Cbv");
 
@@ -935,7 +935,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    TestInstances::TestInstances()
+    TestAnimations::TestAnimations()
     {
         
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
@@ -947,12 +947,12 @@ namespace CPyburnRTXEngine
         }
     }
 
-    TestInstances::~TestInstances()
+    TestAnimations::~TestAnimations()
     {
         Release();
     }
 
-    void TestInstances::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+    void TestAnimations::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
     {
         m_deviceResources = deviceResources;
 
@@ -978,12 +978,12 @@ namespace CPyburnRTXEngine
         createShaderTable(); // Tutorial 05
     }
 
-    void TestInstances::CreateWindowSizeDependentResources()
+    void TestAnimations::CreateWindowSizeDependentResources()
     {
         createShaderResources();
     }
 
-    void TestInstances::Update(DX::StepTimer const& timer)
+    void TestAnimations::Update(DX::StepTimer const& timer)
     {
 		float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
@@ -1005,7 +1005,7 @@ namespace CPyburnRTXEngine
         m_EnvironmentCb.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
     }
 
-    void TestInstances::Render(CameraBase* camera)
+    void TestAnimations::Render(CameraBase* camera)
     {
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
@@ -1088,7 +1088,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    void TestInstances::Release()
+    void TestAnimations::Release()
     {
         m_triangleVertexBuffer.Reset();
         //mpTopLevelAS.Release(); // todo:

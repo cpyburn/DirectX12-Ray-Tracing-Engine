@@ -68,4 +68,7 @@ Adding a shadow ray to the models and adding a NEXT/FUTURE buffer to the TLAS. T
 <img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/38a5ee25-8f13-4dcb-810c-aa29edc22ba9" />
 
 ### [10-Srv heap](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/10-SrvHeap) 
-Creating a single Srv heap with continuous textures for scaling textures in HLSL
+Creating a single Srv heap with continuous textures for scaling textures in HLSL, docs and photo coming soon
+
+### [11-Animations and file input](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/11-Animations) 
+Adding JSON input for reading in animations and adding animation logic

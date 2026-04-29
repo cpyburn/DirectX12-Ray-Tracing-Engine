@@ -363,6 +363,11 @@ namespace CPyburnRTXEngine
 			CreateSingleMeshEntry(i, numVertices, numIndices, mesh);
 		}
 	}
+
+	void AssimpFactory::Release()
+	{
+
+	}
 }
 
 

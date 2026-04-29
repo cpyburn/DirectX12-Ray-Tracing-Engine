@@ -113,5 +113,7 @@ namespace CPyburnRTXEngine
 			// todo: remove the extra processing the shaders and then enable this
 			| aiPostProcessSteps::aiProcess_LimitBoneWeights
 		);
+
+		virtual void Release();
 	};
 }

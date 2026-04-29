@@ -1,6 +1,8 @@
 #include "pchlib.h"
 #include "AssimpAnimations.h"
 
+#include "AnimationPlayer.h"
+
 namespace CPyburnRTXEngine
 {
 	std::unordered_map<UINT, std::string> AssimpAnimations::AnimationTypes;
@@ -365,7 +367,7 @@ namespace CPyburnRTXEngine
 
 				animation.startFrame = v["start"].GetInt();
 				animation.endFrame = v["end"].GetInt();
-				float framesPerSecond = v["fps"].GetInt();
+				float framesPerSecond = v["fps"].GetFloat();
 				animation.startTime = (float)animation.startFrame / framesPerSecond;
 				animation.endTime = (float)animation.endFrame / framesPerSecond;
 				animation.fps = (UINT)framesPerSecond;
@@ -430,17 +432,23 @@ namespace CPyburnRTXEngine
 
 		if (hasBones)
 		{
+			LoadJSON(); // this only loads once, so it is ok to call this for every model that has bones
+
 			CreateSkeletonBones(m_pScene->mRootNode, &m_rootBone);
 
 			m_ticksPerSecond = (float)(m_pScene->mAnimations[0]->mTicksPerSecond != 0 ? m_pScene->mAnimations[0]->mTicksPerSecond : 25.0f);
 			m_duration = (float)m_pScene->mAnimations[0]->mDuration;
+
+			m_animationPlayer = std::make_unique<AnimationPlayer>(this);
+			// todo: remove after testing
+			//m_animationPlayer->PlayClip(L"sword_action_3", true);
+			//m_animationPlayer->PlayClip("walk", true);
+			m_animationPlayer->PlayClipByAnimationType(Animation::AnimationType::idle, true);
 		}
 		else
 		{
 			DebugTrace("Does not have bones");
 		}
-
-		LoadJSON();
 	}
 
 	void AssimpAnimations::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
@@ -460,5 +468,21 @@ namespace CPyburnRTXEngine
 		float animationTime = fmod(timeInTicks, m_duration);
 
 		ReadSkeletonBones(animationTime, &m_rootBone, XMMatrixIdentity(), bones, noGlobalBones, global);
+	}
+
+	void AssimpAnimations::Update(DX::StepTimer const& timer)
+	{
+		if (m_animationPlayer)
+		{
+			m_animationPlayer->Update(timer);
+		}
+	}
+
+	void AssimpAnimations::Release()
+	{
+		AssimpFactory::Release(); // base release
+
+		m_animationPlayer.reset();
+		m_animationPlayer = nullptr;
 	}
 }

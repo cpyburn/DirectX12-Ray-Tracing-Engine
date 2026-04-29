@@ -16,8 +16,9 @@ namespace CPyburnRTXEngine
 		m_targetClip.noGlobalBones.resize(MAX_BONES);
 		m_targetClip.global.resize(MAX_BONES);
 
-		// todo:
-		//m_animationsByModelId = &ForwardPlusSkinned::Animations[skinnedMesh->GetModelId()];
+		// todo: GetModelId()
+		//m_animationsByModelId = &AssimpAnimations::Animations[skinnedMesh->GetModelId()];
+		m_animationsByModelId = &AssimpAnimations::Animations[1];
 	}
 
 	AnimationPlayer::~AnimationPlayer()

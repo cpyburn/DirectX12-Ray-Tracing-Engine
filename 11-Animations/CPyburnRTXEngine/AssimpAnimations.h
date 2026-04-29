@@ -5,6 +5,8 @@
 
 namespace CPyburnRTXEngine
 {
+	class AnimationPlayer; // forward declaration
+
 	class AssimpAnimations : public AssimpFactory
 	{
 	private:
@@ -110,6 +112,9 @@ namespace CPyburnRTXEngine
 				if (it->second == name)
 					return it->first;
 		}
+
+		// add animation player
+		std::unique_ptr<AnimationPlayer> m_animationPlayer = nullptr;
 	public:
 		static std::unordered_map<UINT, std::string> AnimationTypes;
 		static std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> Animations;
@@ -131,6 +136,9 @@ namespace CPyburnRTXEngine
 
 		void BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void BoneTransform(float timeInSeconds, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
+
+		void Update(DX::StepTimer const& timer);
+		virtual void Release() override;
 	};
 }
 

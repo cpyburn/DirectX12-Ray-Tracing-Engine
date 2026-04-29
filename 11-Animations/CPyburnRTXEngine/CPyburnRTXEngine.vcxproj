@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
+    <ClInclude Include="AnimationCompute.h" />
     <ClInclude Include="AnimationPlayer.h" />
     <ClInclude Include="AssimpAnimations.h" />
     <ClInclude Include="CameraBase.h" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationCompute.cpp" />
     <ClCompile Include="AnimationPlayer.cpp" />
     <ClCompile Include="AssimpAnimations.cpp" />
     <ClCompile Include="CameraBase.cpp" />
@@ -221,6 +223,14 @@
   <ItemGroup>
     <CustomBuild Include="09-Shaders.hlsl">
       <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(Identity) "$(OutDir)" &gt; NUL</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\%(Identity)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="skinnedCompute.hlsl">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(Identity) "$(OutDir)" &gt; NUL</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\%(Identity)</Outputs>

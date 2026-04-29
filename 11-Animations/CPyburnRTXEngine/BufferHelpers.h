@@ -159,6 +159,44 @@ namespace CPyburnRTXEngine
             return dafaultBuffer;
         }
 
+        static void CreateStructuredSRV(
+            ID3D12Device* device,
+            ID3D12Resource* resource,
+            UINT elementCount,
+            UINT stride,
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+        {
+            D3D12_SHADER_RESOURCE_VIEW_DESC srv{};
+            srv.Format = DXGI_FORMAT_UNKNOWN;
+            srv.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+            srv.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            srv.Buffer.FirstElement = 0;
+            srv.Buffer.NumElements = elementCount;
+            srv.Buffer.StructureByteStride = stride;
+            srv.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+            device->CreateShaderResourceView(resource, &srv, cpuHandle);
+        }
+
+        static void CreateStructuredUAV(
+            ID3D12Device* device,
+            ID3D12Resource* resource,
+            UINT elementCount,
+            UINT stride,
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+        {
+            D3D12_UNORDERED_ACCESS_VIEW_DESC uav{};
+            uav.Format = DXGI_FORMAT_UNKNOWN;
+            uav.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+            uav.Buffer.FirstElement = 0;
+            uav.Buffer.NumElements = elementCount;
+            uav.Buffer.StructureByteStride = stride;
+            uav.Buffer.CounterOffsetInBytes = 0;
+            uav.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+
+            device->CreateUnorderedAccessView(resource, nullptr, &uav, cpuHandle);
+        }
+
         void Release()
         {
 

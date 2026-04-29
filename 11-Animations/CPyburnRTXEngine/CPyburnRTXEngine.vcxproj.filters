@@ -83,6 +83,9 @@
     <ClInclude Include="TestAnimations.h">
       <Filter>Testing</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationCompute.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -130,6 +133,9 @@
     <ClCompile Include="TestAnimations.cpp">
       <Filter>Testing</Filter>
     </ClCompile>
+    <ClCompile Include="AnimationCompute.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -145,6 +151,9 @@
       <Filter>Shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="09-Shaders.hlsl">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="skinnedCompute.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
   </ItemGroup>

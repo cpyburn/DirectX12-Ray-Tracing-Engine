@@ -6,6 +6,7 @@
 namespace CPyburnRTXEngine
 {
 	class AnimationPlayer; // forward declaration
+	class AnimationCompute; // forward declaration
 
 	class AssimpAnimations : public AssimpFactory
 	{
@@ -115,12 +116,15 @@ namespace CPyburnRTXEngine
 
 		// add animation player
 		std::unique_ptr<AnimationPlayer> m_animationPlayer = nullptr;
+		std::unique_ptr<AnimationCompute> m_animationCompute = nullptr;
 	public:
 		static std::unordered_map<UINT, std::string> AnimationTypes;
 		static std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> Animations;
 		
 		AssimpAnimations();
 		~AssimpAnimations();
+
+		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 
 		void Initialize(const std::string& fileName,
 			unsigned int customFlags = aiProcess_Triangulate

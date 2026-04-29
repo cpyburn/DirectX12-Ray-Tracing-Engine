@@ -2,6 +2,7 @@
 #include "AssimpAnimations.h"
 
 #include "AnimationPlayer.h"
+#include "AnimationCompute.h"
 
 namespace CPyburnRTXEngine
 {
@@ -413,6 +414,12 @@ namespace CPyburnRTXEngine
 
 	}
 
+	void AssimpAnimations::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+	{
+		m_animationCompute = std::make_unique<AnimationCompute>();
+		m_animationCompute->CreateDeviceDependentResources(deviceResources);
+	}
+
 	void AssimpAnimations::Initialize(const std::string& fileName, unsigned int customFlags)
 	{
 		AssimpFactory::Initialize(fileName, customFlags);
@@ -484,5 +491,8 @@ namespace CPyburnRTXEngine
 
 		m_animationPlayer.reset();
 		m_animationPlayer = nullptr;
+
+		m_animationCompute.reset();
+		m_animationCompute = nullptr;
 	}
 }

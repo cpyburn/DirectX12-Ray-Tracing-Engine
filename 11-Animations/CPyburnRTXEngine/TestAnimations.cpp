@@ -968,6 +968,8 @@ namespace CPyburnRTXEngine
         // want the heap positions to be contiguous, so load models after reserving the positions
         m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
 
+        m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
+
         CreateCommandObjects();
         CreateModelBuffers();
         createAccelerationStructures(); // Tutorial 03
@@ -986,18 +988,15 @@ namespace CPyburnRTXEngine
     {
 		float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
-		//XMMATRIX orthoLH = XMMatrixIdentity();
-        //XMMATRIX orthoLH = XMMatrixOrthographicLH(static_cast<float>(m_deviceResources->GetResolution().Width), static_cast<float>(m_deviceResources->GetResolution().Height), 0.0f, 100.0f);
-        
         XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
-        //XMVECTOR vec2 = XMVectorSet(2, 0, 0, 0);
-
 		XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
 
         // 3 instances
         m_instanceData[1].world = XMMatrixRotationY(rotation) * translation1;
         m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
 
+        // update the bones
+        m_assimpAnimations.Update(timer);
 
         XMFLOAT3 lightDir = XMFLOAT3(0.5f, 0.5f, -0.5f);
         m_EnvironmentCb.CpuData.lightDirection = lightDir;

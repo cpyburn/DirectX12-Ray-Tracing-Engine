@@ -325,54 +325,79 @@ namespace CPyburnRTXEngine
 			return;
 		} 
 
-		std::string filePath = "../../Assets/JSON/AnimationTypes.json";
-		rapidjson::Document doc = LoadJsonDocument(filePath);
+		{
+			std::string filePath = "../../Assets/JSON/AnimationTypes.json";
+			rapidjson::Document doc = LoadJsonDocument(filePath);
 
-		if (!doc.IsArray()) {
-			DebugTrace(("JSON is not an array!" + filePath).c_str());
-			return;
-		}
+			const auto& arr = doc["animationTypes"];
 
-		for (rapidjson::SizeType i = 0; i < doc.Size(); i++) {
-			const rapidjson::Value& anim = doc[i];
-
-			if (anim.HasMember("id") && anim["id"].IsInt() &&
-				anim.HasMember("name") && anim["name"].IsString()) {
-
-				UINT id = anim["id"].GetInt();
-				std::string name = anim["name"].GetString();
+			for (auto& v : arr.GetArray()) {
+				UINT id = v["id"].GetInt();
+				std::string name = v["name"].GetString();
 
 				std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 				AnimationTypes[id] = name;
 			}
 		}
 
-		doc.Clear();
+		{
+			std::string filePath = "../../Assets/JSON/Animations.json";
+			rapidjson::Document doc = LoadJsonDocument(filePath);
 
-		filePath = "../../Assets/JSON/Animations.json";
-		doc = LoadJsonDocument(filePath);
+			const auto& arr = doc["animations"];
 
-		if (!doc.IsArray()) {
-			DebugTrace(("JSON is not an array!" + filePath).c_str());
-			return;
-		}
+			for (auto& v : arr.GetArray()) 
+			{
+				Animation animation;
+				animation.animationTypeId = v["animationTypeId"].GetInt();
+				// if animationTypeId is 0 then it has no use in the game, go ahead and go to the next animation
+				if (animation.animationTypeId == 0)
+				{
+					continue;
+				}
 
-		const auto& arr = doc["animations"];
+				animation.id = v["id"].GetInt();
+				animation.modelId = v["modelId"].GetInt();
 
-		std::vector<Animation> animations;
-		animations.reserve(arr.Size());
+				std::string name = v["animationName"].GetString();
+				std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+				animation.animationName = name;
 
-		for (auto& v : arr.GetArray()) {
-			Animation a;
-			a.id = v["id"].GetInt();
-			a.modelId = v["modelId"].GetInt();
-			a.animationName = v["animationName"].GetString();
-			a.startFrame = v["start"].GetInt();
-			a.endFrame = v["end"].GetInt();
-			a.fps = v["fps"].GetInt();
-			a.animationTypeId = v["animationTypeId"].GetInt();
+				animation.startFrame = v["start"].GetInt();
+				animation.endFrame = v["end"].GetInt();
+				float framesPerSecond = v["fps"].GetInt();
+				animation.startTime = (float)animation.startFrame / framesPerSecond;
+				animation.endTime = (float)animation.endFrame / framesPerSecond;
+				animation.fps = (UINT)framesPerSecond;
+				animation.animationTypeName = GetAnimationTypeNameById(animation.animationTypeId);
+				animation.animationType = (Animation::AnimationType)animation.animationTypeId;
 
-			animations.push_back(a);
+				auto iterByModelId = Animations.find(animation.modelId);
+				if (iterByModelId != Animations.end())
+				{
+					auto iterByAnimationTypeId = iterByModelId->second.find(animation.animationTypeId);
+					if (iterByAnimationTypeId != iterByModelId->second.end())
+					{
+						iterByAnimationTypeId->second.insert(std::pair<std::string, Animation>(animation.animationName, animation));
+					}
+					else
+					{
+						std::unordered_map<std::string, Animation> animationsByString;
+						animationsByString[animation.animationName] = animation;
+
+						iterByModelId->second.insert(std::pair<UINT, std::unordered_map<std::string, Animation>>(animation.animationTypeId, animationsByString));
+					}
+				}
+				else
+				{
+					std::unordered_map<std::string, Animation> animationsByString;
+					animationsByString[animation.animationName] = animation;
+
+					std::unordered_map<UINT, std::unordered_map<std::string, Animation>> m_animationsByModelId;
+					m_animationsByModelId.insert(std::pair<UINT, std::unordered_map<std::string, Animation>>(animation.animationTypeId, animationsByString));
+					Animations[animation.modelId] = m_animationsByModelId;
+				}
+			}
 		}
 	}
 

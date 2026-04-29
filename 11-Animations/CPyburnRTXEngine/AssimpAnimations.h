@@ -99,6 +99,17 @@ namespace CPyburnRTXEngine
 		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<VertexBoneData>& bones);
 
 		void LoadJSON();
+		static std::string GetAnimationTypeNameById(const UINT& id)
+		{
+			return AnimationTypes[id];
+		}
+		static UINT GetAnimationTypeIdByName(std::string name)
+		{
+			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+			for (auto it = AnimationTypes.begin(); it != AnimationTypes.end(); ++it)
+				if (it->second == name)
+					return it->first;
+		}
 	public:
 		static std::unordered_map<UINT, std::string> AnimationTypes;
 		static std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> Animations;

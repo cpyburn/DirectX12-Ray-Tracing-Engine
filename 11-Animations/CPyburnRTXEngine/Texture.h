@@ -16,9 +16,9 @@ namespace CPyburnRTXEngine
 
 		static std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
-		static std::map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> m_texturesUpload;
-		static std::map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> m_textures;
-		static std::map<std::string, HeapTexture> m_loadedTextures;
+		static std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> m_texturesUpload;
+		static std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> m_textures;
+		static std::unordered_map<std::string, HeapTexture> m_loadedTextures;
 		static bool TryGetTextureHeap(const std::string& path, Texture::HeapTexture& textureHeap);
 		static Texture::HeapTexture LoadCustomDDSTexture(ID3D12GraphicsCommandList* commandList, const std::wstring& wFileName);
 		static Texture::HeapTexture LoadCustomWICTexture(ID3D12GraphicsCommandList* commandList, const std::wstring& wFileName);

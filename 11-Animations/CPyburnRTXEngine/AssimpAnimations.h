@@ -76,7 +76,7 @@ namespace CPyburnRTXEngine
 
 		float m_ticksPerSecond = 0;
 		float m_duration = 0;
-		std::map<std::string, unsigned int> m_boneMapping; // maps a bone name to its index
+		std::unordered_map<std::string, unsigned int> m_boneMapping; // maps a bone name to its index
 		unsigned int m_numBones = 0;
 		std::vector<XMFLOAT4X4> m_boneInfo;
 		Bone m_rootBone;
@@ -100,8 +100,8 @@ namespace CPyburnRTXEngine
 
 		void LoadJSON();
 	public:
-		static std::map<UINT, std::string> AnimationTypes;
-		static std::map<UINT, std::map<UINT, std::map<std::string, Animation>>> Animations;
+		static std::unordered_map<UINT, std::string> AnimationTypes;
+		static std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> Animations;
 		
 		AssimpAnimations();
 		~AssimpAnimations();

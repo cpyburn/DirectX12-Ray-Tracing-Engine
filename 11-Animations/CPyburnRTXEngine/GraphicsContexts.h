@@ -7,7 +7,7 @@ namespace CPyburnRTXEngine
 	private:
 		static UINT m_heapPositionCounter;
 		static std::vector<UINT> m_availableHeapPositions;
-		static std::map<UINT, UINT> m_multiUseHeapPositions;
+		static std::unordered_map<UINT, UINT> m_multiUseHeapPositions;
 		static std::mutex m_mutexMultiUseHeapPositions;
 
 	public:

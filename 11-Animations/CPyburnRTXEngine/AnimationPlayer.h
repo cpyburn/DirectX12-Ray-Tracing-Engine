@@ -34,7 +34,7 @@ namespace CPyburnRTXEngine
 		RandomNumberGenerator s_RNG;
 
 		AssimpAnimations* m_skinnedMesh = nullptr; // pointer to model
-		std::map<UINT, std::map<std::string, Animation>>* m_animationsByModelId; // pointer to the map
+		std::unordered_map<UINT, std::unordered_map<std::string, Animation>>* m_animationsByModelId; // pointer to the map
 
 		AnimationClip m_currentClip;
 		AnimationClip m_targetClip;
@@ -60,9 +60,9 @@ namespace CPyburnRTXEngine
 
 		Animation* GetAnimation(const std::string& clipName)
 		{
-			for (std::map<UINT, std::map<std::string, Animation>>::iterator it = m_animationsByModelId->begin(); it != m_animationsByModelId->end(); ++it)
+			for (std::unordered_map<UINT, std::unordered_map<std::string, Animation>>::iterator it = m_animationsByModelId->begin(); it != m_animationsByModelId->end(); ++it)
 			{
-				std::map<std::string, Animation>* animationByModelTypeId = &it->second;
+				std::unordered_map<std::string, Animation>* animationByModelTypeId = &it->second;
 				auto animationByTypeIter = animationByModelTypeId->find(clipName);
 				if (animationByTypeIter != animationByModelTypeId->end())
 					return &animationByTypeIter->second;
@@ -90,7 +90,7 @@ namespace CPyburnRTXEngine
 			auto iter = m_animationsByModelId->find((UINT)animationType);
 			if (iter != m_animationsByModelId->end())
 			{
-				std::map<std::string, Animation>* animationByString = &iter->second;
+				std::unordered_map<std::string, Animation>* animationByString = &iter->second;
 
 				if (animationByString->size() == 0)
 				{

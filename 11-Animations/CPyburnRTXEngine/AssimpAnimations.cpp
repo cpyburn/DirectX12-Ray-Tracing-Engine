@@ -3,8 +3,8 @@
 
 namespace CPyburnRTXEngine
 {
-	std::map<UINT, std::string> AssimpAnimations::AnimationTypes;
-	std::map<UINT, std::map<UINT, std::map<std::string, Animation>>> AssimpAnimations::Animations;
+	std::unordered_map<UINT, std::string> AssimpAnimations::AnimationTypes;
+	std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> AssimpAnimations::Animations;
 	
 	void AssimpAnimations::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
 	{
@@ -325,15 +325,16 @@ namespace CPyburnRTXEngine
 			return;
 		} 
 
-		rapidjson::Document doc = LoadJsonDocument("../../Assets/JSON/AnimationTypes.json");
+		std::string filePath = "../../Assets/JSON/AnimationTypes.json";
+		rapidjson::Document doc = LoadJsonDocument(filePath);
 
 		if (!doc.IsArray()) {
-			std::cerr << "JSON is not an array!" << std::endl;
+			DebugTrace(("JSON is not an array!" + filePath).c_str());
 			return;
 		}
 
-		for (SizeType i = 0; i < doc.Size(); i++) {
-			const Value& anim = doc[i];
+		for (rapidjson::SizeType i = 0; i < doc.Size(); i++) {
+			const rapidjson::Value& anim = doc[i];
 
 			if (anim.HasMember("id") && anim["id"].IsInt() &&
 				anim.HasMember("name") && anim["name"].IsString()) {
@@ -344,6 +345,34 @@ namespace CPyburnRTXEngine
 				std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 				AnimationTypes[id] = name;
 			}
+		}
+
+		doc.Clear();
+
+		filePath = "../../Assets/JSON/Animations.json";
+		doc = LoadJsonDocument(filePath);
+
+		if (!doc.IsArray()) {
+			DebugTrace(("JSON is not an array!" + filePath).c_str());
+			return;
+		}
+
+		const auto& arr = doc["animations"];
+
+		std::vector<Animation> animations;
+		animations.reserve(arr.Size());
+
+		for (auto& v : arr.GetArray()) {
+			Animation a;
+			a.id = v["id"].GetInt();
+			a.modelId = v["modelId"].GetInt();
+			a.animationName = v["animationName"].GetString();
+			a.startFrame = v["start"].GetInt();
+			a.endFrame = v["end"].GetInt();
+			a.fps = v["fps"].GetInt();
+			a.animationTypeId = v["animationTypeId"].GetInt();
+
+			animations.push_back(a);
 		}
 	}
 

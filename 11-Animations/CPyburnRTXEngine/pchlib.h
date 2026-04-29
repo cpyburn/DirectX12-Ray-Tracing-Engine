@@ -68,7 +68,8 @@
 #include <tuple>
 
 #include <vector>
-#include <map>
+//#include <map> // chad: commented out because we don't think we will use map unless we require sorting at some point
+#include <unordered_map>
 #include <mutex>
 #include <fstream>
 #include <sstream> // istringstream
@@ -313,11 +314,10 @@ inline std::string wstringToString(const std::wstring& wstr)
 #include <iostream>
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
-using namespace rapidjson;
 
-inline Document LoadJsonDocument(const std::string& filePath)
+inline rapidjson::Document LoadJsonDocument(const std::string& filePath)
 {
-    Document document;
+    rapidjson::Document document;
 
 	FILE* fp = nullptr;
 	fopen_s(&fp, filePath.c_str(), "r");
@@ -328,7 +328,7 @@ inline Document LoadJsonDocument(const std::string& filePath)
 	}
 
     std::vector<char> readBuffer(65536);
-    FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+    rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
 
 	document.ParseStream(is);
 

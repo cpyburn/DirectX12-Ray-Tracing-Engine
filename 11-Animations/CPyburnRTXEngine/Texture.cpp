@@ -6,9 +6,9 @@
 
 namespace CPyburnRTXEngine
 {
-    std::map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_texturesUpload;
-    std::map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_textures;
-    std::map<std::string, Texture::HeapTexture> Texture::m_loadedTextures;
+    std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_texturesUpload;
+    std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_textures;
+    std::unordered_map<std::string, Texture::HeapTexture> Texture::m_loadedTextures;
     std::mutex Texture::m_mutex;
 	std::shared_ptr<DX::DeviceResources> Texture::m_deviceResources = nullptr;
 

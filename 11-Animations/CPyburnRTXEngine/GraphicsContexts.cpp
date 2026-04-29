@@ -8,7 +8,7 @@ Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> GraphicsContexts::c_heap;
 
 UINT GraphicsContexts::m_heapPositionCounter;
 std::vector<UINT> GraphicsContexts::m_availableHeapPositions;
-std::map<UINT, UINT> GraphicsContexts::m_multiUseHeapPositions;
+std::unordered_map<UINT, UINT> GraphicsContexts::m_multiUseHeapPositions;
 std::mutex GraphicsContexts::m_mutexMultiUseHeapPositions;
 
 namespace CPyburnRTXEngine

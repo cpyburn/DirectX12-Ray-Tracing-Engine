@@ -105,11 +105,11 @@ namespace CPyburnRTXEngine
             return pResult;
         }
 
-        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferOnDefaultHeap(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const T* data, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Buffer not named")
+        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferOnDefaultHeap(const std::shared_ptr<DX::DeviceResources>& deviceResources, const std::vector<T>& data, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Buffer not named")
         {
             Microsoft::WRL::ComPtr<ID3D12Resource> dafaultBuffer;
 
-            const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * count);
+            const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * data.size());
             CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
             DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -133,7 +133,7 @@ namespace CPyburnRTXEngine
             // Upload the index buffer to the GPU.
             {
                 D3D12_SUBRESOURCE_DATA verticeData = {};
-                verticeData.pData = data;
+                verticeData.pData = &data[0];
                 verticeData.RowPitch = 0;
                 verticeData.SlicePitch = 0;
 
@@ -195,6 +195,34 @@ namespace CPyburnRTXEngine
             uav.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
             device->CreateUnorderedAccessView(resource, nullptr, &uav, cpuHandle);
+        }
+
+        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBuffer(ID3D12Device* device, UINT64 size, D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_STATES state, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
+        {
+            Microsoft::WRL::ComPtr<ID3D12Resource> res;
+
+            D3D12_HEAP_PROPERTIES heap = {};
+            heap.Type = heapType;
+
+            D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
+
+            ThrowIfFailed(device->CreateCommittedResource(
+                &heap,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                state,
+                nullptr,
+                IID_PPV_ARGS(&res)));
+
+            return res;
+        }
+
+        static void UploadData(ID3D12Resource* res, const void* data, size_t size)
+        {
+            void* mapped;
+            res->Map(0, nullptr, &mapped);
+            memcpy(mapped, data, size);
+            res->Unmap(0, nullptr);
         }
 
         void Release()

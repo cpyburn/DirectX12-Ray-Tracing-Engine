@@ -44,8 +44,8 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_triangleVertexBuffer = BufferHelpers<AssimpFactory::VSVertices>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), &m_assimpAnimations.GetMeshEntries()[0].vertices[0], commandList, m_commandAllocator[0], L"Model Buffer");
-        m_triangleIndicesBuffer = BufferHelpers<UINT>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()), &m_assimpAnimations.GetMeshEntries()[0].indices[0], commandList, m_commandAllocator[0], L"Index Buffer");
+        m_triangleVertexBuffer = BufferHelpers<AssimpFactory::VSVertices>::CreateBufferOnDefaultHeap(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].vertices, commandList, m_commandAllocator[0], L"Model Buffer");
+        m_triangleIndicesBuffer = BufferHelpers<UINT>::CreateBufferOnDefaultHeap(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].indices, commandList, m_commandAllocator[0], L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -54,21 +54,19 @@ namespace CPyburnRTXEngine
             m_materialData[i].baseColorTexIndex = static_cast<UINT>(0);
         }
 
-        m_materialDataBuffer = BufferHelpers<MaterialData>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(m_materialData.size()), &m_materialData[0], commandList, m_commandAllocator[0], L"Material Buffer");
+        m_materialDataBuffer = BufferHelpers<MaterialData>::CreateBufferOnDefaultHeap(m_deviceResources, m_materialData, commandList, m_commandAllocator[0], L"Material Buffer");
 
         // create createPlaneVB
-        const XMFLOAT3 vertices[] =
-        {
-            XMFLOAT3(-100, -1,  -2),
-            XMFLOAT3(100, -1,  100),
-            XMFLOAT3(-100, -1,  100),
+        std::vector<XMFLOAT3> planeVertices(6);
+        planeVertices[0] = XMFLOAT3(-100, -1,  -2);
+        planeVertices[1] = XMFLOAT3(100, -1,  100);
+        planeVertices[2] = XMFLOAT3(-100, -1,  100);
 
-            XMFLOAT3(-100, -1,  -2),
-            XMFLOAT3(100, -1,  -2),
-            XMFLOAT3(100, -1,  100),
-        };
+        planeVertices[3] = XMFLOAT3(-100, -1,  -2);
+        planeVertices[4] = XMFLOAT3(100, -1,  -2);
+        planeVertices[5] = XMFLOAT3(100, -1,  100);
 
-        m_planeVertexBuffer = BufferHelpers<XMFLOAT3>::CreateBufferOnDefaultHeap(m_deviceResources, static_cast<UINT>(std::size(vertices)), &vertices[0], commandList, m_commandAllocator[0], L"Plane Buffer");
+        m_planeVertexBuffer = BufferHelpers<XMFLOAT3>::CreateBufferOnDefaultHeap(m_deviceResources, planeVertices, commandList, m_commandAllocator[0], L"Plane Buffer");
 
         // load model images
         {

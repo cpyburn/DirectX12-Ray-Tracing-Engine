@@ -44,8 +44,8 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_triangleVertexBuffer = BufferHelpers<AssimpFactory::VSVertices>::CreateBufferOnDefaultHeap(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].vertices, commandList, m_commandAllocator[0], L"Model Buffer");
-        m_triangleIndicesBuffer = BufferHelpers<UINT>::CreateBufferOnDefaultHeap(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].indices, commandList, m_commandAllocator[0], L"Index Buffer");
+        m_triangleVertexBuffer = BufferHelpers::CreateBufferOnDefaultHeap<AssimpFactory::VSVertices>(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].vertices, commandList, m_commandAllocator[0], L"Model Buffer");
+        m_triangleIndicesBuffer = BufferHelpers::CreateBufferOnDefaultHeap<UINT>(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].indices, commandList, m_commandAllocator[0], L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -54,7 +54,7 @@ namespace CPyburnRTXEngine
             m_materialData[i].baseColorTexIndex = static_cast<UINT>(0);
         }
 
-        m_materialDataBuffer = BufferHelpers<MaterialData>::CreateBufferOnDefaultHeap(m_deviceResources, m_materialData, commandList, m_commandAllocator[0], L"Material Buffer");
+        m_materialDataBuffer = BufferHelpers::CreateBufferOnDefaultHeap<MaterialData>(m_deviceResources, m_materialData, commandList, m_commandAllocator[0], L"Material Buffer");
 
         // create createPlaneVB
         std::vector<XMFLOAT3> planeVertices(6);
@@ -66,7 +66,7 @@ namespace CPyburnRTXEngine
         planeVertices[4] = XMFLOAT3(100, -1,  -2);
         planeVertices[5] = XMFLOAT3(100, -1,  100);
 
-        m_planeVertexBuffer = BufferHelpers<XMFLOAT3>::CreateBufferOnDefaultHeap(m_deviceResources, planeVertices, commandList, m_commandAllocator[0], L"Plane Buffer");
+        m_planeVertexBuffer = BufferHelpers::CreateBufferOnDefaultHeap<XMFLOAT3>(m_deviceResources, planeVertices, commandList, m_commandAllocator[0], L"Plane Buffer");
 
         // load model images
         {
@@ -95,8 +95,8 @@ namespace CPyburnRTXEngine
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferHelpers<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer, commandList, m_commandAllocator[0]);
-            m_triangleBlas = BufferHelpers<AssimpFactory::VSVertices>::CreateBlas(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer, commandList, m_commandAllocator[0], m_triangleIndicesBuffer, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_planeBlas = BufferHelpers::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer, commandList, m_commandAllocator[0]);
+            m_triangleBlas = BufferHelpers::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer, commandList, m_commandAllocator[0], m_triangleIndicesBuffer, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
 
         // Top Level AS

@@ -1,10 +1,9 @@
 #pragma once
+#include "AssimpFactory.h"
+#include "AssimpAnimations.h"
 
 namespace CPyburnRTXEngine
 {
-	class VSVertices;
-	class VertexBoneData;
-
 	class AnimationCompute
 	{
 	private:
@@ -23,7 +22,7 @@ namespace CPyburnRTXEngine
 		~AnimationCompute();
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
-		void CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator);
+		void CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator);
 		void Dispatch(ID3D12GraphicsCommandList4* commandList);
 		//void Initialize();
 	};

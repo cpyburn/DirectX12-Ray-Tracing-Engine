@@ -4,7 +4,6 @@
 
 namespace CPyburnRTXEngine
 {
-    template<typename T>
     class BufferHelpers
     {
     private:
@@ -20,6 +19,7 @@ namespace CPyburnRTXEngine
             Release();
         }
 
+        template<typename T>
         static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBlas(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
         {
             D3D12_RESOURCE_DESC bufDesc = {};
@@ -105,6 +105,7 @@ namespace CPyburnRTXEngine
             return pResult;
         }
 
+        template<typename T>
         static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferOnDefaultHeap(const std::shared_ptr<DX::DeviceResources>& deviceResources, const std::vector<T>& data, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Buffer not named")
         {
             Microsoft::WRL::ComPtr<ID3D12Resource> dafaultBuffer;
@@ -206,7 +207,7 @@ namespace CPyburnRTXEngine
 
             D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size, flags);
 
-            ThrowIfFailed(device->CreateCommittedResource(
+            DX::ThrowIfFailed(device->CreateCommittedResource(
                 &heap,
                 D3D12_HEAP_FLAG_NONE,
                 &desc,

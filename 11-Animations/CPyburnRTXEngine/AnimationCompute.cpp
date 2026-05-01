@@ -2,8 +2,6 @@
 #include "AnimationCompute.h"
 
 #include "BufferHelpers.h"
-#include "AssimpFactory.h"
-#include "AssimpAnimations.h"
 #include "GraphicsContexts.h"
 
 namespace CPyburnRTXEngine
@@ -84,13 +82,13 @@ namespace CPyburnRTXEngine
         device->CreateComputePipelineState(&pso, IID_PPV_ARGS(&m_pso));
     }
 
-    void AnimationCompute::CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator)
+    void AnimationCompute::CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator)
     {
-        baseVertices = BufferHelpers<AssimpFactory::VSVertices>::CreateBufferOnDefaultHeap(m_deviceResources, vertices, commandList, commandAllocator, L"Base Vertices Buffer");
-        boneBuffer = BufferHelpers<VertexBoneData>::CreateBufferOnDefaultHeap(m_deviceResources, boneData, commandList, commandAllocator, L"Bone Data Buffer");
-        boneMatrices = BufferHelpers<XMMATRIX>::CreateBufferOnDefaultHeap(m_deviceResources, bones, commandList, commandAllocator, L"Bone Matrices Buffer");
+        baseVertices = BufferHelpers::CreateBufferOnDefaultHeap<AssimpFactory::VSVertices>(m_deviceResources, vertices, commandList, commandAllocator, L"Base Vertices Buffer");
+        boneBuffer = BufferHelpers::CreateBufferOnDefaultHeap<AssimpAnimations::VertexBoneData>(m_deviceResources, boneData, commandList, commandAllocator, L"Bone Data Buffer");
+        boneMatrices = BufferHelpers::CreateBufferOnDefaultHeap<XMMATRIX>(m_deviceResources, bones, commandList, commandAllocator, L"Bone Matrices Buffer");
         
-        outVertices = BufferHelpers::CreateBuffer();
+        outVertices = BufferHelpers::CreateBuffer(m_deviceResources->GetD3DDevice(), vertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_FLAG_NONE);
     }
 
     void AnimationCompute::Dispatch(ID3D12GraphicsCommandList4* commandList)

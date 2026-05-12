@@ -1,4 +1,6 @@
 #pragma once
+#include "AssimpFactory.h"
+#include "AssimpAnimations.h"
 
 #include "AssimpFactory.h"
 #include "AssimpAnimations.h"

@@ -2,13 +2,8 @@
 #include "AssimpFactory.h"
 #include "AssimpAnimations.h"
 
-#include "AssimpFactory.h"
-#include "AssimpAnimations.h"
-
 namespace CPyburnRTXEngine
 {
-	class VSVertices;
-
 	class AnimationCompute
 	{
 	private:

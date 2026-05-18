@@ -418,6 +418,7 @@ namespace CPyburnRTXEngine
 	{
 		m_animationCompute = std::make_unique<AnimationCompute>();
 		m_animationCompute->CreateDeviceDependentResources(deviceResources);
+		m_animationCompute->CreateBuffers(m_meshEntries[0].vertices, m_bones, m_boneInfo);
 	}
 
 	void AssimpAnimations::Initialize(const std::string& fileName, unsigned int customFlags)

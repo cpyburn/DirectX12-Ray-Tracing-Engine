@@ -82,13 +82,63 @@ namespace CPyburnRTXEngine
         device->CreateComputePipelineState(&pso, IID_PPV_ARGS(&m_pso));
     }
 
-    void AnimationCompute::CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator)
+    void AnimationCompute::CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMFLOAT4X4>& bones)
     {
+        m_vertexCount = static_cast<UINT>(vertices.size());
+
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+
         baseVertices = BufferHelpers::CreateBufferOnDefaultHeap<AssimpFactory::VSVertices>(m_deviceResources, vertices, commandList, commandAllocator, L"Base Vertices Buffer");
         boneBuffer = BufferHelpers::CreateBufferOnDefaultHeap<AssimpAnimations::VertexBoneData>(m_deviceResources, boneData, commandList, commandAllocator, L"Bone Data Buffer");
-        boneMatrices = BufferHelpers::CreateBufferOnDefaultHeap<XMMATRIX>(m_deviceResources, bones, commandList, commandAllocator, L"Bone Matrices Buffer");
+        boneMatrices = BufferHelpers::CreateBufferOnDefaultHeap<XMFLOAT4X4>(m_deviceResources, bones, commandList, commandAllocator, L"Bone Matrices Buffer");
         
-        //outVertices = BufferHelpers::CreateBuffer();
+        // Output buffer
+        const UINT bufferSize = (UINT)(sizeof(AssimpFactory::VSVertices) * vertices.size());
+        outVertices = BufferHelpers::CreateBuffer(
+            m_deviceResources->GetD3DDevice(),
+            bufferSize,
+            D3D12_HEAP_TYPE_DEFAULT,
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
+        m_heapIndexBaseVertices = GraphicsContexts::GetAvailableHeapPosition();
+        m_cpuBaseVertices = GraphicsContexts::GetCpuHandle(m_heapIndexBaseVertices);
+        m_gpuBaseVertices = GraphicsContexts::GetGpuHandle(m_heapIndexBaseVertices);
+        BufferHelpers::CreateStructuredSRV(m_deviceResources->GetD3DDevice(), baseVertices.Get(), (UINT)vertices.size(), sizeof(AssimpFactory::VSVertices), m_cpuBaseVertices);
+
+        m_heapIndexBoneBuffer = GraphicsContexts::GetAvailableHeapPosition();
+        m_cpuBoneBuffer = GraphicsContexts::GetCpuHandle(m_heapIndexBoneBuffer);
+        BufferHelpers::CreateStructuredSRV(m_deviceResources->GetD3DDevice(), boneBuffer.Get(), (UINT)boneData.size(), sizeof(AssimpAnimations::VertexBoneData), m_cpuBoneBuffer);
+
+        m_heapIndexBoneMatrices = GraphicsContexts::GetAvailableHeapPosition();
+        m_cpuBoneMatrices = GraphicsContexts::GetCpuHandle(m_heapIndexBoneMatrices);
+        // Use the actual bone count here, not vertex count.
+        BufferHelpers::CreateStructuredSRV(m_deviceResources->GetD3DDevice(), boneMatrices.Get(), (UINT)bones.size(), sizeof(XMFLOAT4X4), m_cpuBoneMatrices);
+
+        m_heapIndexOutVertices = GraphicsContexts::GetAvailableHeapPosition();
+        m_cpuOutVertices = GraphicsContexts::GetCpuHandle(m_heapIndexOutVertices);
+        m_gpuOutVertices = GraphicsContexts::GetGpuHandle(m_heapIndexOutVertices);
+        BufferHelpers::CreateStructuredUAV(m_deviceResources->GetD3DDevice(), outVertices.Get(), (UINT)vertices.size(), sizeof(AssimpFactory::VSVertices), m_cpuOutVertices);
+    }
+
+    void AnimationCompute::Update(const std::vector<XMMATRIX>& bones)
+    {
+        if (!boneMatrices || bones.empty())
+        {
+            return;
+        }
+
+        //std::vector<XMFLOAT4X4> transposed(bones.size());
+        //for (size_t i = 0; i < bones.size(); ++i)
+        //{
+        //    XMStoreFloat4x4(&transposed[i], XMMatrixTranspose(bones[i]));
+        //}
+        //BufferHelpers::UploadData(boneMatrices.Get(), transposed.data(), transposed.size() * sizeof(XMFLOAT4X4));
+
+        BufferHelpers::UploadData(boneMatrices.Get(), bones.data(), bones.size() * sizeof(XMFLOAT4X4));
     }
 
     void AnimationCompute::Dispatch(ID3D12GraphicsCommandList4* commandList)
@@ -99,13 +149,15 @@ namespace CPyburnRTXEngine
         commandList->SetPipelineState(m_pso.Get());
         commandList->SetComputeRootSignature(m_rootSig.Get());
 
-        //commandList->SetComputeRootDescriptorTable(0, srv);
-        //commandList->SetComputeRootDescriptorTable(1, uav);
+        // Root parameter 0: SRVs t0-t2
+        commandList->SetComputeRootDescriptorTable(0, m_gpuBaseVertices);
 
-        //UINT groups = (sys.vertexCount + 255) / 256;
-        //commandList->Dispatch(groups, 1, 1);
+        // Root parameter 1: UAV u0
+        commandList->SetComputeRootDescriptorTable(1, m_gpuOutVertices);
 
-        // UAV barrier
+        const UINT groups = (m_vertexCount + 255u) / 256u;
+        commandList->Dispatch(groups, 1, 1);
+
         commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(outVertices.Get()));
     }
 }

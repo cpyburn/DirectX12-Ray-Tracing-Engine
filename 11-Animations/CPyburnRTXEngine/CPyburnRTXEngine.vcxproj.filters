@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{326f11c4-009a-4c61-8ade-2e470285007d}</UniqueIdentifier>
     </Filter>
@@ -17,6 +13,12 @@
     </Filter>
     <Filter Include="Cameras">
       <UniqueIdentifier>{ded96a62-1e64-474f-ac5c-76320aaee969}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{abb532d2-9044-441d-b1ea-86d2817f218f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models\Animations">
+      <UniqueIdentifier>{448b0b01-921d-44ae-93dc-59bf37a75047}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -65,26 +67,26 @@
     <ClInclude Include="BufferHelpers.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Animation.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="AnimationPlayer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="Random.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="AssimpFactory.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="AssimpAnimations.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="TestAnimations.h">
       <Filter>Testing</Filter>
     </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>Models\Animations</Filter>
+    </ClInclude>
     <ClInclude Include="AnimationCompute.h">
-      <Filter>Common</Filter>
+      <Filter>Models\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationPlayer.h">
+      <Filter>Models\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="AssimpAnimations.h">
+      <Filter>Models\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="AssimpFactory.h">
+      <Filter>Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -115,26 +117,26 @@
     <ClCompile Include="TestModel.cpp">
       <Filter>Testing</Filter>
     </ClCompile>
-    <ClCompile Include="AssimpFactory.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="TestInstances.cpp">
       <Filter>Testing</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="AnimationPlayer.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="AssimpAnimations.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="TestAnimations.cpp">
       <Filter>Testing</Filter>
     </ClCompile>
     <ClCompile Include="AnimationCompute.cpp">
-      <Filter>Common</Filter>
+      <Filter>Models\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationPlayer.cpp">
+      <Filter>Models\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="AssimpAnimations.cpp">
+      <Filter>Models\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="AssimpFactory.cpp">
+      <Filter>Models</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

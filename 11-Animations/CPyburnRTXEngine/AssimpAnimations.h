@@ -86,7 +86,7 @@ namespace CPyburnRTXEngine
 		std::vector<VertexBoneData> m_bones;
 
 		// for now this is a string, but may be a map of <key, object holdind everything needed>
-		std::vector<Bone*> m_globalBones;
+		std::vector<Bone*> m_globalBones; // this is just a place for storing bones that are useful, have names, etc.
 
 		void CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
 		void CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim);

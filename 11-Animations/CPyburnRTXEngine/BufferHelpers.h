@@ -179,7 +179,6 @@ namespace CPyburnRTXEngine
             device->CreateShaderResourceView(resource, &srv, cpuHandle);
         }
 
-        template<typename T>
         static void CreateStructuredUAV(
             ID3D12Device* device,
             ID3D12Resource* resource,

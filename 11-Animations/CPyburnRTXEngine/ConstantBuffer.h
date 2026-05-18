@@ -18,8 +18,6 @@ namespace CPyburnRTXEngine
             Release();
         }
 
-        using ConstantType = T;
-
         // CPU-side data (what you write to)
         T CpuData{};
 

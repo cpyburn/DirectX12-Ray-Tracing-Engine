@@ -131,7 +131,7 @@ namespace CPyburnRTXEngine
 
             dafaultBuffer->SetName(name);
 
-            // Upload the index buffer to the GPU.
+            // Upload the buffer to the GPU.
             {
                 D3D12_SUBRESOURCE_DATA verticeData = {};
                 verticeData.pData = &data[0];
@@ -220,9 +220,10 @@ namespace CPyburnRTXEngine
 
         static void UploadData(ID3D12Resource* res, const void* data, size_t size)
         {
-            void* mapped;
-            res->Map(0, nullptr, &mapped);
-            memcpy(mapped, data, size);
+            uint8_t* mappedData = nullptr;
+            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+            DX::ThrowIfFailed(res->Map(0, &readRange, reinterpret_cast<void**>(&mappedData)));
+            memcpy(mappedData, data, size);
             res->Unmap(0, nullptr);
         }
 

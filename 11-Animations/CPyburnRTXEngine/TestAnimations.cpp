@@ -853,7 +853,7 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition);
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvHeapPosition);
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -892,17 +892,17 @@ namespace CPyburnRTXEngine
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
         srvDesc.Buffer.StructureByteStride = sizeof(AssimpFactory::VSVertices); // your vertex struct size goes here
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleVertexBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mVertexBufferSrvPosition));
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleVertexBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mVertexBufferSrvHeapPosition));
         m_triangleVertexBuffer->SetName(L"SRV VB");
 
         srvDesc.Buffer.StructureByteStride = sizeof(UINT); // your vertex struct size goes here
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleIndicesBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mIndexBufferSrvPosition));
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleIndicesBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mIndexBufferSrvHeapPosition));
         m_triangleIndicesBuffer->SetName(L"SRV IX");
 
         srvDesc.Buffer.StructureByteStride = sizeof(MaterialData); // your vertex struct size goes here
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_materialData.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_materialDataBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mMaterialBufferSrvPosition));
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_materialDataBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mMaterialBufferSrvHeapPosition));
         m_materialDataBuffer->SetName(L"SRV Material");
     }
 
@@ -965,16 +965,18 @@ namespace CPyburnRTXEngine
         {
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
-        mVertexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        mIndexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        
-        // want the heap positions to be contiguous, so load models after reserving the positions
-        m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
-        //m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
-        
-        CreateCommandObjects();
 
-        mMaterialBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+        m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
+        m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
+        
+        // want the heap positions to be contiguous, so reserving the positions
+        mVertexBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();
+        mIndexBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();
+        // this needs to come 3 positions after the vertex buffer srv position, since we create the Shader Table in that order and to work contiguously
+        // also material srv has to be created last of ALL heap positions for textures to work contiguously
+        mMaterialBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();
+
+        CreateCommandObjects();
         CreateModelBuffers();
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09
@@ -1109,6 +1111,6 @@ namespace CPyburnRTXEngine
         {
             GraphicsContexts::RemoveHeapPosition(mTlasSrvPosition[i]);
         }
-        GraphicsContexts::RemoveHeapPosition(mVertexBufferSrvPosition);
+        GraphicsContexts::RemoveHeapPosition(mVertexBufferSrvHeapPosition);
     }
 }

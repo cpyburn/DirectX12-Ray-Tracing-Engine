@@ -126,7 +126,7 @@ namespace CPyburnRTXEngine
 
     void AnimationCompute::Update(const std::vector<XMMATRIX>& bones)
     {
-        if (!boneMatrices || bones.empty())
+        if (!boneMatrices || bones.size() == 0)
         {
             return;
         }
@@ -138,7 +138,7 @@ namespace CPyburnRTXEngine
         //}
         //BufferHelpers::UploadData(boneMatrices.Get(), transposed.data(), transposed.size() * sizeof(XMFLOAT4X4));
 
-        BufferHelpers::UploadData(boneMatrices.Get(), bones.data(), bones.size() * sizeof(XMFLOAT4X4));
+        //BufferHelpers::UploadData(boneMatrices.Get(), bones.data(), bones.size() * sizeof(XMFLOAT4X4));
     }
 
     void AnimationCompute::Dispatch(ID3D12GraphicsCommandList4* commandList)

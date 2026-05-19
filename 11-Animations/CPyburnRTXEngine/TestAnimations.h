@@ -72,9 +72,9 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		UINT mVertexBufferSrvPosition = 0;
-		UINT mIndexBufferSrvPosition = 0;
-		UINT mMaterialBufferSrvPosition = 0;
+		UINT mVertexBufferSrvHeapPosition = 0;
+		UINT mIndexBufferSrvHeapPosition = 0;
+		UINT mMaterialBufferSrvHeapPosition = 0;
 		AssimpAnimations m_assimpAnimations;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 

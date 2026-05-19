@@ -483,6 +483,7 @@ namespace CPyburnRTXEngine
 		if (m_animationPlayer)
 		{
 			m_animationPlayer->Update(timer);
+			m_animationCompute->Update(m_animationPlayer->GetBones());
 		}
 	}
 

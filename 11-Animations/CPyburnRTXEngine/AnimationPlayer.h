@@ -54,7 +54,7 @@ namespace CPyburnRTXEngine
 		//void BlendClipByAnimationTypeName(const string& animationTypeName, bool repeat = true, bool forward = true);
 
 		void Update(DX::StepTimer const& timer);
-		XMMATRIX* GetBones() { return &m_currentClip.bones[0]; }
+		const std::vector<XMMATRIX>& GetBones() { return m_currentClip.bones; }
 		AnimationClip* GetCurrentClip() { return &m_currentClip; }
 		AnimationClip* GetTargetClip() { return &m_targetClip; }
 

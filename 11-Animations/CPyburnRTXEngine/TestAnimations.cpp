@@ -872,24 +872,7 @@ namespace CPyburnRTXEngine
     // todo: handle this in a more elegant way when we implement resizing
     void TestAnimations::createShaderResources()
     {
-        // Create the output resource. The dimensions and format should match the swap-chain
-        D3D12_RESOURCE_DESC resDesc = {};
-        resDesc.DepthOrArraySize = 1;
-        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        resDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
-        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        resDesc.Width = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetResolution().Width), 1u);
-        resDesc.Height = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetResolution().Height), 1u);
-        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-        resDesc.MipLevels = 1;
-        resDesc.SampleDesc.Count = 1;
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
-
-        // Create the UAV. Based on the root signature we created it should be the first entry
-        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-
-        m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, GraphicsContexts::GetCpuHandle(mUavPosition));
+        createShaderResourcesForWindowSize();
 
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -921,6 +904,28 @@ namespace CPyburnRTXEngine
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_materialData.size()); // number of vertices go here
         m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_materialDataBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mMaterialBufferSrvPosition));
         m_materialDataBuffer->SetName(L"SRV Material");
+    }
+
+    void TestAnimations::createShaderResourcesForWindowSize()
+    {
+        // Create the output resource. The dimensions and format should match the swap-chain
+        D3D12_RESOURCE_DESC resDesc = {};
+        resDesc.DepthOrArraySize = 1;
+        resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        resDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
+        resDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        resDesc.Width = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetResolution().Width), 1u);
+        resDesc.Height = std::max<UINT>(static_cast<UINT>(m_deviceResources->GetResolution().Height), 1u);
+        resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+        resDesc.MipLevels = 1;
+        resDesc.SampleDesc.Count = 1;
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
+    
+        // Create the UAV. Based on the root signature we created it should be the first entry
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+        m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, GraphicsContexts::GetCpuHandle(mUavPosition));
     }
 
     void TestAnimations::createConstantBuffer()
@@ -962,13 +967,14 @@ namespace CPyburnRTXEngine
         }
         mVertexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         mIndexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        mMaterialBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+        
         // want the heap positions to be contiguous, so load models after reserving the positions
         m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
-
-        m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
-
+        //m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
+        
         CreateCommandObjects();
+
+        mMaterialBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
         CreateModelBuffers();
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09
@@ -979,7 +985,7 @@ namespace CPyburnRTXEngine
 
     void TestAnimations::CreateWindowSizeDependentResources()
     {
-        createShaderResources();
+        createShaderResourcesForWindowSize();
     }
 
     void TestAnimations::Update(DX::StepTimer const& timer)

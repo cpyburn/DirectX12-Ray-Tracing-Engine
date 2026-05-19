@@ -53,7 +53,6 @@ namespace CPyburnRTXEngine
 			m_isSkinned = true;
 		}
 
-		// todo: take out the m_vertices and m_indices? why have this passed in if it is local
 		InitializeMesh(i, mesh);
 		InitializeMaterials();
 	}

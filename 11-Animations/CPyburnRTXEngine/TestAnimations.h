@@ -67,6 +67,7 @@ namespace CPyburnRTXEngine
 		uint32_t mShaderTableEntrySize = 0;
 
 		void createShaderResources();
+		void createShaderResourcesForWindowSize();
 		Microsoft::WRL::ComPtr<ID3D12Resource> mpOutputResource;
 
 		UINT mUavPosition = 0;

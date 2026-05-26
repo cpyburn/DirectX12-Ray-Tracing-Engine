@@ -160,12 +160,7 @@ namespace CPyburnRTXEngine
             return dafaultBuffer;
         }
 
-        static void CreateStructuredSRV(
-            ID3D12Device* device,
-            ID3D12Resource* resource,
-            UINT elementCount,
-            UINT stride,
-            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+        static void CreateStructuredSRV(ID3D12Device* device, ID3D12Resource* resource, UINT elementCount, UINT stride, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
         {
             D3D12_SHADER_RESOURCE_VIEW_DESC srv{};
             srv.Format = DXGI_FORMAT_UNKNOWN;
@@ -179,12 +174,7 @@ namespace CPyburnRTXEngine
             device->CreateShaderResourceView(resource, &srv, cpuHandle);
         }
 
-        static void CreateStructuredUAV(
-            ID3D12Device* device,
-            ID3D12Resource* resource,
-            UINT elementCount,
-            UINT stride,
-            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+        static void CreateStructuredUAV(ID3D12Device* device, ID3D12Resource* resource, UINT elementCount, UINT stride, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
         {
             D3D12_UNORDERED_ACCESS_VIEW_DESC uav{};
             uav.Format = DXGI_FORMAT_UNKNOWN;

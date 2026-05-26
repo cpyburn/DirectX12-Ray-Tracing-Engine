@@ -176,7 +176,7 @@
     <ClCompile Include="AnimationCompute.cpp" />
     <ClCompile Include="AnimationPlayer.cpp" />
     <ClCompile Include="AssimpAnimations.cpp" />
-    <ClCompile Include="BufferHeapHelper.h" />
+    <ClCompile Include="BufferHeap.h" />
     <ClCompile Include="CameraBase.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="FrameResource.cpp" />

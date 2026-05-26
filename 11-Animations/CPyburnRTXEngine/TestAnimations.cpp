@@ -48,7 +48,8 @@ namespace CPyburnRTXEngine
         m_triangleVertexBuffer.CpuData = m_assimpAnimations.GetMeshEntries()[0].vertices;
         m_triangleVertexBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Model Buffer");
 
-        m_triangleIndicesBuffer = BufferHelpers::CreateBufferOnDefaultHeap<UINT>(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].indices, commandList, m_commandAllocator[0], L"Index Buffer");
+        m_triangleIndicesBuffer.CpuData = m_assimpAnimations.GetMeshEntries()[0].indices;
+        m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -99,7 +100,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferHelpers::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer, commandList, m_commandAllocator[0]);
-            m_triangleBlas = BufferHelpers::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_triangleBlas = BufferHelpers::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
 
         // Top Level AS
@@ -897,11 +898,7 @@ namespace CPyburnRTXEngine
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()); // number of vertices go here
 
         m_triangleVertexBuffer.CreateShaderResourceView();
-
-        srvDesc.Buffer.StructureByteStride = sizeof(UINT); // your vertex struct size goes here
-        srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleIndicesBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mIndexBufferSrvHeapPosition));
-        //m_triangleIndicesBuffer->SetName(L"SRV IX");
+        m_triangleIndicesBuffer.CreateShaderResourceView();
 
         srvDesc.Buffer.StructureByteStride = sizeof(MaterialData); // your vertex struct size goes here
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_materialData.size()); // number of vertices go here
@@ -975,7 +972,7 @@ namespace CPyburnRTXEngine
         // want the heap positions to be contiguous, so reserving the positions
         //mVertexBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();
         m_triangleVertexBuffer.CreateDeviceDependentResources(deviceResources);
-        mIndexBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();
+        m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);
         // this needs to come 3 positions after the vertex buffer srv position, since we create the Shader Table in that order and to work contiguously
         // also material srv has to be created last of ALL heap positions for textures to work contiguously
         mMaterialBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();

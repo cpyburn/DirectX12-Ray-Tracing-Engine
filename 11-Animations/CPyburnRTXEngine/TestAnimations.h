@@ -2,7 +2,7 @@
 
 #include "AssimpAnimations.h" // todo: move?
 #include "Texture.h"
-#include "BufferHeapHelper.h"
+#include "BufferHeap.h"
 
 namespace CPyburnRTXEngine
 {
@@ -38,9 +38,9 @@ namespace CPyburnRTXEngine
 		void CreateCommandObjects();
 		void CreateModelBuffers();
 		void createAccelerationStructures();
-		BufferHeapHelper<AssimpFactory::VSVertices> m_triangleVertexBuffer;
+		BufferHeap<AssimpFactory::VSVertices> m_triangleVertexBuffer;
+		BufferHeap<UINT> m_triangleIndicesBuffer;
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBuffer;
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 		
@@ -74,7 +74,6 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		UINT mIndexBufferSrvHeapPosition = 0;
 		UINT mMaterialBufferSrvHeapPosition = 0;
 		AssimpAnimations m_assimpAnimations;
 		Texture::HeapTexture m_heapTextureDiffuse = {};

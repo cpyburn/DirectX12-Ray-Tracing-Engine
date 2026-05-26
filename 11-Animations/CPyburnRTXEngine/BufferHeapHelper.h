@@ -56,14 +56,13 @@ namespace CPyburnRTXEngine
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
             CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
-            Microsoft::WRL::ComPtr<ID3D12Resource> dafaultBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
                 &bufferDescModel,
                 D3D12_RESOURCE_STATE_GENERIC_READ,
                 nullptr,
-                IID_PPV_ARGS(&dafaultBufferUpload)));
+                IID_PPV_ARGS(&UploadHeapResource)));
             UploadHeapResource->SetName(name);
         }
 

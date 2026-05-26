@@ -48,7 +48,7 @@ namespace CPyburnRTXEngine
         m_triangleVertexBuffer.CpuData = m_assimpAnimations.GetMeshEntries()[0].vertices;
         m_triangleVertexBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Model Buffer");
 
-        //m_triangleIndicesBuffer = BufferHelpers::CreateBufferOnDefaultHeap<UINT>(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].indices, commandList, m_commandAllocator[0], L"Index Buffer");
+        m_triangleIndicesBuffer = BufferHelpers::CreateBufferOnDefaultHeap<UINT>(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].indices, commandList, m_commandAllocator[0], L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -856,7 +856,7 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(m_triangleVertexBuffer.HeapIndex);
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -895,8 +895,8 @@ namespace CPyburnRTXEngine
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
         srvDesc.Buffer.StructureByteStride = sizeof(AssimpFactory::VSVertices); // your vertex struct size goes here
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleVertexBuffer.DefaultHeapResource.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(m_triangleVertexBuffer.HeapIndex));
-        //m_triangleVertexBuffer->SetName(L"SRV VB");
+
+        m_triangleVertexBuffer.CreateShaderResourceView();
 
         srvDesc.Buffer.StructureByteStride = sizeof(UINT); // your vertex struct size goes here
         srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()); // number of vertices go here

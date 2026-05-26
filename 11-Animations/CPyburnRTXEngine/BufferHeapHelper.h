@@ -42,9 +42,6 @@ namespace CPyburnRTXEngine
         // CPU-side data (what you write to)
         std::vector<T> CpuData;
 
-        // D3D12 requires 256-byte alignment for CBVs
-        static constexpr UINT AlignedSize = (sizeof(T) + 255u) & ~255u;
-
         CD3DX12_CPU_DESCRIPTOR_HANDLE CpuHandle;
         CD3DX12_GPU_DESCRIPTOR_HANDLE GpuHandle;
 
@@ -57,14 +54,16 @@ namespace CPyburnRTXEngine
 
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
+            const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
+            CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
+            Microsoft::WRL::ComPtr<ID3D12Resource> dafaultBufferUpload; // dont need upload buffer after uploading the data to the default heap, so we can keep it as a local variable
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
-                &CD3DX12_RESOURCE_DESC::Buffer(AlignedSize * DX::DeviceResources::c_backBufferCount),
+                &bufferDescModel,
                 D3D12_RESOURCE_STATE_GENERIC_READ,
                 nullptr,
-                IID_PPV_ARGS(&UploadHeapResource)));
-
+                IID_PPV_ARGS(&dafaultBufferUpload)));
             UploadHeapResource->SetName(name);
         }
 
@@ -98,7 +97,7 @@ namespace CPyburnRTXEngine
 
         void CopyToUpload()
         {
-            memcpy(MappedData + AlignedSize, &CpuData[0], sizeof(T));
+            memcpy(MappedData, &CpuData[0], sizeof(T));
         }
 
         void CopyUploadToDefault(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator)
@@ -119,23 +118,6 @@ namespace CPyburnRTXEngine
                 indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DefaultHeapResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
                 commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
             }
-        }
-
-        void CreateConstantBufferView()
-        {
-            // Create constant buffer views to access the upload buffer.
-            D3D12_GPU_VIRTUAL_ADDRESS cbvGpuAddress = UploadHeapResource->GetGPUVirtualAddress();
-
-            // Describe and create constant buffer views.
-            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-            cbvDesc.BufferLocation = cbvGpuAddress;
-            cbvDesc.SizeInBytes = AlignedSize;
-            m_deviceResources->GetD3DDevice()->CreateConstantBufferView(&cbvDesc, CpuHandle);
-
-            // Map and initialize the constant buffer. We don't unmap this until the
-            // app closes. Keeping things mapped for the lifetime of the resource is okay.
-            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-            DX::ThrowIfFailed(UploadHeapResource->Map(0, &readRange, reinterpret_cast<void**>(&MappedData)));
         }
 
         void CreateShaderResourceView()

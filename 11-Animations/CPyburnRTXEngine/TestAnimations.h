@@ -38,8 +38,8 @@ namespace CPyburnRTXEngine
 		void CreateCommandObjects();
 		void CreateModelBuffers();
 		void createAccelerationStructures();
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBuffer;
-		//BufferHeapHelper<AssimpFactory::VSVertices> m_triangleVertexBuffer;
+		//Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBuffer;
+		BufferHeapHelper<AssimpFactory::VSVertices> m_triangleVertexBuffer;
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBuffer;
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
@@ -75,7 +75,7 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		UINT mVertexBufferSrvHeapPosition = 0;
+		//UINT mVertexBufferSrvHeapPosition = 0;
 		UINT mIndexBufferSrvHeapPosition = 0;
 		UINT mMaterialBufferSrvHeapPosition = 0;
 		AssimpAnimations m_assimpAnimations;

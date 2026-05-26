@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BufferConstant.h"
+
 using namespace DirectX;
 
 namespace CPyburnRTXEngine

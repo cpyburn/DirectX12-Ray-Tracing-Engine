@@ -1,13 +1,10 @@
 #pragma once
 
 #include "pchlib.h"
-#include "d3dx12.h"
-#include "GraphicsContexts.h"
-#include "DeviceResources.h"
 
 namespace CPyburnRTXEngine
 {
-    template<typename Q>
+    template<typename T>
     class BufferHeap
     {
     private:
@@ -40,7 +37,7 @@ namespace CPyburnRTXEngine
         }
 
         // CPU-side data (what you write to)
-        std::vector<Q> CpuData;
+        std::vector<T> CpuData;
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE CpuHandle;
         CD3DX12_GPU_DESCRIPTOR_HANDLE GpuHandle;
@@ -54,7 +51,7 @@ namespace CPyburnRTXEngine
 
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
-            const UINT bufferSizeModel = static_cast<UINT>(sizeof(Q) * CpuData.size());
+            const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
             CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -68,7 +65,7 @@ namespace CPyburnRTXEngine
 
         void CreateOnDefaultHeap(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Dfault buffer not named")
         {
-            const UINT bufferSizeModel = static_cast<UINT>(sizeof(Q) * CpuData.size());
+            const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
             CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -96,7 +93,7 @@ namespace CPyburnRTXEngine
 
         void CopyToUpload()
         {
-            memcpy(MappedData, &CpuData[0], sizeof(Q));
+            memcpy(MappedData, &CpuData[0], sizeof(T));
         }
 
         void CopyUploadToDefault(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator)
@@ -126,7 +123,7 @@ namespace CPyburnRTXEngine
             srvDesc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
             srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-            srvDesc.Buffer.StructureByteStride = sizeof(Q); // your vertex struct size goes here
+            srvDesc.Buffer.StructureByteStride = sizeof(T); // your vertex struct size goes here
             srvDesc.Buffer.NumElements = static_cast<UINT>(CpuData.size()); // number of vertices go here
 
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(DefaultHeapResource.Get(), &srvDesc, CpuHandle);

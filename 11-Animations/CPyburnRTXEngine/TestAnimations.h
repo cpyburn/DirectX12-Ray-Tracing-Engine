@@ -2,6 +2,8 @@
 
 #include "AssimpAnimations.h" // todo: move?
 #include "Texture.h"
+
+#include "BufferConstant.h"
 #include "BufferHeap.h"
 
 namespace CPyburnRTXEngine

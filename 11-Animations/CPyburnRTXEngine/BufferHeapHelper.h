@@ -40,7 +40,7 @@ namespace CPyburnRTXEngine
         }
 
         // CPU-side data (what you write to)
-        std::vector<T> CpuData{};
+        std::vector<T> CpuData;
 
         // D3D12 requires 256-byte alignment for CBVs
         static constexpr UINT AlignedSize = (sizeof(T) + 255u) & ~255u;
@@ -81,9 +81,19 @@ namespace CPyburnRTXEngine
                 IID_PPV_ARGS(&DefaultHeapResource)));
             DefaultHeapResource->SetName(name);
 
-            CreateOnUploadHeap(L"Upload " + name);
+            std::wstring wname = L"" + std::wstring(name);
+            CreateOnUploadHeap(wname.c_str());
 
             CopyUploadToDefault(commandList, commandAllocator);
+
+            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
+            DX::ThrowIfFailed(commandList->Close());
+            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+            m_deviceResources->WaitForGpu();
+
+            DX::ThrowIfFailed(commandAllocator->Reset());
+            DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
         }
 
         void CopyToUpload()
@@ -97,8 +107,8 @@ namespace CPyburnRTXEngine
             {
                 D3D12_SUBRESOURCE_DATA resourceData = {};
                 resourceData.pData = &CpuData[0];
-                resourceData.RowPitch = sizeof(T);
-                resourceData.SlicePitch = CpuData.size();
+                resourceData.RowPitch = 0;
+                resourceData.SlicePitch = 0;
 
                 CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
                     CD3DX12_RESOURCE_BARRIER::Transition(DefaultHeapResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);

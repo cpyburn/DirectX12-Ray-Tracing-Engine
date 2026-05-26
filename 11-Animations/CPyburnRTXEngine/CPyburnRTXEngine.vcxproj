@@ -154,7 +154,7 @@
     <ClInclude Include="AnimationPlayer.h" />
     <ClInclude Include="AssimpAnimations.h" />
     <ClInclude Include="CameraBase.h" />
-    <ClInclude Include="ConstantBuffer.h" />
+    <ClInclude Include="BufferConstant.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="BufferHelpers.h" />
     <ClInclude Include="DeviceResources.h" />
@@ -176,6 +176,7 @@
     <ClCompile Include="AnimationCompute.cpp" />
     <ClCompile Include="AnimationPlayer.cpp" />
     <ClCompile Include="AssimpAnimations.cpp" />
+    <ClCompile Include="BufferHeapHelper.h" />
     <ClCompile Include="CameraBase.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="FrameResource.cpp" />

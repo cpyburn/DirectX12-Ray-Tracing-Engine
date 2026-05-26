@@ -5,15 +5,15 @@
 namespace CPyburnRTXEngine
 {
     template<typename T>
-    class ConstantBuffer
+    class BufferConstant
     {
     public:
-        ConstantBuffer()
+        BufferConstant()
         {
 
         }
 
-        ~ConstantBuffer()
+        ~BufferConstant()
         {
             Release();
         }

@@ -39,6 +39,6 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_sceneVertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_sceneVertexBufferView = {};
 		
-		ConstantBuffer<SceneConstantBuffer> m_sceneConstantBuffer;
+		BufferConstant<SceneConstantBuffer> m_sceneConstantBuffer;
 	};
 } // namespace CPyburnRTXEngine

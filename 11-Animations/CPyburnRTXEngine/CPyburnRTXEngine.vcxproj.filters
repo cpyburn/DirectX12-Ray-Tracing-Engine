@@ -40,7 +40,7 @@
     <ClInclude Include="FrameResource.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="ConstantBuffer.h">
+    <ClInclude Include="BufferConstant.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="TestFullscreen.h">
@@ -137,6 +137,9 @@
     </ClCompile>
     <ClCompile Include="AssimpFactory.cpp">
       <Filter>Models</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferHeapHelper.h">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

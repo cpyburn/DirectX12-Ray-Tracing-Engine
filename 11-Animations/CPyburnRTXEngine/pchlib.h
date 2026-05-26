@@ -217,7 +217,7 @@ inline void PIXEndEvent(T*) {}
 #include "DeviceResources.h" // available to all libraries
 //using namespace DX;
 #include "FrameResource.h"
-#include "ConstantBuffer.h"
+#include "BufferConstant.h"
 #include "GraphicsContexts.h"
 #include "CameraBase.h"
 #include <ppltasks.h>

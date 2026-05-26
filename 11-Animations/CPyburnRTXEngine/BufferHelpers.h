@@ -133,16 +133,16 @@ namespace CPyburnRTXEngine
 
             // Upload the buffer to the GPU.
             {
-                D3D12_SUBRESOURCE_DATA verticeData = {};
-                verticeData.pData = &data[0];
-                verticeData.RowPitch = 0;
-                verticeData.SlicePitch = 0;
+                D3D12_SUBRESOURCE_DATA resourceData = {};
+                resourceData.pData = &data[0];
+                resourceData.RowPitch = 0;
+                resourceData.SlicePitch = 0;
 
                 CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
                     CD3DX12_RESOURCE_BARRIER::Transition(dafaultBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
                 commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
 
-                UpdateSubresources(commandList.Get(), dafaultBuffer.Get(), dafaultBufferUpload.Get(), 0, 0, 1, &verticeData);
+                UpdateSubresources(commandList.Get(), dafaultBuffer.Get(), dafaultBufferUpload.Get(), 0, 0, 1, &resourceData);
 
                 indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(dafaultBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
                 commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
@@ -206,15 +206,6 @@ namespace CPyburnRTXEngine
                 IID_PPV_ARGS(&res)));
 
             return res;
-        }
-
-        static void UploadData(ID3D12Resource* res, const void* data, size_t size)
-        {
-            uint8_t* mappedData = nullptr;
-            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-            DX::ThrowIfFailed(res->Map(0, &readRange, reinterpret_cast<void**>(&mappedData)));
-            memcpy(mappedData, data, size);
-            res->Unmap(0, nullptr);
         }
 
         void Release()

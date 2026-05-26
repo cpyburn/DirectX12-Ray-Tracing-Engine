@@ -71,7 +71,7 @@ namespace CPyburnRTXEngine
 
 		void createConstantBuffer();
 		static const UINT countOfConstantBuffers = 3;
-		ConstantBuffer<XMFLOAT4[9]> mpConstantBuffer[countOfConstantBuffers];
+		BufferConstant<XMFLOAT4[9]> mpConstantBuffer[countOfConstantBuffers];
 
 		AssimpFactory m_assimpFactory;
 		Texture::HeapTexture m_heapTextureDiffuse = {};

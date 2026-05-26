@@ -17,7 +17,7 @@ namespace CPyburnRTXEngine
 			XMFLOAT3 gCameraPos;
 		};
 
-		ConstantBuffer<CameraCbv> m_cameraCbv;
+		BufferConstant<CameraCbv> m_cameraCbv;
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
 		float m_aspectRatio = 0;

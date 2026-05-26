@@ -82,7 +82,7 @@ namespace CPyburnRTXEngine
 			XMFLOAT3 lightDirection = XMFLOAT3(0.5f, 0.5f, -0.5f);
 		};
 		EnvironmentData m_environmentData = {};
-		ConstantBuffer<EnvironmentData> m_EnvironmentCb;
+		BufferConstant<EnvironmentData> m_EnvironmentCb;
 
 		struct InstanceData
 		{

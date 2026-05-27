@@ -46,6 +46,9 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3D12Resource> UploadHeapResource = nullptr;
         Microsoft::WRL::ComPtr<ID3D12Resource> DefaultHeapResource = nullptr;
 
+        // Persistently mapped pointer
+        uint8_t* MappedData = nullptr;
+
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
@@ -58,7 +61,15 @@ namespace CPyburnRTXEngine
                 nullptr,
                 IID_PPV_ARGS(&UploadHeapResource)));
             UploadHeapResource->SetName(name);
+
+            DX::ThrowIfFailed(UploadHeapResource->Map(0, nullptr, reinterpret_cast<void**>(&MappedData)));
         }
+
+        void UpdateUploadHeap()
+		{
+			const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
+			memcpy(MappedData, CpuData.data(), bufferSizeModel);
+		}
 
         void CreateOnDefaultHeap(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Dfault buffer not named")
         {

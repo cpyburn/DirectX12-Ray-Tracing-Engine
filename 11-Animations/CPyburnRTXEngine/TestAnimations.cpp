@@ -2,6 +2,7 @@
 #include "TestAnimations.h"
 
 #include "BufferBlas.h"
+#include "AnimationCompute.h"
 
 namespace CPyburnRTXEngine
 {
@@ -1010,6 +1011,8 @@ namespace CPyburnRTXEngine
     void TestAnimations::Render(CameraBase* camera)
     {
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
+
+        m_assimpAnimations.GetAnimationCompute()->Dispatch(m_sceneCommandList);
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {

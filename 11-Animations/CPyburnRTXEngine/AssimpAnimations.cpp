@@ -211,7 +211,7 @@ namespace CPyburnRTXEngine
 
 		if (pBone->hasBoneMapping)
 		{
-			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * XMLoadFloat4x4(&m_boneInfo[pBone->nodeId]);
+			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * m_boneInfo[pBone->nodeId];
 			global[pBone->nodeId] = parent;
 
 			XMMATRIX finalTransformationConversion = parent * noGlobalBones[pBone->nodeId];
@@ -261,7 +261,7 @@ namespace CPyburnRTXEngine
 
 		if (pBone->hasBoneMapping)
 		{
-			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * XMLoadFloat4x4(&m_boneInfo[pBone->nodeId]);
+			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * m_boneInfo[pBone->nodeId];
 			global[pBone->nodeId] = parent;
 
 			XMMATRIX finalTransformationConversion = parent * noGlobalBones[pBone->nodeId];
@@ -293,7 +293,7 @@ namespace CPyburnRTXEngine
 				// Allocate an index for bone
 				boneIndex = m_numBones;
 				m_numBones++;
-				XMFLOAT4X4 boneOffsetMatrix = XMFLOAT4X4(pMesh->mBones[i]->mOffsetMatrix.a1, pMesh->mBones[i]->mOffsetMatrix.a2, pMesh->mBones[i]->mOffsetMatrix.a3, pMesh->mBones[i]->mOffsetMatrix.a4,
+				XMMATRIX boneOffsetMatrix = XMMatrixSet(pMesh->mBones[i]->mOffsetMatrix.a1, pMesh->mBones[i]->mOffsetMatrix.a2, pMesh->mBones[i]->mOffsetMatrix.a3, pMesh->mBones[i]->mOffsetMatrix.a4,
 					pMesh->mBones[i]->mOffsetMatrix.b1, pMesh->mBones[i]->mOffsetMatrix.b2, pMesh->mBones[i]->mOffsetMatrix.b3, pMesh->mBones[i]->mOffsetMatrix.b4,
 					pMesh->mBones[i]->mOffsetMatrix.c1, pMesh->mBones[i]->mOffsetMatrix.c2, pMesh->mBones[i]->mOffsetMatrix.c3, pMesh->mBones[i]->mOffsetMatrix.c4,
 					pMesh->mBones[i]->mOffsetMatrix.d1, pMesh->mBones[i]->mOffsetMatrix.d2, pMesh->mBones[i]->mOffsetMatrix.d3, pMesh->mBones[i]->mOffsetMatrix.d4);

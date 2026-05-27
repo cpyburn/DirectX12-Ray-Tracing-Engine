@@ -107,7 +107,8 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0]);
-            m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_blas.UpdateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
             //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
 
@@ -201,7 +202,7 @@ namespace CPyburnRTXEngine
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
             XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
-            pInstanceDesc[i].AccelerationStructure = m_triangleBlas->GetGPUVirtualAddress(); // triangle blas
+            pInstanceDesc[i].AccelerationStructure = m_blas.GetResult()->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
         }
 
@@ -885,6 +886,7 @@ namespace CPyburnRTXEngine
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
         m_assimpAnimations.GetAnimationCompute()->Dispatch(m_sceneCommandList);
+        m_blas.UpdateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, m_sceneCommandList, m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {

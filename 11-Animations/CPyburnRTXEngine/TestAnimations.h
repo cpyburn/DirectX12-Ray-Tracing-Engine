@@ -5,6 +5,7 @@
 
 #include "BufferConstant.h"
 #include "BufferHeap.h"
+#include "BufferBlas.h"
 
 namespace CPyburnRTXEngine
 {
@@ -49,7 +50,6 @@ namespace CPyburnRTXEngine
 		UINT64 mTlasSize = 0;
 
 		BufferHeap<XMFLOAT3> m_planeVertexBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleBlas;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
 		void RefitOrRebuildTLASNext();
@@ -108,6 +108,7 @@ namespace CPyburnRTXEngine
 		std::vector<MaterialData> m_materialData;
 		BufferHeap<MaterialData> m_materialDataBuffer;
 
+		BufferBlas m_blas;
 	public:
 		TestAnimations();
 		~TestAnimations();

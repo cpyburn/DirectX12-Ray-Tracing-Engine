@@ -11,6 +11,8 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3D12Resource> m_result;
 
     public:
+        Microsoft::WRL::ComPtr<ID3D12Resource> GetResult() const { return m_result; }
+
         BufferBlas()
         {
 
@@ -22,7 +24,7 @@ namespace CPyburnRTXEngine
         }
 
         template<typename T>
-        void CreateBlas1(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
+        void UpdateBlas(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
         {
             D3D12_RESOURCE_DESC bufDesc = {};
             bufDesc.Alignment = 0;
@@ -72,9 +74,11 @@ namespace CPyburnRTXEngine
             bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             bufDesc.Width = info.ScratchDataSizeInBytes;
             DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_scratch)));
+            m_scratch->SetName(L"BLAS Scratch");
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&m_result)));
+            m_result->SetName(L"BLAS Result");
 
             // Create the bottom-level AS
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -89,19 +93,6 @@ namespace CPyburnRTXEngine
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             uavBarrier.UAV.pResource = m_result.Get();
             commandList->ResourceBarrier(1, &uavBarrier);
-
-            // Close the resource creation command list and execute it to begin the vertex buffer copy into
-            // the default heap.
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-            deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-            deviceResources->WaitForGpu();
-
-            DX::ThrowIfFailed(commandAllocator->Reset());
-            DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
-
-            // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            return m_result;
         }
 
         template<typename T>
@@ -157,10 +148,12 @@ namespace CPyburnRTXEngine
 
             Microsoft::WRL::ComPtr<ID3D12Resource> pScratch;
             DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
+            pScratch->SetName(L"BLAS Scratch");
 
             bufDesc.Width = info.ResultDataMaxSizeInBytes;
             Microsoft::WRL::ComPtr<ID3D12Resource> pResult;
             DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
+            pResult->SetName(L"BLAS Result");
 
             // Create the bottom-level AS
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};

@@ -48,7 +48,7 @@ namespace CPyburnRTXEngine
 		
 		UINT64 mTlasSize = 0;
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeVertexBuffer;
+		BufferHeap<XMFLOAT3> m_planeVertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleBlas;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
@@ -76,7 +76,6 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		UINT mMaterialBufferSrvHeapPosition = 0;
 		AssimpAnimations m_assimpAnimations;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
@@ -107,7 +106,7 @@ namespace CPyburnRTXEngine
 			UINT baseColorTexIndex = 0;
 		};
 		std::vector<MaterialData> m_materialData;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_materialDataBuffer;
+		BufferHeap<MaterialData> m_materialDataBuffer;
 
 	public:
 		TestAnimations();

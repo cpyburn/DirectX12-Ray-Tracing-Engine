@@ -46,9 +46,6 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3D12Resource> UploadHeapResource = nullptr;
         Microsoft::WRL::ComPtr<ID3D12Resource> DefaultHeapResource = nullptr;
 
-        // Persistently mapped pointer
-        uint8_t* MappedData = nullptr;
-
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
@@ -66,11 +63,11 @@ namespace CPyburnRTXEngine
         void CreateOnDefaultHeap(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Dfault buffer not named")
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
-            CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                 D3D12_HEAP_FLAG_NONE,
-                &bufferDescModel,
+                &bufferDesc,
                 D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
                 nullptr,
                 IID_PPV_ARGS(&DefaultHeapResource)));
@@ -81,19 +78,39 @@ namespace CPyburnRTXEngine
 
             CopyUploadToDefault(commandList, commandAllocator);
 
-            // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
-            DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
-            m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-            m_deviceResources->WaitForGpu();
+            //// upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
+            //DX::ThrowIfFailed(commandList->Close());
+            //ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+            //m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+            //m_deviceResources->WaitForGpu();
 
-            DX::ThrowIfFailed(commandAllocator->Reset());
-            DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+            //DX::ThrowIfFailed(commandAllocator->Reset());
+            //DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
         }
 
-        void CopyToUpload()
+        void CreateOnDefaultHeapForUAV(UINT count, const WCHAR* name = L"Upload buffer not named")
         {
-            memcpy(MappedData, &CpuData[0], sizeof(T));
+            UINT stride = static_cast<UINT>(sizeof(T));
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(count * stride, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                D3D12_HEAP_FLAG_NONE,
+                &bufferDesc,
+                D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+                nullptr,
+                IID_PPV_ARGS(&DefaultHeapResource)));
+            DefaultHeapResource->SetName(name);
+
+            D3D12_UNORDERED_ACCESS_VIEW_DESC uav{};
+            uav.Format = DXGI_FORMAT_UNKNOWN;
+            uav.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+            uav.Buffer.FirstElement = 0;
+            uav.Buffer.NumElements = count;
+            uav.Buffer.StructureByteStride = stride;
+            uav.Buffer.CounterOffsetInBytes = 0;
+            uav.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+
+            m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(DefaultHeapResource.Get(), nullptr, &uav, CpuHandle);
         }
 
         void CopyUploadToDefault(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator)
@@ -123,11 +140,19 @@ namespace CPyburnRTXEngine
             srvDesc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
             srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-            srvDesc.Buffer.StructureByteStride = sizeof(T); // your vertex struct size goes here
+            srvDesc.Buffer.StructureByteStride = static_cast < UINT>(sizeof(T)); // your vertex struct size goes here
             srvDesc.Buffer.NumElements = static_cast<UINT>(CpuData.size()); // number of vertices go here
 
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(DefaultHeapResource.Get(), &srvDesc, CpuHandle);
         }
+
+        void ReleaseUploadResource()
+		{
+			if (UploadHeapResource)
+			{
+				UploadHeapResource.Reset();
+			}
+		}
 
         void Release()
         {
@@ -137,19 +162,12 @@ namespace CPyburnRTXEngine
                 GraphicsContexts::RemoveHeapPosition(HeapIndex);
             }
 
-            if (UploadHeapResource)
-            {
-                UploadHeapResource->Unmap(0, nullptr); // reset should and probably does unmap, but we conver our tracks
-                UploadHeapResource.Reset();
-            }
+			ReleaseUploadResource();
 
             if (DefaultHeapResource)
             {
-                DefaultHeapResource->Unmap(0, nullptr); // reset should and probably does unmap, but we conver our tracks
                 DefaultHeapResource.Reset();
             }
-
-            MappedData = nullptr;
         }
     };
 }

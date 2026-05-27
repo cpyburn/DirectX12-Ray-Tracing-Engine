@@ -4,17 +4,17 @@
 
 namespace CPyburnRTXEngine
 {
-    class BufferHelpers
+    class BufferBlas
     {
     private:
 
     public:
-        BufferHelpers()
+        BufferBlas()
         {
 
         }
 
-        ~BufferHelpers()
+        ~BufferBlas()
         {
             Release();
         }

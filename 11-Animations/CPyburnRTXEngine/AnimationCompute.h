@@ -1,29 +1,17 @@
 #pragma once
 #include "AssimpFactory.h"
 #include "AssimpAnimations.h"
+#include "BufferHeap.h"
 
 namespace CPyburnRTXEngine
 {
 	class AnimationCompute
 	{
 	private:
-		Microsoft::WRL::ComPtr<ID3D12Resource> baseVertices;
-		UINT m_heapIndexBaseVertices = MAXUINT;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE m_cpuBaseVertices;
-		CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuBaseVertices;
-
-		Microsoft::WRL::ComPtr<ID3D12Resource> boneBuffer;
-		UINT m_heapIndexBoneBuffer = MAXUINT;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE m_cpuBoneBuffer;
-
-		Microsoft::WRL::ComPtr<ID3D12Resource> boneMatrices;
-		UINT m_heapIndexBoneMatrices = MAXUINT;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE m_cpuBoneMatrices;
-
-		Microsoft::WRL::ComPtr<ID3D12Resource> outVertices;
-		UINT m_heapIndexOutVertices = MAXUINT;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE m_cpuOutVertices;
-		CD3DX12_GPU_DESCRIPTOR_HANDLE m_gpuOutVertices;
+		BufferHeap<AssimpFactory::VSVertices> baseVertices;
+		BufferHeap<AssimpAnimations::VertexBoneData> boneBuffer;
+		BufferHeap<XMFLOAT4X4> boneMatrices;
+		BufferHeap<AssimpFactory::VSVertices> outVertices;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSig;
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pso;

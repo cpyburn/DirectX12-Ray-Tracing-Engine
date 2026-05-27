@@ -70,15 +70,21 @@ namespace CPyburnRTXEngine
             D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
             deviceResources->GetD3DDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
 
-            // Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
-            bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-            bufDesc.Width = info.ScratchDataSizeInBytes;
-            DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_scratch)));
-            m_scratch->SetName(L"BLAS Scratch");
-
-            bufDesc.Width = info.ResultDataMaxSizeInBytes;
-            DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&m_result)));
-            m_result->SetName(L"BLAS Result");
+            if (!m_scratch.Get())
+            {
+                // Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
+                bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                bufDesc.Width = info.ScratchDataSizeInBytes;
+                DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_scratch)));
+                m_scratch->SetName(L"BLAS Scratch");
+            }
+           
+            if (!m_result.Get())
+            {
+                bufDesc.Width = info.ResultDataMaxSizeInBytes;
+                DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&m_result)));
+                m_result->SetName(L"BLAS Result");
+            }
 
             // Create the bottom-level AS
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -115,10 +121,10 @@ namespace CPyburnRTXEngine
 
             D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
             geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-            geomDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetGPUVirtualAddress(); 
+            geomDesc.Triangles.VertexBuffer.StartAddress = vertexBuffer->GetGPUVirtualAddress();
             geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(T);
             geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-            geomDesc.Triangles.VertexCount = count; 
+            geomDesc.Triangles.VertexCount = count;
             geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
             if (indicesBuffer)
@@ -128,7 +134,7 @@ namespace CPyburnRTXEngine
                 geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
             }
 
-            geomDescVector[0] = geomDesc; 
+            geomDescVector[0] = geomDesc;
 
             // Get the size requirements for the scratch and AS buffers
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};

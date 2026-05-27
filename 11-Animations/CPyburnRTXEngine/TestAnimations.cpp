@@ -886,7 +886,22 @@ namespace CPyburnRTXEngine
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
         m_assimpAnimations.GetAnimationCompute()->Dispatch(m_sceneCommandList);
-        m_blas.UpdateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, m_sceneCommandList, m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+        {
+            D3D12_RESOURCE_BARRIER uavBarrier = {};
+            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarrier.UAV.pResource =
+                m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource.Get();
+
+            m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
+        }
+
+        m_blas.UpdateBlas<AssimpFactory::VSVertices>(
+            m_deviceResources,
+            static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()),
+            m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource,
+            m_sceneCommandList,
+            m_triangleIndicesBuffer.DefaultHeapResource,
+            static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {
@@ -899,7 +914,10 @@ namespace CPyburnRTXEngine
                 //    RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true); // if the next one is not ready, fall back here, but if this happens, you should consider a different architecture as it means you are not able to keep up with the updates
                 //}
 
-                RefitOrRebuildTLASNext(); // always have the next one ready for rendering if possible (tlas buffering)
+                RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true);
+
+                // TODO: until we have single frame working for animation
+                //RefitOrRebuildTLASNext(); // always have the next one ready for rendering if possible (tlas buffering)
             }
 
             ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
@@ -971,7 +989,9 @@ namespace CPyburnRTXEngine
     {
         m_triangleVertexBuffer.Release();
         //mpTopLevelAS.Release(); // todo:
+        //m_planeBlas.Release();
         m_planeBlas.Reset();
+        m_blas.Release();
         mpPipelineState.Reset();
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();

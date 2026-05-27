@@ -153,10 +153,10 @@
     <ClInclude Include="AnimationCompute.h" />
     <ClInclude Include="AnimationPlayer.h" />
     <ClInclude Include="AssimpAnimations.h" />
+    <ClInclude Include="BufferBlas.h" />
     <ClInclude Include="CameraBase.h" />
     <ClInclude Include="BufferConstant.h" />
     <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="BufferHelpers.h" />
     <ClInclude Include="DeviceResources.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameInput.h" />
@@ -167,7 +167,6 @@
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
     <ClInclude Include="StepTimer.h" />
-    <ClInclude Include="TestInstances.h" />
     <ClInclude Include="TestModel.h" />
     <ClInclude Include="TestTriangle.h" />
     <ClInclude Include="Texture.h" />
@@ -191,7 +190,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TestInstances.cpp" />
     <ClCompile Include="TestModel.cpp" />
     <ClCompile Include="TestTriangle.cpp" />
     <ClCompile Include="Texture.cpp" />

@@ -45,7 +45,6 @@ namespace CPyburnRTXEngine
 		BufferHeap<UINT> m_triangleIndicesBuffer;
 
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 		
 		UINT64 mTlasSize = 0;
 
@@ -109,6 +108,8 @@ namespace CPyburnRTXEngine
 		BufferHeap<MaterialData> m_materialDataBuffer;
 
 		BufferBlas m_blas;
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
+
 	public:
 		TestAnimations();
 		~TestAnimations();

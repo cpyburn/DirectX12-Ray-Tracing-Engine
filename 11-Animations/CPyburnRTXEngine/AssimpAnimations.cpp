@@ -451,7 +451,7 @@ namespace CPyburnRTXEngine
 			// todo: remove after testing
 			//m_animationPlayer->PlayClip(L"sword_action_3", true);
 			//m_animationPlayer->PlayClip("walk", true);
-			m_animationPlayer->PlayClipByAnimationType(Animation::AnimationType::walk, true);
+			m_animationPlayer->PlayClipByAnimationType(Animation::AnimationType::run, true);
 		}
 		else
 		{

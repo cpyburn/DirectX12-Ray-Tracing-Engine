@@ -107,7 +107,7 @@ namespace CPyburnRTXEngine
 		std::vector<MaterialData> m_materialData;
 		BufferHeap<MaterialData> m_materialDataBuffer;
 
-		BufferBlas m_blas;
+		BufferBlas<AssimpFactory::VSVertices> m_blas;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 
 	public:

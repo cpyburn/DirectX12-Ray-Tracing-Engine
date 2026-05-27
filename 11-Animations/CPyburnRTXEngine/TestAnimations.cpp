@@ -106,8 +106,9 @@ namespace CPyburnRTXEngine
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferBlas::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0]);
-            m_blas.UpdateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0]);
+            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_blas.UpdateBlas(commandList);
             //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
             //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
@@ -139,19 +140,19 @@ namespace CPyburnRTXEngine
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
         m_deviceResources->GetD3DDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
 
-        D3D12_RESOURCE_DESC bufDesc = {};
-        bufDesc.Alignment = 0;
-        bufDesc.DepthOrArraySize = 1;
-        bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        D3D12_RESOURCE_DESC m_bufDesc = {};
+        m_bufDesc.Alignment = 0;
+        m_bufDesc.DepthOrArraySize = 1;
+        m_bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
         // Create the buffers
-        bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        bufDesc.Format = DXGI_FORMAT_UNKNOWN;
-        bufDesc.Height = 1;
-        bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        bufDesc.MipLevels = 1;
-        bufDesc.SampleDesc.Count = 1;
-        bufDesc.SampleDesc.Quality = 0;
-        bufDesc.Width = info.ScratchDataSizeInBytes;
+        m_bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        m_bufDesc.Format = DXGI_FORMAT_UNKNOWN;
+        m_bufDesc.Height = 1;
+        m_bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        m_bufDesc.MipLevels = 1;
+        m_bufDesc.SampleDesc.Count = 1;
+        m_bufDesc.SampleDesc.Quality = 0;
+        m_bufDesc.Width = info.ScratchDataSizeInBytes;
 
         // 14.1.c
         if (update)
@@ -165,19 +166,19 @@ namespace CPyburnRTXEngine
         else
         {
             //ComPtr<ID3D12Resource> pScratch;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
 
-            bufDesc.Width = info.ResultDataMaxSizeInBytes;
+            m_bufDesc.Width = info.ResultDataMaxSizeInBytes;
             //ComPtr<ID3D12Resource> pResult;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
             mTlasSize = info.ResultDataMaxSizeInBytes;
 
             // The instance desc should be inside a buffer, create and map the buffer
-            bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-            bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size());
+            m_bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+            m_bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size());
 
             //ComPtr<ID3D12Resource> pInstanceDescResource;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
         }
 
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
@@ -699,20 +700,20 @@ namespace CPyburnRTXEngine
         uint32_t shaderTableSize = mShaderTableEntrySize * 7;
 
         // For simplicity, we create the shader-table on the upload heap. You can also create it on the default heap
-        D3D12_RESOURCE_DESC bufDesc = {};
-        bufDesc.Alignment = 0;
-        bufDesc.DepthOrArraySize = 1;
-        bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-        bufDesc.Format = DXGI_FORMAT_UNKNOWN;
-        bufDesc.Height = 1;
-        bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        bufDesc.MipLevels = 1;
-        bufDesc.SampleDesc.Count = 1;
-        bufDesc.SampleDesc.Quality = 0;
-        bufDesc.Width = shaderTableSize;
+        D3D12_RESOURCE_DESC m_bufDesc = {};
+        m_bufDesc.Alignment = 0;
+        m_bufDesc.DepthOrArraySize = 1;
+        m_bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        m_bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+        m_bufDesc.Format = DXGI_FORMAT_UNKNOWN;
+        m_bufDesc.Height = 1;
+        m_bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        m_bufDesc.MipLevels = 1;
+        m_bufDesc.SampleDesc.Count = 1;
+        m_bufDesc.SampleDesc.Quality = 0;
+        m_bufDesc.Width = shaderTableSize;
 
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
 
         // Map the buffer
         uint8_t* pData;
@@ -871,7 +872,7 @@ namespace CPyburnRTXEngine
 
         // 3 instances
         m_instanceData[1].world = XMMatrixRotationY(rotation) * translation1;
-        m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(rotation);
+        m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(-rotation);
 
         // update the bones
         m_assimpAnimations.Update(timer);
@@ -895,13 +896,7 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
         }
 
-        m_blas.UpdateBlas<AssimpFactory::VSVertices>(
-            m_deviceResources,
-            static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()),
-            m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource,
-            m_sceneCommandList,
-            m_triangleIndicesBuffer.DefaultHeapResource,
-            static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+        m_blas.UpdateBlas(m_sceneCommandList);
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {

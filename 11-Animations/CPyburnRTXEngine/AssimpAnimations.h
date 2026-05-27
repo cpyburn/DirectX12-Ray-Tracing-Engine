@@ -80,7 +80,7 @@ namespace CPyburnRTXEngine
 		float m_ticksPerSecond = 0;
 		float m_duration = 0;
 		std::unordered_map<std::string, unsigned int> m_boneMapping; // maps a bone name to its index
-		unsigned int m_numBones = 0;
+		UINT m_numBones = 0;
 		std::vector<XMMATRIX> m_boneInfo;
 		Bone m_rootBone;
 		std::vector<VertexBoneData> m_bones;
@@ -118,6 +118,7 @@ namespace CPyburnRTXEngine
 		std::unique_ptr<AnimationPlayer> m_animationPlayer = nullptr;
 		std::unique_ptr<AnimationCompute> m_animationCompute = nullptr;
 	public:
+		const UINT& GetNumBones() const { return m_numBones; }
 		AnimationCompute* GetAnimationCompute() { return m_animationCompute.get(); }
 
 		static std::unordered_map<UINT, std::string> AnimationTypes;

@@ -10,8 +10,6 @@ namespace CPyburnRTXEngine
 	class AnimationPlayer
 	{
 	public:
-#define MAX_BONES 100
-
 		struct AnimationClip
 		{
 			std::string name;

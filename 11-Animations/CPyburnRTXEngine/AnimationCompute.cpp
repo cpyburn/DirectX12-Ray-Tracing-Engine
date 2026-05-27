@@ -103,6 +103,10 @@ namespace CPyburnRTXEngine
 		m_boneMatrices.CpuData = bones;
         m_boneMatrices.CreateOnUploadHeap(L"Bone Matrices Buffer");
 
+        // Output buffer
+        m_outVertices.CpuData = vertices;
+        m_outVertices.CreateOnDefaultHeap(commandList, commandAllocator, L"Out Vertices Buffer", D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
         DX::ThrowIfFailed(commandList->Close());
         ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
@@ -110,14 +114,12 @@ namespace CPyburnRTXEngine
 
         DX::ThrowIfFailed(commandAllocator->Reset());
         DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
-        
-		m_baseVertices.CreateShaderResourceView();
+
+        const UINT count = (UINT)(vertices.size());
+        m_baseVertices.CreateShaderResourceView();
         m_boneBuffer.CreateShaderResourceView();
         // since bones are usually small, going to use upload heap
         m_boneMatrices.CreateShaderResourceView(true);
-
-        // Output buffer
-        const UINT count = (UINT)(vertices.size());
 		m_outVertices.CreateOnDefaultHeapForUAV(count, L"Output Vertices Buffer");
     }
 

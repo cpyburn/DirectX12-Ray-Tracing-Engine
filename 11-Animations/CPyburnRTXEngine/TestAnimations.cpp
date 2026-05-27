@@ -374,70 +374,6 @@ namespace CPyburnRTXEngine
         subobjects[index++] = hitGroupSubobjectShadow;
 #pragma endregion
 
-
-#pragma region Ray Root Signature
-        //// Create the root-signature
-        //D3D12_ROOT_SIGNATURE_DESC descRay{};
-        //std::vector<D3D12_DESCRIPTOR_RANGE> rangeRay;
-        //std::vector<D3D12_ROOT_PARAMETER> rootParamsRay;
-
-        //rangeRay.resize(2);
-        //// gOutput
-        //rangeRay[0].BaseShaderRegister = 0;
-        //rangeRay[0].NumDescriptors = 1;
-        //rangeRay[0].RegisterSpace = 0;
-        //rangeRay[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-        //rangeRay[0].OffsetInDescriptorsFromTableStart = 0;
-
-        //// gRtScene
-        //rangeRay[1].BaseShaderRegister = 0;
-        //rangeRay[1].NumDescriptors = 1;
-        //rangeRay[1].RegisterSpace = 0;
-        //rangeRay[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        //rangeRay[1].OffsetInDescriptorsFromTableStart = 1;
-
-        //rootParamsRay.resize(1);
-        //rootParamsRay[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        //rootParamsRay[0].DescriptorTable.NumDescriptorRanges = 2;
-        //rootParamsRay[0].DescriptorTable.pDescriptorRanges = rangeRay.data();
-
-        //// Create the desc
-        //descRay.NumParameters = 1;
-        //descRay.pParameters = rootParamsRay.data();
-        //descRay.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-
-        //// create ray-gen root-signature and associate it with the ray-gen shader
-        //Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobRay;
-        //Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobRay;
-        //HRESULT hrRay = D3D12SerializeRootSignature(&descRay, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobRay, &pErrorBlobRay);
-        //if (FAILED(hrRay))
-        //{
-        //    if (pErrorBlobRay)
-        //    {
-        //        OutputDebugStringA((char*)pErrorBlobRay->GetBufferPointer());
-        //    }
-        //    throw std::runtime_error("Failed to serialize root signature");
-        //}
-
-        //Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigRay;
-        //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobRay->GetBufferPointer(), pSigBlobRay->GetBufferSize(), IID_PPV_ARGS(&pRootSigRay)));
-
-        //ID3D12RootSignature* pRootSigRayPtr = pRootSigRay.Get();
-        //subobjects[index].pDesc = &pRootSigRayPtr;
-        //subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-#pragma endregion
-
-#pragma region Ray root associations
-        //// Associate the ray-gen root signature with the ray-gen shader
-        //D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationRay = {};
-        //associationRay.NumExports = 1;
-        //associationRay.pExports = &kRayGenShader;
-        //associationRay.pSubobjectToAssociate = &subobjects[index - 1];
-        //subobjects[index] = {};
-        //subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-        //subobjects[index++].pDesc = &associationRay;
-#pragma endregion
-
 #pragma region Hit triangle root signature
         D3D12_ROOT_SIGNATURE_DESC descHit = {};
         std::vector<D3D12_DESCRIPTOR_RANGE> rangeHit;
@@ -522,60 +458,6 @@ namespace CPyburnRTXEngine
         associationHit.pSubobjectToAssociate = &subobjects[index - 1];
         subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
         subobjects[index++].pDesc = &associationHit;
-#pragma endregion
-
-
-        // 13.2.g Create the plane hit root-signature and association
-#pragma region Plane hit root signature
-        //D3D12_ROOT_SIGNATURE_DESC descPlaneHit = {};
-        //std::vector<D3D12_DESCRIPTOR_RANGE> rangePlaneHit;
-        //std::vector<D3D12_ROOT_PARAMETER> rootParamsPlaneHit;
-
-        //rangePlaneHit.resize(1);
-        //rangePlaneHit[0].BaseShaderRegister = 0;
-        //rangePlaneHit[0].NumDescriptors = 1;
-        //rangePlaneHit[0].RegisterSpace = 1;
-        //rangePlaneHit[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        //rangePlaneHit[0].OffsetInDescriptorsFromTableStart = 0;
-
-        //rootParamsPlaneHit.resize(1);
-        //rootParamsPlaneHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        //rootParamsPlaneHit[0].DescriptorTable.NumDescriptorRanges = 1;
-        //rootParamsPlaneHit[0].DescriptorTable.pDescriptorRanges = rangePlaneHit.data();
-
-        //descPlaneHit.NumParameters = 1;
-        //descPlaneHit.pParameters = rootParamsPlaneHit.data();
-        //descPlaneHit.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-
-        //// create ray-gen root-signature and associate it with the ray-gen shader
-        //Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobPlaneHit;
-        //Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobPlaneHit;
-        //HRESULT hrPlaneHit = D3D12SerializeRootSignature(&descPlaneHit, D3D_ROOT_SIGNATURE_VERSION_1, &pSigBlobPlaneHit, &pErrorBlobPlaneHit);
-        //if (FAILED(hrPlaneHit))
-        //{
-        //    if (pErrorBlobPlaneHit)
-        //    {
-        //        OutputDebugStringA((char*)pErrorBlobPlaneHit->GetBufferPointer());
-        //    }
-        //    throw std::runtime_error("Failed to serialize root signature");
-        //}
-
-        //Microsoft::WRL::ComPtr<ID3D12RootSignature> pRootSigPlaneHit;
-        //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateRootSignature(0, pSigBlobPlaneHit->GetBufferPointer(), pSigBlobPlaneHit->GetBufferSize(), IID_PPV_ARGS(&pRootSigPlaneHit)));
-
-        //ID3D12RootSignature* pRootSigPlaneHitPtr = pRootSigPlaneHit.Get();
-        //subobjects[index].pDesc = &pRootSigPlaneHitPtr;
-        //subobjects[index++].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-#pragma endregion
-
-#pragma region plane PlaneHit root associations
-            //D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION associationPlaneHit = {};
-            //associationPlaneHit.NumExports = 1;
-            //const WCHAR* exportsPlaneHit[] = { kPlaneHitGroup };
-            //associationPlaneHit.pExports = exportsPlaneHit;
-            //associationPlaneHit.pSubobjectToAssociate = &subobjects[index - 1];
-            //subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-            //subobjects[index++].pDesc = &associationPlaneHit;
 #pragma endregion
 
 #pragma region Empty root signature
@@ -807,18 +689,7 @@ namespace CPyburnRTXEngine
 
     void TestAnimations::createShaderTable()
     {
-        /** The shader-table layout is as follows:
-            Entry 0 - Ray-gen program
-            Entry 1 - Miss program for the primary ray
-            Entry 2 - Miss program for the shadow ray
-            Entries 3,4 - Hit programs for triangle 0 (primary followed by shadow)
-            Entries 5,6 - Hit programs for the plane (primary followed by shadow)
-            Entries 7,8 - Hit programs for triangle 1 (primary followed by shadow)
-            Entries 9,10 - Hit programs for triangle 2 (primary followed by shadow)
-            All entries in the shader-table must have the same size, so we will choose it base on the largest required entry.
-            The triangle primary-ray hit program requires the largest entry - sizeof(program identifier) + 8 bytes for the constant-buffer root descriptor.
-            The entry size must be aligned up to D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
-        */
+
 
         const size_t kShaderId = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
         //const size_t kCbvSize = sizeof(D3D12_GPU_VIRTUAL_ADDRESS); // 8

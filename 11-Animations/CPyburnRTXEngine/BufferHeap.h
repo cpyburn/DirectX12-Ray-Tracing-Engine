@@ -74,10 +74,10 @@ namespace CPyburnRTXEngine
 			memcpy(MappedData, CpuData.data(), bufferSizeModel);
 		}
 
-        void CreateOnDefaultHeap(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Dfault buffer not named")
+        void CreateOnDefaultHeap(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Dfault buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
-            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel, flags);
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                 D3D12_HEAP_FLAG_NONE,
@@ -105,15 +105,15 @@ namespace CPyburnRTXEngine
         void CreateOnDefaultHeapForUAV(UINT count, const WCHAR* name = L"Upload buffer not named")
         {
             UINT stride = static_cast<UINT>(sizeof(T));
-            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(count * stride, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                D3D12_HEAP_FLAG_NONE,
-                &bufferDesc,
-                D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
-                nullptr,
-                IID_PPV_ARGS(&DefaultHeapResource)));
-            DefaultHeapResource->SetName(name);
+            //CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(count * stride, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+            //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            //    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            //    D3D12_HEAP_FLAG_NONE,
+            //    &bufferDesc,
+            //    D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+            //    nullptr,
+            //    IID_PPV_ARGS(&DefaultHeapResource)));
+            //DefaultHeapResource->SetName(name);
 
             D3D12_UNORDERED_ACCESS_VIEW_DESC uav{};
             uav.Format = DXGI_FORMAT_UNKNOWN;

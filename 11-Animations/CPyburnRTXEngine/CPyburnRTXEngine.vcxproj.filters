@@ -64,9 +64,6 @@
     <ClInclude Include="Texture.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="BufferBlas.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="Random.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -88,6 +85,7 @@
     <ClInclude Include="AssimpFactory.h">
       <Filter>Models</Filter>
     </ClInclude>
+    <ClInclude Include="BufferHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -161,5 +159,8 @@
     <CustomBuild Include="skinnedCompute.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ToDo.txt" />
   </ItemGroup>
 </Project>

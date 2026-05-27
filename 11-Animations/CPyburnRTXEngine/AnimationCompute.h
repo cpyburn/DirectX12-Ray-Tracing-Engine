@@ -18,8 +18,6 @@ namespace CPyburnRTXEngine
 
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
-		UINT m_vertexCount = 0;
-
 	public:
 		const Microsoft::WRL::ComPtr<ID3D12Resource>& GetOutputBuffer() const { return m_outVertices.DefaultHeapResource; }
 

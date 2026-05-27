@@ -44,8 +44,11 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_triangleVertexBuffer = BufferBlas::CreateBufferOnDefaultHeap<AssimpFactory::VSVertices>(m_deviceResources, m_assimpFactory.GetMeshEntries()[0].vertices, commandList, m_commandAllocator[0], L"Model Buffer");
-        m_triangleIndicesBuffer = BufferBlas::CreateBufferOnDefaultHeap<UINT>(m_deviceResources, m_assimpFactory.GetMeshEntries()[0].indices, commandList, m_commandAllocator[0], L"Index Buffer");
+        m_triangleVertexBuffer.CpuData = m_assimpFactory.GetMeshEntries()[0].vertices;
+        m_triangleVertexBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Model Buffer");
+
+        m_triangleIndicesBuffer.CpuData = m_assimpFactory.GetMeshEntries()[0].indices;
+        m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -53,8 +56,8 @@ namespace CPyburnRTXEngine
         {
             m_materialData[i].baseColorTexIndex = static_cast<UINT>(0);
         }
-
-        m_materialDataBuffer = BufferBlas::CreateBufferOnDefaultHeap<MaterialData>(m_deviceResources, m_materialData, commandList, m_commandAllocator[0], L"Material Buffer");
+        m_materialDataBuffer.CpuData = m_materialData;
+        m_materialDataBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Material Buffer");
 
         // create createPlaneVB
         std::vector<XMFLOAT3> planeVertices(6);
@@ -66,7 +69,8 @@ namespace CPyburnRTXEngine
         planeVertices[4] = XMFLOAT3(100, -1, -2);
         planeVertices[5] = XMFLOAT3(100, -1, 100);
 
-        m_planeVertexBuffer = BufferBlas::CreateBufferOnDefaultHeap<XMFLOAT3>(m_deviceResources, planeVertices, commandList, m_commandAllocator[0], L"Plane Buffer");
+        m_planeVertexBuffer.CpuData = planeVertices;
+        m_planeVertexBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Plane Buffer");
 
         // load model images
         {
@@ -95,8 +99,8 @@ namespace CPyburnRTXEngine
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferBlas::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer, commandList, m_commandAllocator[0]);
-            m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer, commandList, m_commandAllocator[0], m_triangleIndicesBuffer, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].indices.size()));
+            m_planeBlas = BufferBlas::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0]);
+            m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].indices.size()));
         }
 
         // Top Level AS
@@ -853,7 +857,7 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = GraphicsContexts::GetGpuHandle(mVertexBufferSrvPosition);
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -902,25 +906,9 @@ namespace CPyburnRTXEngine
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mTlasSrvPosition[i]));
         }
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER;
-        srvDesc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
-        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-        srvDesc.Buffer.StructureByteStride = sizeof(AssimpFactory::VSVertices); // your vertex struct size goes here
-        srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].vertices.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleVertexBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mVertexBufferSrvPosition));
-        m_triangleVertexBuffer->SetName(L"SRV VB");
-
-        srvDesc.Buffer.StructureByteStride = sizeof(UINT); // your vertex struct size goes here
-        srvDesc.Buffer.NumElements = static_cast<UINT>(m_assimpFactory.GetMeshEntries()[0].indices.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_triangleIndicesBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mIndexBufferSrvPosition));
-        m_triangleIndicesBuffer->SetName(L"SRV IX");
-
-        srvDesc.Buffer.StructureByteStride = sizeof(MaterialData); // your vertex struct size goes here
-        srvDesc.Buffer.NumElements = static_cast<UINT>(m_materialData.size()); // number of vertices go here
-        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(m_materialDataBuffer.Get(), &srvDesc, GraphicsContexts::GetCpuHandle(mMaterialBufferSrvPosition));
-        m_materialDataBuffer->SetName(L"SRV Material");
+        m_triangleVertexBuffer.CreateShaderResourceView();
+        m_triangleIndicesBuffer.CreateShaderResourceView();
+        m_materialDataBuffer.CreateShaderResourceView();
     }
 
     void TestInstances::createConstantBuffer()
@@ -960,12 +948,19 @@ namespace CPyburnRTXEngine
         {
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
-        mVertexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        mIndexBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        mMaterialBufferSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+
         // want the heap positions to be contiguous, so load models after reserving the positions
         m_assimpFactory.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
 
+        m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
+
+        // want the heap positions to be contiguous, so reserving the positions
+        //mVertexBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();
+        m_triangleVertexBuffer.CreateDeviceDependentResources(deviceResources);
+        m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);
+        // this needs to come 3 positions after the vertex buffer srv position, since we create the Shader Table in that order and to work contiguously
+        // also material srv has to be created last of ALL heap positions for textures to work contiguously
+        m_materialDataBuffer.CreateDeviceDependentResources(deviceResources);
         
         CreateCommandObjects();
         CreateModelBuffers();
@@ -1088,7 +1083,6 @@ namespace CPyburnRTXEngine
 
     void TestInstances::Release()
     {
-        m_triangleVertexBuffer.Reset();
         //mpTopLevelAS.Release(); // todo:
         m_planeBlas.Reset();
         mpPipelineState.Reset();
@@ -1105,6 +1099,5 @@ namespace CPyburnRTXEngine
         {
             GraphicsContexts::RemoveHeapPosition(mTlasSrvPosition[i]);
         }
-        GraphicsContexts::RemoveHeapPosition(mVertexBufferSrvPosition);
     }
 }

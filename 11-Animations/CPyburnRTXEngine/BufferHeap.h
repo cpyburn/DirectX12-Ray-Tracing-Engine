@@ -62,7 +62,10 @@ namespace CPyburnRTXEngine
                 IID_PPV_ARGS(&UploadHeapResource)));
             UploadHeapResource->SetName(name);
 
-            DX::ThrowIfFailed(UploadHeapResource->Map(0, nullptr, reinterpret_cast<void**>(&MappedData)));
+            // Map and initialize the constant buffer. We don't unmap this until the
+            // app closes. Keeping things mapped for the lifetime of the resource is okay.
+            CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+            DX::ThrowIfFailed(UploadHeapResource->Map(0, &readRange, reinterpret_cast<void**>(&MappedData)));
         }
 
         void UpdateUploadHeap()
@@ -144,7 +147,7 @@ namespace CPyburnRTXEngine
             }
         }
 
-        void CreateShaderResourceView()
+        void CreateShaderResourceView(bool useUploadHeap = false)
         {
             D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER;
@@ -153,8 +156,13 @@ namespace CPyburnRTXEngine
             srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
             srvDesc.Buffer.StructureByteStride = static_cast < UINT>(sizeof(T)); // your vertex struct size goes here
             srvDesc.Buffer.NumElements = static_cast<UINT>(CpuData.size()); // number of vertices go here
-
-            m_deviceResources->GetD3DDevice()->CreateShaderResourceView(DefaultHeapResource.Get(), &srvDesc, CpuHandle);
+            
+            if (useUploadHeap)
+            {
+                m_deviceResources->GetD3DDevice()->CreateShaderResourceView(UploadHeapResource.Get(), &srvDesc, CpuHandle);
+            }
+            else
+                m_deviceResources->GetD3DDevice()->CreateShaderResourceView(DefaultHeapResource.Get(), &srvDesc, CpuHandle);
         }
 
         void ReleaseUploadResource()

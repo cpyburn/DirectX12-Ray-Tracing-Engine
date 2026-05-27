@@ -45,7 +45,6 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        //m_triangleVertexBuffer = BufferHelpers::CreateBufferOnDefaultHeap<AssimpFactory::VSVertices>(m_deviceResources, m_assimpAnimations.GetMeshEntries()[0].vertices, commandList, m_commandAllocator[0], L"Model Buffer");
         m_triangleVertexBuffer.CpuData = m_assimpAnimations.GetMeshEntries()[0].vertices;
         m_triangleVertexBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Model Buffer");
 
@@ -108,7 +107,8 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0]);
-            m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer(), commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
 
         // Top Level AS

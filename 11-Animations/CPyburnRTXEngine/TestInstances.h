@@ -2,6 +2,7 @@
 
 #include "AssimpFactory.h" // todo: move?
 #include "Texture.h"
+#include "BufferHeap.h"
 
 namespace CPyburnRTXEngine
 {
@@ -37,14 +38,15 @@ namespace CPyburnRTXEngine
 		void CreateCommandObjects();
 		void CreateModelBuffers();
 		void createAccelerationStructures();
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleVertexBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleIndicesBuffer;
+		BufferHeap<AssimpFactory::VSVertices> m_triangleVertexBuffer;
+		BufferHeap<UINT> m_triangleIndicesBuffer;
+
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 		
 		UINT64 mTlasSize = 0;
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeVertexBuffer;
+		BufferHeap<XMFLOAT3> m_planeVertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_triangleBlas;
 
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
@@ -71,9 +73,6 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		UINT mVertexBufferSrvPosition = 0;
-		UINT mIndexBufferSrvPosition = 0;
-		UINT mMaterialBufferSrvPosition = 0;
 		AssimpFactory m_assimpFactory;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
@@ -104,7 +103,7 @@ namespace CPyburnRTXEngine
 			UINT baseColorTexIndex = 0;
 		};
 		std::vector<MaterialData> m_materialData;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_materialDataBuffer;
+		BufferHeap<MaterialData> m_materialDataBuffer;
 
 	public:
 		TestInstances();

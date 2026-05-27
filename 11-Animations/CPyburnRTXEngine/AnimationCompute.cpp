@@ -89,8 +89,6 @@ namespace CPyburnRTXEngine
 
     void AnimationCompute::CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones)
     {
-        m_vertexCount = static_cast<UINT>(vertices.size());
-
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
         Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
         DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
@@ -115,7 +113,8 @@ namespace CPyburnRTXEngine
         
 		m_baseVertices.CreateShaderResourceView();
         m_boneBuffer.CreateShaderResourceView();
-        m_boneMatrices.CreateShaderResourceView();
+        // since bones are usually small, going to use upload heap
+        m_boneMatrices.CreateShaderResourceView(true);
 
         // Output buffer
         const UINT count = (UINT)(vertices.size());
@@ -142,6 +141,8 @@ namespace CPyburnRTXEngine
 
     void AnimationCompute::Dispatch(ID3D12GraphicsCommandList4* commandList)
     {		
+        PIXBeginEvent(commandList, 0, L"Animation Compute");
+
         ID3D12DescriptorHeap* heaps[] = { GraphicsContexts::c_heap.Get() };
         commandList->SetDescriptorHeaps(1, heaps);
 
@@ -158,6 +159,8 @@ namespace CPyburnRTXEngine
         commandList->Dispatch(groups, 1, 1);
 
         commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(m_outVertices.DefaultHeapResource.Get()));
+
+        PIXBeginEvent(commandList, 0, L"Animation Compute");
     }
 }
 

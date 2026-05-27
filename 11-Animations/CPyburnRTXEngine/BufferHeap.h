@@ -102,7 +102,7 @@ namespace CPyburnRTXEngine
             //DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
         }
 
-        void CreateOnDefaultHeapForUAV(UINT count, const WCHAR* name = L"Upload buffer not named")
+        void CreateUnorderedAccessView(const WCHAR* name = L"Upload buffer not named")
         {
             UINT stride = static_cast<UINT>(sizeof(T));
             //CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(count * stride, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -119,7 +119,7 @@ namespace CPyburnRTXEngine
             uav.Format = DXGI_FORMAT_UNKNOWN;
             uav.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
             uav.Buffer.FirstElement = 0;
-            uav.Buffer.NumElements = count;
+            uav.Buffer.NumElements = static_cast<UINT>(CpuData.size());
             uav.Buffer.StructureByteStride = stride;
             uav.Buffer.CounterOffsetInBytes = 0;
             uav.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;

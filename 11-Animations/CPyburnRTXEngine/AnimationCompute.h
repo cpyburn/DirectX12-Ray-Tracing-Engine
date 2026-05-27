@@ -19,7 +19,7 @@ namespace CPyburnRTXEngine
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
 	public:
-		const Microsoft::WRL::ComPtr<ID3D12Resource>& GetOutputBuffer() const { return m_outVertices.DefaultHeapResource; }
+		const BufferHeap<AssimpFactory::VSVertices>& GetOutputBuffer() const { return m_outVertices; }
 
 		AnimationCompute();
 		~AnimationCompute();

@@ -120,7 +120,7 @@ namespace CPyburnRTXEngine
         m_boneBuffer.CreateShaderResourceView();
         // since bones are usually small, going to use upload heap
         m_boneMatrices.CreateShaderResourceView(true);
-		m_outVertices.CreateOnDefaultHeapForUAV(count, L"Output Vertices Buffer");
+		m_outVertices.CreateUnorderedAccessView(L"Output Vertices Buffer");
     }
 
     void AnimationCompute::Update(const std::vector<XMMATRIX>& bones)
@@ -157,12 +157,12 @@ namespace CPyburnRTXEngine
         // Root parameter 1: UAV u0
         commandList->SetComputeRootDescriptorTable(1, m_outVertices.GpuHandle);
 
-        const UINT groups = ((UINT)m_baseVertices.CpuData.size() + 255u) / 256u;
+        const UINT groups = (static_cast<UINT>(m_baseVertices.CpuData.size()) + 255u) / 256u;
         commandList->Dispatch(groups, 1, 1);
 
         commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(m_outVertices.DefaultHeapResource.Get()));
 
-        PIXBeginEvent(commandList, 0, L"Animation Compute");
+        PIXEndEvent(commandList);
     }
 }
 

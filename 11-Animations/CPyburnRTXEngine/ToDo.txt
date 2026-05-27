@@ -1,3 +1,5 @@
 TODO and things to consider as you go or want to go back and attempt
 
 see if CpuData can be a pointer to the actual data instead of copy
+create a class for loading shaders
+double/triple buffer bones upload data? treat as CBV type?

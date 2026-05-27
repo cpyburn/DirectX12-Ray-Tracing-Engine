@@ -107,7 +107,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas::CreateBlas<XMFLOAT3>(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0]);
-            m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer(), commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
             //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
 
@@ -736,7 +736,8 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 1) = GraphicsContexts::GetGpuHandle(mIndexBufferSrvPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
+        //*(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().GpuHandle;
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -833,16 +834,16 @@ namespace CPyburnRTXEngine
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
 
-        m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
-        m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
-
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
 
         // want the heap positions to be contiguous, so reserving the positions
-        //mVertexBufferSrvHeapPosition = GraphicsContexts::GetAvailableHeapPosition();
-        m_triangleVertexBuffer.CreateDeviceDependentResources(deviceResources);
+        m_triangleVertexBuffer.CreateDeviceDependentResources(deviceResources); 
+        // assimp animations is now creating the outVertices that NOW needs to be in the correct place in the shader table
+        m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
+        m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
+
         m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);
-        // this needs to come 3 positions after the vertex buffer srv position, since we create the Shader Table in that order and to work contiguously
+        // this needs to come 3 positions after the vertex buffer srv position (output vertices on animated model), since we create the Shader Table in that order and to work contiguously
         // also material srv has to be created last of ALL heap positions for textures to work contiguously
 		m_materialDataBuffer.CreateDeviceDependentResources(deviceResources);
 

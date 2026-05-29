@@ -40,38 +40,44 @@ Alright chums let's do this!
 ### [1-Creating the game project](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/1-CreatingGameProject)  
 
 ### [2-Adding Fullscreen code](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/2-Fullscreen)  
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/b7f7e9a7-8f30-4b15-adcf-2ff8801f16a7" />
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/b7f7e9a7-8f30-4b15-adcf-2ff8801f16a7" />
 
 ### [3-Rendering the first ray trace triangle with DXC](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/3-FirstTriangle) 
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/873ef043-4a61-4a68-bf36-9e0ce6cacbae" />
+
 1. I will not be doing any code reuse methods for the next couple of tutorials. Reason, I think bouncing around lots of methods can lose some people. After a few tutorials we will start working on code scale, quailty, and reuse.
 2. Tutorials 3, 4, 5 will cover everything we did in these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tutorials-2). So if you get lost, go look at those.
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/873ef043-4a61-4a68-bf36-9e0ce6cacbae" />
 
 ### [4-Rendering shadow rays](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/4-TriangleShadow) 
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/5e39af24-4db7-456b-a6d4-06106b31ee04" />
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/5e39af24-4db7-456b-a6d4-06106b31ee04" />
 
 ### [5-Buffered Top Level Acceleration Structure for rebuilding or refitting with vertex data available in shader](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/5-TriangleRefitting) 
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/ce19812a-2038-4c12-a97a-351b153390fb" />
+
 This wraps up these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tutorials-2).
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/ce19812a-2038-4c12-a97a-351b153390fb" />
 
 ### [6-Global Root Signature, Camera, and game input using Directxtk12](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/6-InputCamera) 
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/ffb22ba7-e064-4991-9290-ac5a181e1880" />
+
 We wrapped up these [tutorials](https://github.com/cpyburn/DirectX12-DXR-RTX-Tutorials-2) in 5. Everything from here on out will be brand new.
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/ffb22ba7-e064-4991-9290-ac5a181e1880" />
 
 ### [7-Loading models using Assimp](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/7-Models) 
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/02a67426-4f85-4da6-8b82-3dca7023b12c" />
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/02a67426-4f85-4da6-8b82-3dca7023b12c" />
 
 ### [8-Loading textures using Directxtk12](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/8-Textures) 
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/fc1fae58-97e5-403a-8a9a-896280bb88bf" />
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/fc1fae58-97e5-403a-8a9a-896280bb88bf" />
 
 ### [9-Revisting the shadow ray](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/9-ShadowRevisit) 
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/38a5ee25-8f13-4dcb-810c-aa29edc22ba9" />
+
 Adding a shadow ray to the models and adding a NEXT/FUTURE buffer to the TLAS. The TLAS will always be ready for the render pipeline.
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/38a5ee25-8f13-4dcb-810c-aa29edc22ba9" />
 
 ### [10-Srv heap](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/10-SrvHeap) 
 Creating a single Srv heap with continuous textures for scaling textures in HLSL, docs and photo coming soon
 
 ### [11-Animations and file input](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/11-Animations) 
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/cb7209f2-0ee0-4b9d-b62d-7ade8bcfc766" />
+
 Adding JSON input for reading in animations and adding animation logic
-<img width="300" height="200" alt="image" src="https://github.com/user-attachments/assets/cb7209f2-0ee0-4b9d-b62d-7ade8bcfc766" />
+
 

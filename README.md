@@ -73,3 +73,5 @@ Creating a single Srv heap with continuous textures for scaling textures in HLSL
 
 ### [11-Animations and file input](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/11-Animations) 
 Adding JSON input for reading in animations and adding animation logic
+<img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/cb7209f2-0ee0-4b9d-b62d-7ade8bcfc766" />
+

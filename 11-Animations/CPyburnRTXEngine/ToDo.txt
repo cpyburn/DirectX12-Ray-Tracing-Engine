@@ -1,5 +1,10 @@
 TODO and things to consider as you go or want to go back and attempt
 
+next steps:
+move indices and vertices buffer creation to assimpfactory
+get json method for models
+add a second model
+
 see if CpuData can be a pointer to the actual data instead of copy
 create a class for loading shaders
 double/triple buffer bones upload data? treat as CBV kind of type?

@@ -21,7 +21,6 @@ namespace CPyburnRTXEngine
 			XMFLOAT3 binormal; // todo: drop for ray tracing
 		};
 
-	protected:
 		struct MeshEntry
 		{
 			std::string name = "";
@@ -56,6 +55,7 @@ namespace CPyburnRTXEngine
 			}
 		};
 
+	private:
 		struct LoadedMaterial
 		{
 			std::string name;
@@ -104,11 +104,12 @@ namespace CPyburnRTXEngine
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>& GetVertexBuffer() { return m_vertexBuffer; }
+		const aiScene* GetAiScene() { return m_pScene; }
 
 		AssimpFactory();
 		~AssimpFactory();
 
-		virtual void Initialize(const std::string& fileName,
+		void Initialize(const std::string& fileName,
 			unsigned int customFlags = aiProcess_Triangulate
 			//| aiProcess_MakeLeftHanded
 			| aiProcess_GenSmoothNormals
@@ -122,6 +123,6 @@ namespace CPyburnRTXEngine
 
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 
-		virtual void Release();
+		void Release();
 	};
 }

@@ -75,7 +75,9 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		AssimpAnimations m_assimpAnimations;
+		AssimpFactory m_elfStatic;
+		AssimpAnimations* m_elfAnimated = nullptr;
+
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
 		struct EnvironmentData

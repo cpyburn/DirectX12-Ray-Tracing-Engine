@@ -8,7 +8,7 @@ namespace CPyburnRTXEngine
 	class AnimationPlayer; // forward declaration
 	class AnimationCompute; // forward declaration
 
-	class AssimpAnimations : public AssimpFactory
+	class AssimpAnimations
 	{
 	public:
 		struct VertexBoneData
@@ -77,6 +77,8 @@ namespace CPyburnRTXEngine
 			}
 		};
 
+		AssimpFactory* m_elfStatic = nullptr;
+
 		float m_ticksPerSecond = 0;
 		float m_duration = 0;
 		std::unordered_map<std::string, unsigned int> m_boneMapping; // maps a bone name to its index
@@ -128,28 +130,16 @@ namespace CPyburnRTXEngine
 		static std::unordered_map<UINT, std::string> AnimationTypes;
 		static std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> Animations;
 		
-		AssimpAnimations();
+		AssimpAnimations(AssimpFactory* assimpFactory);
 		~AssimpAnimations();
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
-
-		void Initialize(const std::string& fileName,
-			unsigned int customFlags = aiProcess_Triangulate
-			//| aiProcess_MakeLeftHanded
-			| aiProcess_GenSmoothNormals
-			//| aiProcess_FlipWindingOrder
-			| aiProcess_FlipUVs
-			| aiProcess_JoinIdenticalVertices
-			| aiProcess_CalcTangentSpace
-			// todo: remove the extra processing the shaders and then enable this
-			| aiPostProcessSteps::aiProcess_LimitBoneWeights
-		) override;
 
 		void BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void BoneTransform(float timeInSeconds, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 
 		void Update(DX::StepTimer const& timer);
-		virtual void Release() override;
+		void Release();
 	};
 }
 

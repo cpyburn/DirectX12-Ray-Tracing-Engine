@@ -117,7 +117,7 @@ namespace CPyburnRTXEngine
 	void AssimpAnimations::CreateSkeletonBones(const aiNode* pNode, Bone* pBone)
 	{
 		pBone->nodeName = pNode->mName.data;
-		pBone->pNodeAnim = FindNodeAnim(m_pScene->mAnimations[0], pBone->nodeName);
+		pBone->pNodeAnim = FindNodeAnim(m_elfStatic->GetAiScene()->mAnimations[0], pBone->nodeName);
 		pBone->parentNodeTransformation = XMFLOAT4X4(pNode->mTransformation.a1, pNode->mTransformation.a2, pNode->mTransformation.a3, pNode->mTransformation.a4,
 			pNode->mTransformation.b1, pNode->mTransformation.b2, pNode->mTransformation.b3, pNode->mTransformation.b4,
 			pNode->mTransformation.c1, pNode->mTransformation.c2, pNode->mTransformation.c3, pNode->mTransformation.c4,
@@ -313,7 +313,7 @@ namespace CPyburnRTXEngine
 
 			for (unsigned int j = 0; j < pMesh->mBones[i]->mNumWeights; j++)
 			{
-				int vertexID = m_meshEntries[meshIndex].baseVertex + pMesh->mBones[i]->mWeights[j].mVertexId;
+				int vertexID = m_elfStatic->GetMeshEntries()[meshIndex].baseVertex + pMesh->mBones[i]->mWeights[j].mVertexId;
 				float weight = pMesh->mBones[i]->mWeights[j].mWeight;
 				bones[vertexID].AddBoneData(boneIndex, weight);
 			}
@@ -416,36 +416,22 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	AssimpAnimations::AssimpAnimations() : AssimpFactory()
+	AssimpAnimations::AssimpAnimations(AssimpFactory* assimpFactory)
 	{
+		m_elfStatic = assimpFactory;
 
-	}
-
-	AssimpAnimations::~AssimpAnimations()
-	{
-
-	}
-
-	void AssimpAnimations::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
-	{
-		m_animationCompute = std::make_unique<AnimationCompute>();
-		m_animationCompute->CreateDeviceDependentResources(deviceResources);
-		m_animationCompute->CreateBuffers(m_meshEntries[0].vertices, m_bones, m_boneInfo);
-	}
-
-	void AssimpAnimations::Initialize(const std::string& fileName, unsigned int customFlags)
-	{
-		AssimpFactory::Initialize(fileName, customFlags);
+		std::vector<AssimpFactory::MeshEntry>& meshEntries = m_elfStatic->GetMeshEntries();
+		const aiScene* pScene = m_elfStatic->GetAiScene();
 
 		bool hasBones = false;
 		// Initialize the meshes in the scene one by one
-		for (UINT i = 0; i < m_meshEntries.size(); i++)
+		for (UINT i = 0; i < meshEntries.size(); i++)
 		{
-			if (m_meshEntries[i].hasBones)
+			if (meshEntries[i].hasBones)
 			{
 				hasBones = true;
-				const aiMesh* paiMesh = m_pScene->mMeshes[i];
-				m_bones.resize(m_bones.size() + m_meshEntries[i].numVerts);
+				const aiMesh* paiMesh = pScene->mMeshes[i];
+				m_bones.resize(m_bones.size() + meshEntries[i].numVerts);
 				LoadBones(i, paiMesh, m_bones);
 			}
 		}
@@ -454,10 +440,10 @@ namespace CPyburnRTXEngine
 		{
 			LoadJson(); // this only loads once, so it is ok to call this for every model that has bones
 
-			CreateSkeletonBones(m_pScene->mRootNode, &m_rootBone);
+			CreateSkeletonBones(pScene->mRootNode, &m_rootBone);
 
-			m_ticksPerSecond = (float)(m_pScene->mAnimations[0]->mTicksPerSecond != 0 ? m_pScene->mAnimations[0]->mTicksPerSecond : 25.0f);
-			m_duration = (float)m_pScene->mAnimations[0]->mDuration;
+			m_ticksPerSecond = (float)(pScene->mAnimations[0]->mTicksPerSecond != 0 ? pScene->mAnimations[0]->mTicksPerSecond : 25.0f);
+			m_duration = (float)pScene->mAnimations[0]->mDuration;
 
 			m_animationPlayer = std::make_unique<AnimationPlayer>(this);
 			// todo: remove after testing
@@ -469,6 +455,18 @@ namespace CPyburnRTXEngine
 		{
 			DebugTrace("Does not have bones");
 		}
+	}
+
+	AssimpAnimations::~AssimpAnimations()
+	{
+
+	}
+
+	void AssimpAnimations::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+	{
+		m_animationCompute = std::make_unique<AnimationCompute>();
+		m_animationCompute->CreateDeviceDependentResources(deviceResources);
+		m_animationCompute->CreateBuffers(m_elfStatic->GetMeshEntries()[0].vertices, m_bones, m_boneInfo);
 	}
 
 	void AssimpAnimations::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
@@ -501,8 +499,6 @@ namespace CPyburnRTXEngine
 
 	void AssimpAnimations::Release()
 	{
-		AssimpFactory::Release(); // base release
-
 		m_animationPlayer.reset();
 		m_animationPlayer = nullptr;
 

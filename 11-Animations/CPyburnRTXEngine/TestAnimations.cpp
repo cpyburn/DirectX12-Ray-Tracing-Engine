@@ -47,8 +47,8 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_assimpAnimations.CreateBuffers(commandList.Get());
-        m_triangleIndicesBuffer.CpuData = m_assimpAnimations.GetMeshEntries()[0].indices;
+        m_elfStatic.CreateBuffers(commandList.Get());
+        m_triangleIndicesBuffer.CpuData = m_elfStatic.GetMeshEntries()[0].indices;
         m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList.Get(), L"Index Buffer");
 
         // create materials
@@ -75,9 +75,9 @@ namespace CPyburnRTXEngine
 
         // load model images
         {
-            if (m_assimpAnimations.GetMeshEntries().size() > 0)
+            if (m_elfStatic.GetMeshEntries().size() > 0)
             {
-                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_assimpAnimations.GetTextureDiffuse(), commandList.Get());
+                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_elfStatic.GetTextureDiffuse(), commandList.Get());
                 // todo: always a good idea to release the upload if isn't going to be used anymore
                 //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
             }
@@ -93,7 +93,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         // release any uploads that will not be used again
-		m_assimpAnimations.GetVertexBuffer().ReleaseUploadResource();
+		m_elfStatic.GetVertexBuffer().ReleaseUploadResource();
         m_triangleIndicesBuffer.ReleaseUploadResource();
         m_materialDataBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
@@ -107,7 +107,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
         }
 
@@ -737,7 +737,7 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
         //*(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().GpuHandle;
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().GpuHandle;
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -845,7 +845,6 @@ namespace CPyburnRTXEngine
 
     TestAnimations::TestAnimations()
     {
-
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
 
         m_instanceData.resize(10);
@@ -876,12 +875,13 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
 
         // want the heap positions to be contiguous, so reserving the positions
-        m_assimpAnimations.GetVertexBuffer().CreateDeviceDependentResources(deviceResources);
+        m_elfStatic.GetVertexBuffer().CreateDeviceDependentResources(deviceResources);
         // assimp animations is now creating the outVertices that NOW needs to be in the correct place in the shader table
         Model model = Models[1]; 
         std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
-        m_assimpAnimations.Initialize(modelPath); 
-        m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
+        m_elfStatic.Initialize(modelPath); 
+        m_elfAnimated = new AssimpAnimations(&m_elfStatic);
+        m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
 
         m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);
         // this needs to come 3 positions after the vertex buffer srv position (output vertices on animated model), since we create the Shader Table in that order and to work contiguously
@@ -914,7 +914,7 @@ namespace CPyburnRTXEngine
         m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(-rotation);
 
         // update the bones
-        m_assimpAnimations.Update(timer);
+        m_elfAnimated->Update(timer);
 
         XMFLOAT3 lightDir = XMFLOAT3(0.5f, 0.5f, -0.5f);
         m_EnvironmentCb.CpuData.lightDirection = lightDir;
@@ -925,12 +925,12 @@ namespace CPyburnRTXEngine
     {
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
-        m_assimpAnimations.GetAnimationCompute()->Dispatch(m_sceneCommandList);
+        m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
         {
             D3D12_RESOURCE_BARRIER uavBarrier = {};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             uavBarrier.UAV.pResource =
-                m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource.Get();
+                m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource.Get();
 
             m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
         }
@@ -1022,7 +1022,7 @@ namespace CPyburnRTXEngine
     void TestAnimations::Release()
     {
         // todo: not needed here, just quick and dirty code to get other stuff working
-        m_assimpAnimations.GetVertexBuffer().Release();
+        m_elfStatic.GetVertexBuffer().Release();
         //mpTopLevelAS.Release(); // todo:
         //m_planeBlas.Release();
         m_planeBlas.Reset();

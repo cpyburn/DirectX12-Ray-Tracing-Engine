@@ -320,7 +320,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void AssimpAnimations::LoadJSON()
+	void AssimpAnimations::LoadJson()
 	{
 		// see if animations have already been loaded
 		if (Animations.size() > 0)
@@ -329,7 +329,7 @@ namespace CPyburnRTXEngine
 		} 
 
 		{
-			std::string filePath = "../../Assets/JSON/AnimationTypes.json";
+			std::string filePath = "../../Assets/Json/AnimationTypes.json";
 			rapidjson::Document doc = LoadJsonDocument(filePath);
 
 			const auto& arr = doc["animationTypes"];
@@ -350,7 +350,7 @@ namespace CPyburnRTXEngine
 		}
 
 		{
-			std::string filePath = "../../Assets/JSON/Animations.json";
+			std::string filePath = "../../Assets/Json/Animations.json";
 			rapidjson::Document doc = LoadJsonDocument(filePath);
 
 			const auto& arr = doc["animations"];
@@ -452,7 +452,7 @@ namespace CPyburnRTXEngine
 
 		if (hasBones)
 		{
-			LoadJSON(); // this only loads once, so it is ok to call this for every model that has bones
+			LoadJson(); // this only loads once, so it is ok to call this for every model that has bones
 
 			CreateSkeletonBones(m_pScene->mRootNode, &m_rootBone);
 

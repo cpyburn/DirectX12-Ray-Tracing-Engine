@@ -101,11 +101,9 @@ namespace CPyburnRTXEngine
 		void ReadSkeletonBones(float animationTime, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<VertexBoneData>& bones);
 
-		void LoadJSON();
-		static std::string GetAnimationTypeNameById(const UINT& id)
-		{
-			return AnimationTypes[id];
-		}
+		void LoadJson();
+
+		static std::string GetAnimationTypeNameById(const UINT& id) { return AnimationTypes[id]; }
 		static UINT GetAnimationTypeIdByName(std::string name)
 		{
 			for (char& c : name)

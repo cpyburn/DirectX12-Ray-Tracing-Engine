@@ -95,7 +95,21 @@ namespace CPyburnRTXEngine
 		std::vector<LoadedMaterial> LoadAllMaterials(const aiScene* scene);
 		
 		std::string FormatTexturePath(const std::string& path, const aiTextureType& type);
+
+		void LoadJson();
+
 	public:
+		struct Model
+		{
+			UINT id;
+			std::string name;
+			UINT meshEntryLocation;
+			std::string contentLocation;
+			std::vector<std::string> textures;
+		};
+
+		static std::unordered_map<UINT, Model> Models;
+
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 

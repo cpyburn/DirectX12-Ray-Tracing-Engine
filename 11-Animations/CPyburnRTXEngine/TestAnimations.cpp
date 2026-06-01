@@ -880,7 +880,7 @@ namespace CPyburnRTXEngine
         Model model = Models[1]; 
         std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
         m_elfStatic.Initialize(modelPath); 
-        m_elfAnimated = new AssimpAnimations(&m_elfStatic);
+        m_elfAnimated = std::make_unique<AssimpAnimations>(&m_elfStatic);
         m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
 
         m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);

@@ -11,3 +11,4 @@ double/triple buffer bones upload data? treat as CBV kind of type?
 double/triple buffer blas resources by next frame?
 consider using a ring buffer for dynamic resources like bones and BLAS
 updating transposes bones in a loop, would be more efficient to do it somewhere else where it is already being looped
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> to ID3D12GraphicsCommandList4* params

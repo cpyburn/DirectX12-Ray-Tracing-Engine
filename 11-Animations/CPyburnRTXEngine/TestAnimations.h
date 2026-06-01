@@ -41,7 +41,7 @@ namespace CPyburnRTXEngine
 		void CreateCommandObjects();
 		void CreateModelBuffers();
 		void createAccelerationStructures();
-		BufferHeap<AssimpFactory::VSVertices> m_triangleVertexBuffer;
+		
 		BufferHeap<UINT> m_triangleIndicesBuffer;
 
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
@@ -118,6 +118,8 @@ namespace CPyburnRTXEngine
 			UINT meshEntryLocation;
 			std::string contentLocation;
 			std::vector<std::string> textures;
+
+			AssimpFactory* assimpFactory = nullptr;
 		};
 
 		static std::unordered_map<UINT, Model> Models;

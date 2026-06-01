@@ -74,7 +74,7 @@ namespace CPyburnRTXEngine
 			memcpy(MappedData, CpuData.data(), bufferSizeModel);
 		}
 
-        void CreateOnDefaultHeap(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, const WCHAR* name = L"Dfault buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
+        void CreateOnDefaultHeap(ID3D12GraphicsCommandList4* commandList, const WCHAR* name = L"Dfault buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
             CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel, flags);
@@ -90,7 +90,7 @@ namespace CPyburnRTXEngine
             std::wstring wname = L"" + std::wstring(name);
             CreateOnUploadHeap(wname.c_str());
 
-            CopyUploadToDefault(commandList, commandAllocator);
+            CopyUploadToDefault(commandList);
 
             //// upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
             //DX::ThrowIfFailed(commandList->Close());
@@ -127,7 +127,7 @@ namespace CPyburnRTXEngine
             m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(DefaultHeapResource.Get(), nullptr, &uav, CpuHandle);
         }
 
-        void CopyUploadToDefault(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator)
+        void CopyUploadToDefault(ID3D12GraphicsCommandList4* commandList)
         {
             // Upload the buffer to the GPU.
             {
@@ -140,7 +140,7 @@ namespace CPyburnRTXEngine
                     CD3DX12_RESOURCE_BARRIER::Transition(DefaultHeapResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
                 commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
 
-                UpdateSubresources(commandList.Get(), DefaultHeapResource.Get(), UploadHeapResource.Get(), 0, 0, 1, &resourceData);
+                UpdateSubresources(commandList, DefaultHeapResource.Get(), UploadHeapResource.Get(), 0, 0, 1, &resourceData);
 
                 indexBufferResourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(DefaultHeapResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
                 commandList->ResourceBarrier(1, &indexBufferResourceBarrier);

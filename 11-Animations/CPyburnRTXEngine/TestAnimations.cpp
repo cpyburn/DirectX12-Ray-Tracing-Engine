@@ -47,11 +47,9 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_triangleVertexBuffer.CpuData = m_assimpAnimations.GetMeshEntries()[0].vertices;
-        m_triangleVertexBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Model Buffer");
-
+        m_assimpAnimations.CreateBuffers(commandList.Get());
         m_triangleIndicesBuffer.CpuData = m_assimpAnimations.GetMeshEntries()[0].indices;
-        m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Index Buffer");
+        m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList.Get(), L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -60,7 +58,7 @@ namespace CPyburnRTXEngine
             m_materialData[i].baseColorTexIndex = static_cast<UINT>(0);
         }
 		m_materialDataBuffer.CpuData = m_materialData;
-		m_materialDataBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Material Buffer");
+		m_materialDataBuffer.CreateOnDefaultHeap(commandList.Get(), L"Material Buffer");
 
         // create createPlaneVB
         std::vector<XMFLOAT3> planeVertices(6);
@@ -73,7 +71,7 @@ namespace CPyburnRTXEngine
         planeVertices[5] = XMFLOAT3(100, -1, 100);
 
 		m_planeVertexBuffer.CpuData = planeVertices;
-		m_planeVertexBuffer.CreateOnDefaultHeap(commandList, m_commandAllocator[0], L"Plane Buffer");
+		m_planeVertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Plane Buffer");
 
         // load model images
         {
@@ -95,7 +93,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         // release any uploads that will not be used again
-		m_triangleVertexBuffer.ReleaseUploadResource();
+		m_assimpAnimations.GetVertexBuffer().ReleaseUploadResource();
         m_triangleIndicesBuffer.ReleaseUploadResource();
         m_materialDataBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
@@ -108,11 +106,9 @@ namespace CPyburnRTXEngine
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
+            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
+            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
-            //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_assimpAnimations.GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
-            //m_triangleBlas = BufferBlas::CreateBlas<AssimpFactory::VSVertices>(m_deviceResources, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].vertices.size()), m_triangleVertexBuffer.DefaultHeapResource, commandList, m_commandAllocator[0], m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_assimpAnimations.GetMeshEntries()[0].indices.size()));
         }
 
         // Top Level AS
@@ -773,7 +769,6 @@ namespace CPyburnRTXEngine
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mTlasSrvPosition[i]));
         }
 
-        m_triangleVertexBuffer.CreateShaderResourceView();
         m_triangleIndicesBuffer.CreateShaderResourceView();
         m_materialDataBuffer.CreateShaderResourceView();
     }
@@ -881,7 +876,7 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
 
         // want the heap positions to be contiguous, so reserving the positions
-        m_triangleVertexBuffer.CreateDeviceDependentResources(deviceResources); 
+        m_assimpAnimations.GetVertexBuffer().CreateDeviceDependentResources(deviceResources);
         // assimp animations is now creating the outVertices that NOW needs to be in the correct place in the shader table
         Model model = Models[1]; 
         std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
@@ -1026,7 +1021,8 @@ namespace CPyburnRTXEngine
 
     void TestAnimations::Release()
     {
-        m_triangleVertexBuffer.Release();
+        // todo: not needed here, just quick and dirty code to get other stuff working
+        m_assimpAnimations.GetVertexBuffer().Release();
         //mpTopLevelAS.Release(); // todo:
         //m_planeBlas.Release();
         m_planeBlas.Reset();

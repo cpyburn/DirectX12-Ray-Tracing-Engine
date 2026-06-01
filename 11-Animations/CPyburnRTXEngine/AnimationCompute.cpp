@@ -95,17 +95,17 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
 		m_baseVertices.CpuData = vertices;
-		m_baseVertices.CreateOnDefaultHeap(commandList, commandAllocator, L"Base Vertices Buffer");
+		m_baseVertices.CreateOnDefaultHeap(commandList.Get(), L"Base Vertices Buffer");
 
 		m_boneBuffer.CpuData = boneData;
-		m_boneBuffer.CreateOnDefaultHeap(commandList, commandAllocator, L"Bone Data Buffer");
+		m_boneBuffer.CreateOnDefaultHeap(commandList.Get(), L"Bone Data Buffer");
 
 		m_boneMatrices.CpuData = bones;
         m_boneMatrices.CreateOnUploadHeap(L"Bone Matrices Buffer");
 
         // Output buffer
         m_outVertices.CpuData = vertices;
-        m_outVertices.CreateOnDefaultHeap(commandList, commandAllocator, L"Out Vertices Buffer", D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_outVertices.CreateOnDefaultHeap(commandList.Get(), L"Out Vertices Buffer", D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
         DX::ThrowIfFailed(commandList->Close());
         ID3D12CommandList* ppCommandLists[] = { commandList.Get() };

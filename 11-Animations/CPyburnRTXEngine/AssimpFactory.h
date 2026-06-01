@@ -5,6 +5,8 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing fla
 
+#include "BufferHeap.h"
+
 namespace CPyburnRTXEngine
 {
 	class AssimpFactory
@@ -96,9 +98,12 @@ namespace CPyburnRTXEngine
 		
 		std::string FormatTexturePath(const std::string& path, const aiTextureType& type);
 
+		// directX 12 buffers
+		BufferHeap<AssimpFactory::VSVertices> m_vertexBuffer;
 	public:
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
+		BufferHeap<AssimpFactory::VSVertices>& GetVertexBuffer() { return m_vertexBuffer; }
 
 		AssimpFactory();
 		~AssimpFactory();
@@ -114,6 +119,8 @@ namespace CPyburnRTXEngine
 			// todo: remove the extra processing the shaders and then enable this
 			| aiPostProcessSteps::aiProcess_LimitBoneWeights
 		);
+
+		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 
 		virtual void Release();
 	};

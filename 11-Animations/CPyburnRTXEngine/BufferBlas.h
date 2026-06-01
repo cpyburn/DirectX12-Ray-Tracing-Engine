@@ -30,7 +30,7 @@ namespace CPyburnRTXEngine
             Release();
         }
 
-        void InitBlas(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
+        void InitBlas(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, ID3D12GraphicsCommandList4* commandList, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
         {
             m_bufDesc.Alignment = 0;
             m_bufDesc.DepthOrArraySize = 1;
@@ -109,7 +109,7 @@ namespace CPyburnRTXEngine
             commandList->ResourceBarrier(1, &m_uavBarrier);
         }
 
-        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBlas(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
+        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBlas(const std::shared_ptr<DX::DeviceResources>& deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, ID3D12GraphicsCommandList4* commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
         {
             D3D12_RESOURCE_DESC m_bufDesc = {};
             m_bufDesc.Alignment = 0;
@@ -185,7 +185,7 @@ namespace CPyburnRTXEngine
             // Close the resource creation command list and execute it to begin the vertex buffer copy into
             // the default heap.
             DX::ThrowIfFailed(commandList->Close());
-            ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+            ID3D12CommandList* ppCommandLists[] = { commandList };
             deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
             deviceResources->WaitForGpu();
 

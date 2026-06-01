@@ -105,7 +105,7 @@ namespace CPyburnRTXEngine
 
 		void LoadJson();
 
-		static std::string GetAnimationTypeNameById(const UINT& id) { return AnimationTypes[id]; }
+		static std::string GetAnimationTypeNameById(const UINT& modelId) { return AnimationTypes[modelId]; }
 		static UINT GetAnimationTypeIdByName(std::string name)
 		{
 			for (char& c : name)

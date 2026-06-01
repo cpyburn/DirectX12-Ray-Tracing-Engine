@@ -115,13 +115,13 @@ namespace CPyburnRTXEngine
 		// todo: this will move eventually, but for now we can just load the model in the test class
 		struct Model
 		{
-			UINT id;
+			UINT modelId;
 			std::string name;
 			UINT meshEntryLocation;
 			std::string contentLocation;
 			std::vector<std::string> textures;
 
-			AssimpFactory* assimpFactory = nullptr;
+			AssimpFactory* assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
 		};
 
 		static std::unordered_map<UINT, Model> Models;

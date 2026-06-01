@@ -121,6 +121,7 @@ namespace CPyburnRTXEngine
 			| aiPostProcessSteps::aiProcess_LimitBoneWeights
 		);
 
+		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 
 		void Release();

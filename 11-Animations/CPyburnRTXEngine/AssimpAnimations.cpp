@@ -335,7 +335,7 @@ namespace CPyburnRTXEngine
 			const auto& arr = doc["animationTypes"];
 
 			for (auto& v : arr.GetArray()) {
-				UINT id = v["id"].GetInt();
+				UINT modelId = v["id"].GetInt();
 				std::string name = v["name"].GetString();
 
 				for (char& c : name)
@@ -345,7 +345,7 @@ namespace CPyburnRTXEngine
 						);
 				}
 
-				AnimationTypes[id] = name;
+				AnimationTypes[modelId] = name;
 			}
 		}
 
@@ -365,7 +365,7 @@ namespace CPyburnRTXEngine
 					continue;
 				}
 
-				animation.id = v["id"].GetInt();
+				animation.modelId = v["id"].GetInt();
 				animation.modelId = v["modelId"].GetInt();
 
 				std::string name = v["animationName"].GetString();

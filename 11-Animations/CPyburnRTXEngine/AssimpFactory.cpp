@@ -363,6 +363,11 @@ namespace CPyburnRTXEngine
 		}
 	}
 
+	void AssimpFactory::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+	{
+		m_vertexBuffer.CreateDeviceDependentResources(deviceResources);
+	}
+
 	void AssimpFactory::CreateBuffers(ID3D12GraphicsCommandList4* commandList)
 	{
 		m_vertexBuffer.CpuData = m_meshEntries[0].vertices; // todo: index 0 is the first mesh, but the Models map will have the correct mesh to use as the main mesh

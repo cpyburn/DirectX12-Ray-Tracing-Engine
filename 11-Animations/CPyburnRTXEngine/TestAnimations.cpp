@@ -821,7 +821,7 @@ namespace CPyburnRTXEngine
 
             Model model;
             for (auto& v : arr.GetArray()) {
-                model.id = v["id"].GetInt();
+                model.modelId = v["id"].GetInt();
                 model.name = v["name"].GetString();
                 model.meshEntryLocation = v["meshEntryLocation"].GetInt();
                 model.contentLocation = v["contentLocation"].GetString();
@@ -838,7 +838,7 @@ namespace CPyburnRTXEngine
                 //		);
                 //}
 
-                Models[model.id] = model;
+                Models[model.modelId] = model;
             }
         }
     }
@@ -875,11 +875,11 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
 
         // want the heap positions to be contiguous, so reserving the positions
-        m_elfStatic.GetVertexBuffer().CreateDeviceDependentResources(deviceResources);
-        // assimp animations is now creating the outVertices that NOW needs to be in the correct place in the shader table
-        Model model = Models[1]; 
+        Model model = Models[1];
         std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
-        m_elfStatic.Initialize(modelPath); 
+        m_elfStatic.Initialize(modelPath);
+        m_elfStatic.CreateDeviceDependentResources(deviceResources);
+        // assimp animations is now creating the outVertices that NOW needs to be in the correct place in the shader table
         m_elfAnimated = std::make_unique<AssimpAnimations>(&m_elfStatic);
         m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
 

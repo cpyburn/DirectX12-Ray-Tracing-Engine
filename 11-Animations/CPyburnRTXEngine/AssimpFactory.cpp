@@ -373,11 +373,22 @@ namespace CPyburnRTXEngine
 		m_vertexBuffer.CpuData = m_meshEntries[0].vertices; // todo: index 0 is the first mesh, but the Models map will have the correct mesh to use as the main mesh
 		m_vertexBuffer.CreateOnDefaultHeap(commandList, L"Model Buffer");
 		m_vertexBuffer.CreateShaderResourceView();
+
+		m_triangleIndicesBuffer.CpuData = m_meshEntries[0].indices;
+		m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList, L"Index Buffer");
+		m_triangleIndicesBuffer.CreateShaderResourceView();
+	}
+
+	void AssimpFactory::ReleaseUploadResource()
+	{
+		m_vertexBuffer.ReleaseUploadResource();
+		m_triangleIndicesBuffer.ReleaseUploadResource();
 	}
 
 	void AssimpFactory::Release()
 	{
-
+		m_vertexBuffer.Release();
+		m_triangleIndicesBuffer.Release();
 	}
 }
 

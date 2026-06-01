@@ -48,8 +48,6 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
         m_elfStatic.CreateBuffers(commandList.Get());
-        m_triangleIndicesBuffer.CpuData = m_elfStatic.GetMeshEntries()[0].indices;
-        m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList.Get(), L"Index Buffer");
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -93,8 +91,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         // release any uploads that will not be used again
-		m_elfStatic.GetVertexBuffer().ReleaseUploadResource();
-        m_triangleIndicesBuffer.ReleaseUploadResource();
+		m_elfStatic.ReleaseUploadResource();
         m_materialDataBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
     }
@@ -107,7 +104,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_triangleIndicesBuffer.DefaultHeapResource, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].indices.size()));
+            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfStatic.GetIndicesBuffer().DefaultHeapResource, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
         }
 
@@ -769,7 +766,6 @@ namespace CPyburnRTXEngine
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mTlasSrvPosition[i]));
         }
 
-        m_triangleIndicesBuffer.CreateShaderResourceView();
         m_materialDataBuffer.CreateShaderResourceView();
     }
 
@@ -883,7 +879,7 @@ namespace CPyburnRTXEngine
         m_elfAnimated = std::make_unique<AssimpAnimations>(&m_elfStatic);
         m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
 
-        m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);
+        m_elfStatic.GetIndicesBuffer().CreateDeviceDependentResources(deviceResources);
         // this needs to come 3 positions after the vertex buffer srv position (output vertices on animated model), since we create the Shader Table in that order and to work contiguously
         // also material srv has to be created last of ALL heap positions for textures to work contiguously
 		m_materialDataBuffer.CreateDeviceDependentResources(deviceResources);
@@ -1021,10 +1017,7 @@ namespace CPyburnRTXEngine
 
     void TestAnimations::Release()
     {
-        // todo: not needed here, just quick and dirty code to get other stuff working
-        m_elfStatic.GetVertexBuffer().Release();
-        //mpTopLevelAS.Release(); // todo:
-        //m_planeBlas.Release();
+        m_elfStatic.Release();
         m_planeBlas.Reset();
         m_blas.Release();
         mpPipelineState.Reset();

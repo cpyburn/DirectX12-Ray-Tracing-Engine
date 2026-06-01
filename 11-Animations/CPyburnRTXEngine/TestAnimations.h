@@ -42,8 +42,6 @@ namespace CPyburnRTXEngine
 		void CreateModelBuffers();
 		void createAccelerationStructures();
 		
-		BufferHeap<UINT> m_triangleIndicesBuffer;
-
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
 		
 		UINT64 mTlasSize = 0;

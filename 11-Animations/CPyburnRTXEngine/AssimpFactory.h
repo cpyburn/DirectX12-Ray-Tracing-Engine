@@ -100,10 +100,12 @@ namespace CPyburnRTXEngine
 
 		// directX 12 buffers
 		BufferHeap<AssimpFactory::VSVertices> m_vertexBuffer;
+		BufferHeap<UINT> m_triangleIndicesBuffer;
 	public:
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>& GetVertexBuffer() { return m_vertexBuffer; }
+		BufferHeap<UINT>& GetIndicesBuffer() { return m_triangleIndicesBuffer; }
 		const aiScene* GetAiScene() { return m_pScene; }
 
 		AssimpFactory();
@@ -123,6 +125,7 @@ namespace CPyburnRTXEngine
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
+		void ReleaseUploadResource();
 
 		void Release();
 	};

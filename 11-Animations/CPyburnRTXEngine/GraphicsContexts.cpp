@@ -88,13 +88,14 @@ namespace CPyburnRTXEngine
 		assert(m_heapPositionCounter != UINT32_MAX);
 
 		UINT value = m_heapPositionCounter;
-		if (m_availableHeapPositions.size() > 0)
-		{
-			value = m_availableHeapPositions[0];
-			DebugTrace("Heap position reused: %s\n", (std::to_string(value)).c_str());
-			m_availableHeapPositions.erase(m_availableHeapPositions.begin());
-		}
-		else
+		// chad: right now not reusing heap positions, not important, game will never be that big
+		//if (m_availableHeapPositions.size() > 0)
+		//{
+		//	value = m_availableHeapPositions[0];
+		//	DebugTrace("Heap position reused: %s\n", (std::to_string(value)).c_str());
+		//	m_availableHeapPositions.erase(m_availableHeapPositions.begin());
+		//}
+		//else
 		{
 			m_heapPositionCounter++;
 			DebugTrace("Heap position used: %s\n", (std::to_string(value)).c_str());

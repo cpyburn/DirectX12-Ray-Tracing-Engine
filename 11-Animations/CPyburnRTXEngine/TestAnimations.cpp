@@ -43,17 +43,36 @@ namespace CPyburnRTXEngine
         }
     }
 
-    void TestAnimations::CreateModelBuffers()
+    void TestAnimations::CreateBuffers()
     {
+        // todo: move this eventually
+        m_instanceData.resize(18);
+        int count = 0;
+        for (size_t x = 0; x < 4; x++)
+        {
+            for (size_t y = 0; y < 4; y++)
+            {
+                if (count > 1)
+                {
+                    m_instanceData[count].world = XMMatrixRotationY(DirectX::XMConvertToRadians(180.0f)) * XMMatrixTranslation((float)x, 0, y);
+                }
+                else
+                {
+                    m_instanceData[count].world = XMMatrixIdentity();
+                }
+                count++;
+            }
+        }
+
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_elfStatic.CreateBuffers(commandList.Get());
+        m_elfAnimated->GetAssimpFactory()->CreateBuffers(commandList.Get());
 
         // create materials
         m_materialData.resize(m_instanceData.size());
         for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
         {
-            m_materialData[i].baseColorTexIndex = static_cast<UINT>(0);
+            m_materialData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
         }
 		m_materialDataBuffer.CpuData = m_materialData;
 		m_materialDataBuffer.CreateOnDefaultHeap(commandList.Get(), L"Material Buffer");
@@ -71,15 +90,26 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CpuData = planeVertices;
 		m_planeVertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Plane Buffer");
 
-        // load model images
+        // this is just for testing
+        for (auto& unorderedModel : Models)
         {
-            if (m_elfStatic.GetMeshEntries().size() > 0)
+            Model& model = unorderedModel.second;
+            for (size_t texIndex = 0; texIndex < model.textures.size(); texIndex++)
             {
-                m_heapTextureDiffuse = Texture::LoadTextureHeap(m_elfStatic.GetTextureDiffuse(), commandList.Get());
-                // todo: always a good idea to release the upload if isn't going to be used anymore
-                //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
+                std::string textureLocation = model.textures[texIndex];
+                Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + textureLocation, commandList.Get());
             }
         }
+
+        // load model images
+        //{
+        //    if (m_elfAnimated->GetAssimpFactory()->GetMeshEntries().size() > 0)
+        //    {
+        //        m_heapTextureDiffuse = Texture::LoadTextureHeap(m_elfAnimated->GetAssimpFactory()->GetTextureDiffuse(), commandList.Get());
+        //        // todo: always a good idea to release the upload if isn't going to be used anymore
+        //        //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
+        //    }
+        //}
 
         // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
         DX::ThrowIfFailed(commandList->Close());
@@ -91,7 +121,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         // release any uploads that will not be used again
-		m_elfStatic.ReleaseUploadResource();
+        m_elfAnimated->GetAssimpFactory()->ReleaseUploadResource();
         m_materialDataBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
     }
@@ -104,7 +134,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfStatic.GetIndicesBuffer().DefaultHeapResource, static_cast<UINT>(m_elfStatic.GetMeshEntries()[0].indices.size()));
+            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndicesBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
         }
 
@@ -841,13 +871,7 @@ namespace CPyburnRTXEngine
 
     TestAnimations::TestAnimations()
     {
-        //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
 
-        m_instanceData.resize(10);
-        for (size_t i = 0; i < m_instanceData.size(); i++)
-        {
-            m_instanceData[i].world = XMMatrixTranslation(2.0f * (float)i, 0, 0);
-        }
     }
 
     TestAnimations::~TestAnimations()
@@ -870,22 +894,25 @@ namespace CPyburnRTXEngine
 
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
 
-        // want the heap positions to be contiguous, so reserving the positions
-        Model model = Models[1];
-        std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
-        m_elfStatic.Initialize(modelPath);
-        m_elfStatic.CreateDeviceDependentResources(deviceResources);
-        // assimp animations is now creating the outVertices that NOW needs to be in the correct place in the shader table
-        m_elfAnimated = std::make_unique<AssimpAnimations>(&m_elfStatic);
-        m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
+        for (auto& unorderedModel : Models)
+        {
+            Model& model = unorderedModel.second;
 
-        m_elfStatic.GetIndicesBuffer().CreateDeviceDependentResources(deviceResources);
+            std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
+            model.assimpFactory = std::make_unique<AssimpFactory>();
+            model.assimpFactory->Initialize(modelPath);
+            model.assimpFactory->CreateDeviceDependentResources(deviceResources);
+
+            m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());
+            m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
+        }
+
         // this needs to come 3 positions after the vertex buffer srv position (output vertices on animated model), since we create the Shader Table in that order and to work contiguously
         // also material srv has to be created last of ALL heap positions for textures to work contiguously
 		m_materialDataBuffer.CreateDeviceDependentResources(deviceResources);
 
         CreateCommandObjects();
-        CreateModelBuffers();
+        CreateBuffers();
         createAccelerationStructures(); // Tutorial 03
         createConstantBuffer(); // Tutorial 09
         createRtPipelineState(); // Tutorial 04
@@ -1017,7 +1044,6 @@ namespace CPyburnRTXEngine
 
     void TestAnimations::Release()
     {
-        m_elfStatic.Release();
         m_planeBlas.Reset();
         m_blas.Release();
         mpPipelineState.Reset();

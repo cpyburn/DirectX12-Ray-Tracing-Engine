@@ -39,7 +39,7 @@ namespace CPyburnRTXEngine
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
 		void CreateCommandObjects();
-		void CreateModelBuffers();
+		void CreateBuffers();
 		void createAccelerationStructures();
 		
 		AccelerationStructureBuffers mpTopLevelAS[DX::DeviceResources::c_backBufferCount];
@@ -73,9 +73,8 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = 0;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		AssimpFactory m_elfStatic;
-		std::unique_ptr<AssimpAnimations> m_elfAnimated = nullptr;
 
+		std::unique_ptr<AssimpAnimations> m_elfAnimated = nullptr;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
 		struct EnvironmentData
@@ -119,13 +118,15 @@ namespace CPyburnRTXEngine
 			std::string contentLocation;
 			std::vector<std::string> textures;
 
-			AssimpFactory* assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
+			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
 		};
 
-		static std::unordered_map<UINT, Model> Models;
+		
 		void LoadJson();
 
 	public:
+		static std::unordered_map<UINT, Model> Models;
+
 		TestAnimations();
 		~TestAnimations();
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);

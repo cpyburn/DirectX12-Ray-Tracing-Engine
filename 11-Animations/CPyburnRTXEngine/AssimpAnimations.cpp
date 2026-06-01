@@ -117,7 +117,7 @@ namespace CPyburnRTXEngine
 	void AssimpAnimations::CreateSkeletonBones(const aiNode* pNode, Bone* pBone)
 	{
 		pBone->nodeName = pNode->mName.data;
-		pBone->pNodeAnim = FindNodeAnim(m_elfStatic->GetAiScene()->mAnimations[0], pBone->nodeName);
+		pBone->pNodeAnim = FindNodeAnim(m_assimpFactory->GetAiScene()->mAnimations[0], pBone->nodeName);
 		pBone->parentNodeTransformation = XMFLOAT4X4(pNode->mTransformation.a1, pNode->mTransformation.a2, pNode->mTransformation.a3, pNode->mTransformation.a4,
 			pNode->mTransformation.b1, pNode->mTransformation.b2, pNode->mTransformation.b3, pNode->mTransformation.b4,
 			pNode->mTransformation.c1, pNode->mTransformation.c2, pNode->mTransformation.c3, pNode->mTransformation.c4,
@@ -313,7 +313,7 @@ namespace CPyburnRTXEngine
 
 			for (unsigned int j = 0; j < pMesh->mBones[i]->mNumWeights; j++)
 			{
-				int vertexID = m_elfStatic->GetMeshEntries()[meshIndex].baseVertex + pMesh->mBones[i]->mWeights[j].mVertexId;
+				int vertexID = m_assimpFactory->GetMeshEntries()[meshIndex].baseVertex + pMesh->mBones[i]->mWeights[j].mVertexId;
 				float weight = pMesh->mBones[i]->mWeights[j].mWeight;
 				bones[vertexID].AddBoneData(boneIndex, weight);
 			}
@@ -418,10 +418,10 @@ namespace CPyburnRTXEngine
 
 	AssimpAnimations::AssimpAnimations(AssimpFactory* assimpFactory)
 	{
-		m_elfStatic = assimpFactory;
+		m_assimpFactory = assimpFactory;
 
-		std::vector<AssimpFactory::MeshEntry>& meshEntries = m_elfStatic->GetMeshEntries();
-		const aiScene* pScene = m_elfStatic->GetAiScene();
+		std::vector<AssimpFactory::MeshEntry>& meshEntries = m_assimpFactory->GetMeshEntries();
+		const aiScene* pScene = m_assimpFactory->GetAiScene();
 
 		bool hasBones = false;
 		// Initialize the meshes in the scene one by one
@@ -466,7 +466,11 @@ namespace CPyburnRTXEngine
 	{
 		m_animationCompute = std::make_unique<AnimationCompute>();
 		m_animationCompute->CreateDeviceDependentResources(deviceResources);
-		m_animationCompute->CreateBuffers(m_elfStatic->GetMeshEntries()[0].vertices, m_bones, m_boneInfo);
+		m_animationCompute->CreateBuffers(m_assimpFactory->GetMeshEntries()[0].vertices, m_bones, m_boneInfo);
+
+		// put the indices heap position right after the vertices heap position since they are used together shader table
+		m_assimpFactory->GetIndicesBuffer().GetNewHeapPosition(); // create new heap position for indices buffer
+		m_assimpFactory->GetIndicesBuffer().CreateShaderResourceView(); // create a shader resource view to that position
 	}
 
 	void AssimpAnimations::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)

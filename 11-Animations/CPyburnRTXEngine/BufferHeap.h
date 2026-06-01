@@ -17,14 +17,20 @@ namespace CPyburnRTXEngine
         {
             m_deviceResources = deviceResources;
 
-            // make sure descriptor heap is allocated
-            if (HeapIndex == MAXUINT)
-            {
-                HeapIndex = GraphicsContexts::GetAvailableHeapPosition();
-                CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetCpuHandle(HeapIndex));
-                GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetGpuHandle(HeapIndex));
-            }
+            GetNewHeapPosition();
         }
+
+        void GetNewHeapPosition()
+		{
+            ReleaseHeapPosition();
+
+			if (HeapIndex == MAXUINT)
+			{
+				HeapIndex = GraphicsContexts::GetAvailableHeapPosition();
+				CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetCpuHandle(HeapIndex));
+				GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetGpuHandle(HeapIndex));
+			}
+		}
 
         BufferHeap()
         {
@@ -164,6 +170,15 @@ namespace CPyburnRTXEngine
             else
                 m_deviceResources->GetD3DDevice()->CreateShaderResourceView(DefaultHeapResource.Get(), &srvDesc, CpuHandle);
         }
+
+        void ReleaseHeapPosition()
+		{
+			if (HeapIndex != MAXUINT)
+			{
+				GraphicsContexts::RemoveHeapPosition(HeapIndex);
+				HeapIndex = MAXUINT;
+			}
+		}
 
         void ReleaseUploadResource()
 		{

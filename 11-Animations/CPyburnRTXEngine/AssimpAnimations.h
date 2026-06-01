@@ -77,7 +77,7 @@ namespace CPyburnRTXEngine
 			}
 		};
 
-		AssimpFactory* m_elfStatic = nullptr;
+		AssimpFactory* m_assimpFactory = nullptr;
 
 		float m_ticksPerSecond = 0;
 		float m_duration = 0;
@@ -124,6 +124,7 @@ namespace CPyburnRTXEngine
 		std::unique_ptr<AnimationPlayer> m_animationPlayer = nullptr;
 		std::unique_ptr<AnimationCompute> m_animationCompute = nullptr;
 	public:
+		AssimpFactory* GetAssimpFactory() { return m_assimpFactory; }
 		const UINT& GetNumBones() const { return m_numBones; }
 		AnimationCompute* GetAnimationCompute() { return m_animationCompute.get(); }
 

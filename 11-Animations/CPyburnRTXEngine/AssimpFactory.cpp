@@ -3,8 +3,6 @@
 
 namespace CPyburnRTXEngine
 {
-	std::unordered_map<UINT, AssimpFactory::Model> AssimpFactory::Models;
-
 	void AssimpFactory::DoMeshTransforms(aiNode* node, XMMATRIX parentTransform)
 	{
 		XMMATRIX nodeTransform = XMMatrixIdentity();
@@ -321,44 +319,6 @@ namespace CPyburnRTXEngine
 		return newPath;
 	}
 
-	void AssimpFactory::LoadJson()
-	{
-		// see if animations have already been loaded
-		if (Models.size() > 0)
-		{
-			return;
-		}
-
-		{
-			std::string filePath = "../../Assets/Json/Models.json";
-			rapidjson::Document doc = LoadJsonDocument(filePath);
-
-			const auto& arr = doc["models"];
-			
-			Model model;
-			for (auto& v : arr.GetArray()) {
-				model.id = v["id"].GetInt();
-				model.name = v["name"].GetString();
-				model.meshEntryLocation = v["meshEntryLocation"].GetInt();
-				model.contentLocation = v["contentLocation"].GetString();
-
-				const auto& textures = v["textureBaseColorList"];
-				for (auto& tex : textures.GetArray()) {
-					model.textures.push_back(tex.GetString());
-				}
-
-				//for (char& c : name)
-				//{
-				//	c = static_cast<char>(
-				//		std::tolower(static_cast<unsigned char>(c))
-				//		);
-				//}
-
-				Models[model.id] = model;
-			}
-		}
-	}
-
 	AssimpFactory::AssimpFactory() :
 		m_boundingSphereRadiusTranslation(XMMatrixIdentity())
 	{
@@ -372,8 +332,6 @@ namespace CPyburnRTXEngine
 
 	void AssimpFactory::Initialize(const std::string& fileName, unsigned int customFlags)
 	{
-		LoadJson();
-
 		m_pathFileName = fileName;
 
 		char drive[_MAX_DRIVE];

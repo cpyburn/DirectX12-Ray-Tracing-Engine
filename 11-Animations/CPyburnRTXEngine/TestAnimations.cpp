@@ -6,6 +6,8 @@
 
 namespace CPyburnRTXEngine
 {
+    std::unordered_map<UINT, TestAnimations::Model> TestAnimations::Models;
+
     static const WCHAR* kRayGenShader = L"rayGen";
     static const WCHAR* kMissShader = L"miss";
     static const WCHAR* kClosestHitShader = L"chs";
@@ -808,6 +810,44 @@ namespace CPyburnRTXEngine
         }
     }
 
+    void TestAnimations::LoadJson()
+    {
+        // see if animations have already been loaded
+        if (Models.size() > 0)
+        {
+            return;
+        }
+
+        {
+            std::string filePath = "../../Assets/Json/Models.json";
+            rapidjson::Document doc = LoadJsonDocument(filePath);
+
+            const auto& arr = doc["models"];
+
+            Model model;
+            for (auto& v : arr.GetArray()) {
+                model.id = v["id"].GetInt();
+                model.name = v["name"].GetString();
+                model.meshEntryLocation = v["meshEntryLocation"].GetInt();
+                model.contentLocation = v["contentLocation"].GetString();
+
+                const auto& textures = v["textureBaseColorList"];
+                for (auto& tex : textures.GetArray()) {
+                    model.textures.push_back(tex.GetString());
+                }
+
+                //for (char& c : name)
+                //{
+                //	c = static_cast<char>(
+                //		std::tolower(static_cast<unsigned char>(c))
+                //		);
+                //}
+
+                Models[model.id] = model;
+            }
+        }
+    }
+
     TestAnimations::TestAnimations()
     {
 
@@ -829,6 +869,8 @@ namespace CPyburnRTXEngine
     {
         m_deviceResources = deviceResources;
 
+        LoadJson();
+
         // reserve the uav position and srv position
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
@@ -841,7 +883,9 @@ namespace CPyburnRTXEngine
         // want the heap positions to be contiguous, so reserving the positions
         m_triangleVertexBuffer.CreateDeviceDependentResources(deviceResources); 
         // assimp animations is now creating the outVertices that NOW needs to be in the correct place in the shader table
-        m_assimpAnimations.Initialize("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X"); // tutorial 10
+        Model model = Models[1]; 
+        std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
+        m_assimpAnimations.Initialize(modelPath); 
         m_assimpAnimations.CreateDeviceDependentResources(m_deviceResources);
 
         m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);

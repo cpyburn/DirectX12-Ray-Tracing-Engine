@@ -110,6 +110,19 @@ namespace CPyburnRTXEngine
 		BufferBlas<AssimpFactory::VSVertices> m_blas;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 
+		// todo: this will move eventually, but for now we can just load the model in the test class
+		struct Model
+		{
+			UINT id;
+			std::string name;
+			UINT meshEntryLocation;
+			std::string contentLocation;
+			std::vector<std::string> textures;
+		};
+
+		static std::unordered_map<UINT, Model> Models;
+		void LoadJson();
+
 	public:
 		TestAnimations();
 		~TestAnimations();

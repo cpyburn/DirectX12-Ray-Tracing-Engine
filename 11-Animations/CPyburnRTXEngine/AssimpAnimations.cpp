@@ -87,12 +87,31 @@ namespace CPyburnRTXEngine
 	//	out = out.Normalize();
 	//}
 
-	void AssimpAnimations::CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
+	//void AssimpAnimations::CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
+	//{
+	//	if (pNodeAnim->mNumPositionKeys == 1)
+	//	{
+	//		out = pNodeAnim->mPositionKeys[0].mValue;
+	//		return;
+	//	}
+
+	//	int positionIndex = FindPosition(animationTime, pNodeAnim);
+	//	unsigned int nextPositionIndex = (positionIndex + 1);
+	//	float deltaTime = (float)(pNodeAnim->mPositionKeys[nextPositionIndex].mTime - pNodeAnim->mPositionKeys[positionIndex].mTime);
+	//	float factor = (animationTime - (float)pNodeAnim->mPositionKeys[positionIndex].mTime) / deltaTime;
+	//	const aiVector3D& start = pNodeAnim->mPositionKeys[positionIndex].mValue;
+	//	const aiVector3D& end = pNodeAnim->mPositionKeys[nextPositionIndex].mValue;
+	//	aiVector3D delta = end - start;
+	//	out = start + factor * delta;
+	//}
+
+	XMVECTOR& AssimpAnimations::CalcInterpolatedPositionXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
+		XMVECTOR out;
 		if (pNodeAnim->mNumPositionKeys == 1)
 		{
-			out = pNodeAnim->mPositionKeys[0].mValue;
-			return;
+			const aiVector3D& position = pNodeAnim->mPositionKeys[0].mValue;
+			return out = { position.x, position.y, position.z };
 		}
 
 		int positionIndex = FindPosition(animationTime, pNodeAnim);
@@ -100,9 +119,11 @@ namespace CPyburnRTXEngine
 		float deltaTime = (float)(pNodeAnim->mPositionKeys[nextPositionIndex].mTime - pNodeAnim->mPositionKeys[positionIndex].mTime);
 		float factor = (animationTime - (float)pNodeAnim->mPositionKeys[positionIndex].mTime) / deltaTime;
 		const aiVector3D& start = pNodeAnim->mPositionKeys[positionIndex].mValue;
+		XMVECTOR xmStart = { start.x, start.y, start.z };
 		const aiVector3D& end = pNodeAnim->mPositionKeys[nextPositionIndex].mValue;
-		aiVector3D delta = end - start;
-		out = start + factor * delta;
+		XMVECTOR xmEnd = { end.x, end.y, end.z };
+		XMVECTOR xmDelta = xmEnd - xmStart;
+		return out = xmStart + factor * xmDelta;
 	}
 
 	int AssimpAnimations::FindScaling(float animationTime, const aiNodeAnim* pNodeAnim)
@@ -160,7 +181,7 @@ namespace CPyburnRTXEngine
 	{
 		pBone->nodeName = pNode->mName.data;
 		pBone->pNodeAnim = FindNodeAnim(m_assimpFactory->GetAiScene()->mAnimations[0], pBone->nodeName);
-		pBone->parentNodeTransformation = XMFLOAT4X4(pNode->mTransformation.a1, pNode->mTransformation.a2, pNode->mTransformation.a3, pNode->mTransformation.a4,
+		pBone->parentNodeTransformation = XMMatrixSet(pNode->mTransformation.a1, pNode->mTransformation.a2, pNode->mTransformation.a3, pNode->mTransformation.a4,
 			pNode->mTransformation.b1, pNode->mTransformation.b2, pNode->mTransformation.b3, pNode->mTransformation.b4,
 			pNode->mTransformation.c1, pNode->mTransformation.c2, pNode->mTransformation.c3, pNode->mTransformation.c4,
 			pNode->mTransformation.d1, pNode->mTransformation.d2, pNode->mTransformation.d3, pNode->mTransformation.d4);
@@ -200,7 +221,7 @@ namespace CPyburnRTXEngine
 
 	void AssimpAnimations::ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
 	{
-		XMMATRIX nodeTransformation = XMLoadFloat4x4(&pBone->parentNodeTransformation);
+		XMMATRIX nodeTransformation = pBone->parentNodeTransformation;
 
 		if (pBone->pNodeAnim)
 		{
@@ -218,13 +239,8 @@ namespace CPyburnRTXEngine
 			XMMATRIX rotationBlendedM = XMMatrixRotationQuaternion(rotationBlendedQ);
 
 			// translation
-			aiVector3D translationCurrent;
-			CalcInterpolatedPosition(translationCurrent, animationTimeCurrent, pBone->pNodeAnim);
-			XMVECTOR xmTranslationCurrent = { translationCurrent.x, translationCurrent.y, translationCurrent.z };
-
-			aiVector3D translationTarget;
-			CalcInterpolatedPosition(translationTarget, animationTimeTarget, pBone->pNodeAnim);
-			XMVECTOR xmTranslationTarget = { translationTarget.x, translationTarget.y, translationTarget.z };
+			XMVECTOR xmTranslationCurrent = CalcInterpolatedPositionXM(animationTimeCurrent, pBone->pNodeAnim);
+			XMVECTOR xmTranslationTarget = CalcInterpolatedPositionXM(animationTimeTarget, pBone->pNodeAnim);
 
 			XMVECTOR xmTranslation = XMVectorLerp(xmTranslationCurrent, xmTranslationTarget, blendFactor);
 			XMMATRIX translationBlendedM = XMMatrixTranslationFromVector(xmTranslation);
@@ -241,14 +257,14 @@ namespace CPyburnRTXEngine
 			global[pBone->nodeId] = parent;
 
 			XMMATRIX finalTransformationConversion = parent * noGlobalBones[pBone->nodeId];
-			bones[pBone->nodeId] = finalTransformationConversion;
+			bones[pBone->nodeId] = XMMatrixTranspose(finalTransformationConversion); // if model is screwed up, you may have to remove transpose
 
 			// transpose this for easy math for modelNodes and LOD's
-			XMStoreFloat4x4(&pBone->globalNodeTransform, XMMatrixTranspose(globalTransformation)); //XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f) * XMMatrixScaling(0.036f, 0.036f, 0.036f) * XMMatrixTranslation(0.09f, 0.04f, 0.0f)  // * XMMatrixTranspose(XMMatrixRotationRollPitchYaw(0.0f, 1.5708f, 1.5708f))
+			pBone->globalNodeTransform = XMMatrixTranspose(globalTransformation); //XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f) * XMMatrixScaling(0.036f, 0.036f, 0.036f) * XMMatrixTranslation(0.09f, 0.04f, 0.0f)  // * XMMatrixTranspose(XMMatrixRotationRollPitchYaw(0.0f, 1.5708f, 1.5708f))
 		}
 		else if (pBone->pNodeAnim) // give the areas that don't have bones but do have animation the global transform
 		{
-			XMStoreFloat4x4(&pBone->globalNodeTransform, XMMatrixTranspose(globalTransformation));
+			pBone->globalNodeTransform = XMMatrixTranspose(globalTransformation);
 		}
 
 		for (size_t i = 0; i < pBone->children.size(); i++)
@@ -259,7 +275,7 @@ namespace CPyburnRTXEngine
 
 	void AssimpAnimations::ReadSkeletonBones(float animationTime, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
 	{
-		XMMATRIX nodeTransformation = XMLoadFloat4x4(&pBone->parentNodeTransformation);
+		XMMATRIX nodeTransformation = pBone->parentNodeTransformation;
 
 		if (pBone->pNodeAnim)
 		{
@@ -267,10 +283,8 @@ namespace CPyburnRTXEngine
 			XMMATRIX scalingM = XMMatrixScalingFromVector(scaling);
 			XMVECTOR rotationQ = CalcInterpolatedRotationXM(animationTime, pBone->pNodeAnim);
 			XMMATRIX rotationM = XMMatrixRotationQuaternion(rotationQ);
-
-			aiVector3D translation;
-			CalcInterpolatedPosition(translation, animationTime, pBone->pNodeAnim);
-			XMMATRIX translationM = XMMatrixTranslation(translation.x, translation.y, translation.z);
+			XMVECTOR translationV = CalcInterpolatedPositionXM(animationTime, pBone->pNodeAnim);
+			XMMATRIX translationM = XMMatrixTranslationFromVector(translationV);
 
 			nodeTransformation = scalingM * rotationM * translationM;
 		}
@@ -284,14 +298,14 @@ namespace CPyburnRTXEngine
 			global[pBone->nodeId] = parent;
 
 			XMMATRIX finalTransformationConversion = parent * noGlobalBones[pBone->nodeId];
-			bones[pBone->nodeId] = finalTransformationConversion;
+			bones[pBone->nodeId] = XMMatrixTranspose(finalTransformationConversion); // if model is screwed up, you may have to remove transpose
 
 			// transpose this for easy math for modelNodes and LOD's
-			XMStoreFloat4x4(&pBone->globalNodeTransform, XMMatrixTranspose(globalTransformation)); //XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f) * XMMatrixScaling(0.036f, 0.036f, 0.036f) * XMMatrixTranslation(0.09f, 0.04f, 0.0f)  // * XMMatrixTranspose(XMMatrixRotationRollPitchYaw(0.0f, 1.5708f, 1.5708f))
+			pBone->globalNodeTransform = XMMatrixTranspose(globalTransformation); //XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f) * XMMatrixScaling(0.036f, 0.036f, 0.036f) * XMMatrixTranslation(0.09f, 0.04f, 0.0f)  // * XMMatrixTranspose(XMMatrixRotationRollPitchYaw(0.0f, 1.5708f, 1.5708f))
 		}
 		else if (pBone->pNodeAnim) // give the areas that don't have bones but do have animation the global transform
 		{
-			XMStoreFloat4x4(&pBone->globalNodeTransform, XMMatrixTranspose(globalTransformation));
+			pBone->globalNodeTransform = XMMatrixTranspose(globalTransformation);
 		}
 
 		for (size_t i = 0; i < pBone->children.size(); i++)

@@ -130,13 +130,7 @@ namespace CPyburnRTXEngine
             return;
         }
 
-        std::vector<XMMATRIX> transposed(bones.size());
-        for (size_t i = 0; i < bones.size(); ++i)
-        {
-            transposed[i] = XMMatrixTranspose(bones[i]);
-        }
-
-        m_boneMatrices.CpuData = transposed;
+        m_boneMatrices.CpuData = bones;
         m_boneMatrices.UpdateUploadHeap();
     }
 

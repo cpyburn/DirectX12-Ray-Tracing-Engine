@@ -39,14 +39,8 @@ namespace CPyburnRTXEngine
 			int nodeId = 0;
 			bool hasBoneMapping = false;
 			const aiNodeAnim* pNodeAnim = nullptr;
-			XMFLOAT4X4 parentNodeTransformation = XMFLOAT4X4(1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				0, 0, 0, 1);
-			XMFLOAT4X4 globalNodeTransform = XMFLOAT4X4(1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				0, 0, 0, 1);
+			XMMATRIX parentNodeTransformation = XMMatrixIdentity();
+			XMMATRIX globalNodeTransform = XMMatrixIdentity();
 			std::vector<std::unique_ptr<Bone>> children;
 
 			Bone()
@@ -95,7 +89,8 @@ namespace CPyburnRTXEngine
 		XMVECTOR& CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim);
 		bool played = false;
 		//void CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim);
-		void CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
+		//void CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
+		XMVECTOR& CalcInterpolatedPositionXM(float animationTime, const aiNodeAnim* pNodeAnim);
 		int FindScaling(float animationTime, const aiNodeAnim* pNodeAnim);
 		int FindRotation(float animationTime, const aiNodeAnim* pNodeAnim);
 		int FindPosition(float animationTime, const aiNodeAnim* pNodeAnim);

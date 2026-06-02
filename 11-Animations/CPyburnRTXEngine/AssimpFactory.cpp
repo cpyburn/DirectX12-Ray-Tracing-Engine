@@ -76,7 +76,7 @@ namespace CPyburnRTXEngine
 			const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &paiMesh->mTextureCoords[0][i] : &aiVector3D(0.0f, 0.0f, 0.0f);
 			const aiVector3D* pNormal = &paiMesh->mNormals[i];
 			const aiVector3D* pTangent = &paiMesh->mTangents[i];
-			const aiVector3D* pBiTangent = &paiMesh->mBitangents[i];
+			//const aiVector3D* pBiTangent = &paiMesh->mBitangents[i];
 
 			VSVertices vertice;
 			vertice.position = XMFLOAT3(pPos->x, pPos->y, pPos->z);
@@ -99,13 +99,14 @@ namespace CPyburnRTXEngine
 			else
 				vertice.tangent = XMFLOAT3(pNormal->x, pNormal->y, pNormal->z);
 
+			// this is now done by the RTX shader
 			// hack: for missing data
-			if (paiMesh->mBitangents)
-			{
-				vertice.binormal = XMFLOAT3(pBiTangent->x, pBiTangent->y, pBiTangent->z);
-			}
-			else
-				vertice.binormal = XMFLOAT3(pNormal->x, pNormal->y, pNormal->z);
+			//if (paiMesh->mBitangents)
+			//{
+			//	vertice.binormal = XMFLOAT3(pBiTangent->x, pBiTangent->y, pBiTangent->z);
+			//}
+			//else
+			//	vertice.binormal = XMFLOAT3(pNormal->x, pNormal->y, pNormal->z);
 
 			meshEntry->vertices[i] = vertice;
 		}

@@ -8,7 +8,6 @@ struct STriVertex
     float2 texture;
     float3 normal;
     float3 tangent;
-    float3 binormal; // todo: drop for ray tracing
 };
 StructuredBuffer<STriVertex> BTriVertex : register(t0, space1);
 StructuredBuffer<uint3> gIndices : register(t1, space1);

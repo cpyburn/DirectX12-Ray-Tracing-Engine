@@ -18,7 +18,6 @@ namespace CPyburnRTXEngine
 			XMFLOAT2 texture;
 			XMFLOAT3 normal;
 			XMFLOAT3 tangent;
-			XMFLOAT3 binormal; // todo: drop for ray tracing
 		};
 
 		struct MeshEntry

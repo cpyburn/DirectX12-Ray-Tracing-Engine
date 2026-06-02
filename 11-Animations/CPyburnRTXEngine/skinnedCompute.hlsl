@@ -4,7 +4,6 @@ struct VSVertices
     float2 tex;
     float3 normal;
     float3 tangent;
-    float3 binormal;
 };
 
 struct VertexBoneData

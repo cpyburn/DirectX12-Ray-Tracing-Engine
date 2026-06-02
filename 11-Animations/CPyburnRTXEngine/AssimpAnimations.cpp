@@ -509,7 +509,7 @@ namespace CPyburnRTXEngine
 		m_animationCompute->CreateShaderResources(); // t1, t2, u0 for compute shader, t0 rtx shader
 
 		// put the indices heap position right after the vertices heap position since they are used together shader table
-		m_assimpFactory->GetIndicesBuffer().CreateShaderResourceView(); // t1 for rtx shader
+		m_assimpFactory->GetIndexBuffer().CreateShaderResourceView(); // t1 for rtx shader
 	}
 
 	void AssimpAnimations::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
@@ -538,13 +538,19 @@ namespace CPyburnRTXEngine
 			m_animationPlayer->Update(timer);
 			m_animationCompute->Update(m_animationPlayer->GetBones());
 
-			float time = timer.GetTotalSeconds();
-			if (time > 5.0f && played == false)
+			double time = timer.GetTotalSeconds();
+			if (time > 5.0 && played == false)
 			{
 				played = true;
 				m_animationPlayer->BlendClipByAnimationType(Animation::AnimationType::action_sword, true);
 			}
 		}
+	}
+
+	void AssimpAnimations::ReleaseUploadResources()
+	{
+		m_assimpFactory->ReleaseUploadResources();
+		m_animationCompute->ReleaseUploadResources();
 	}
 
 	void AssimpAnimations::Release()

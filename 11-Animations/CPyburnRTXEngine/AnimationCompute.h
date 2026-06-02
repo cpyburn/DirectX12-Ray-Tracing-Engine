@@ -30,5 +30,7 @@ namespace CPyburnRTXEngine
 		
 		void Update(const std::vector<XMMATRIX>& bones);
 		void Dispatch(ID3D12GraphicsCommandList4* commandList);
+
+		void ReleaseUploadResources();
 	};
 }

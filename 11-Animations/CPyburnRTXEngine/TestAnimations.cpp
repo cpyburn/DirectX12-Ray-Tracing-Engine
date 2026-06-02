@@ -48,13 +48,13 @@ namespace CPyburnRTXEngine
         // todo: move this eventually
         m_instanceData.resize(18);
         int count = 0;
-        for (size_t x = 0; x < 4; x++)
+        for (UINT x = 0; x < 4; x++)
         {
-            for (size_t y = 0; y < 4; y++)
+            for (UINT y = 0; y < 4; y++)
             {
                 if (count > 1)
                 {
-                    m_instanceData[count].world = XMMatrixRotationY(DirectX::XMConvertToRadians(180.0f)) * XMMatrixTranslation((float)x, 0, y);
+                    m_instanceData[count].world = XMMatrixRotationY(DirectX::XMConvertToRadians(180.0f)) * XMMatrixTranslation((float)x, 0, (float)y);
                 }
                 else
                 {
@@ -125,7 +125,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         // release any uploads that will not be used again
-        m_elfAnimated->GetAssimpFactory()->ReleaseUploadResource();
+        m_elfAnimated->ReleaseUploadResources();
         m_materialDataBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
     }
@@ -138,7 +138,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndicesBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
+            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
         }
 
@@ -720,8 +720,6 @@ namespace CPyburnRTXEngine
 
     void TestAnimations::createShaderTable()
     {
-
-
         const size_t kShaderId = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
         //const size_t kCbvSize = sizeof(D3D12_GPU_VIRTUAL_ADDRESS); // 8
         const size_t kSrvSize = sizeof(uint64_t); // descriptor pointer you store

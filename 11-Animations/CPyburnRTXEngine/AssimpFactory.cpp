@@ -361,7 +361,7 @@ namespace CPyburnRTXEngine
 	void AssimpFactory::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
 	{
 		m_vertexBuffer.CreateDeviceDependentResources(deviceResources);
-		m_triangleIndicesBuffer.CreateDeviceDependentResources(deviceResources);
+		m_indexBuffer.CreateDeviceDependentResources(deviceResources);
 	}
 
 	void AssimpFactory::CreateBuffers(ID3D12GraphicsCommandList4* commandList)
@@ -369,26 +369,26 @@ namespace CPyburnRTXEngine
 		m_vertexBuffer.CpuData = m_meshEntries[0].vertices; // todo: index 0 is the first mesh, but the Models map will have the correct mesh to use as the main mesh
 		m_vertexBuffer.CreateOnDefaultHeap(commandList, L"Model Buffer");
 
-		m_triangleIndicesBuffer.CpuData = m_meshEntries[0].indices;
-		m_triangleIndicesBuffer.CreateOnDefaultHeap(commandList, L"Index Buffer");
+		m_indexBuffer.CpuData = m_meshEntries[0].indices;
+		m_indexBuffer.CreateOnDefaultHeap(commandList, L"Index Buffer");
 	}
 
 	void AssimpFactory::CreateShaderResources()
 	{
 		m_vertexBuffer.CreateShaderResourceView();
-		m_triangleIndicesBuffer.CreateShaderResourceView();
+		m_indexBuffer.CreateShaderResourceView();
 	}
 
-	void AssimpFactory::ReleaseUploadResource()
+	void AssimpFactory::ReleaseUploadResources()
 	{
 		m_vertexBuffer.ReleaseUploadResource();
-		m_triangleIndicesBuffer.ReleaseUploadResource();
+		m_indexBuffer.ReleaseUploadResource();
 	}
 
 	void AssimpFactory::Release()
 	{
 		m_vertexBuffer.Release();
-		m_triangleIndicesBuffer.Release();
+		m_indexBuffer.Release();
 	}
 }
 

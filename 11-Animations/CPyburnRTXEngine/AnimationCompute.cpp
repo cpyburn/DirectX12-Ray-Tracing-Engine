@@ -156,5 +156,11 @@ namespace CPyburnRTXEngine
 
         PIXEndEvent(commandList);
     }
+
+    void AnimationCompute::ReleaseUploadResources()
+    {
+        m_boneBuffer.ReleaseUploadResource();
+        m_outVertices.ReleaseUploadResource();
+    }
 }
 

@@ -140,6 +140,8 @@ namespace CPyburnRTXEngine
 		void BoneTransform(float timeInSeconds, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 
 		void Update(DX::StepTimer const& timer);
+
+		void ReleaseUploadResources();
 		void Release();
 	};
 }

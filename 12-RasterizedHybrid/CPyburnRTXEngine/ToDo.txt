@@ -1,0 +1,20 @@
+TODO and things to consider as you go or want to go back and attempt
+
+next steps:
+move indices and vertices buffer creation to assimpfactory
+get json method for models
+add a second model
+
+see if CpuData can be a pointer to the actual data instead of copy
+create a class for loading shaders
+double/triple buffer bones upload data? treat as CBV kind of type?
+double/triple buffer blas resources by next frame?
+consider using a ring buffer for dynamic resources like bones and BLAS
+updating transposes bones in a loop, would be more efficient to do it somewhere else where it is already being looped
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> to ID3D12GraphicsCommandList4* params
+
+index buffer
+vertex buffer
+
+base ptr to vertex
+

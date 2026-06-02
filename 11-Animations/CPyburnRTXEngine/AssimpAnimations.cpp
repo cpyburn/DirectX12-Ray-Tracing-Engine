@@ -9,13 +9,12 @@ namespace CPyburnRTXEngine
 	std::unordered_map<UINT, std::string> AssimpAnimations::AnimationTypes;
 	std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> AssimpAnimations::Animations;
 
-	XMVECTOR& AssimpAnimations::CalcInterpolatedScalingXM(float animationTime, const aiNodeAnim* pNodeAnim)
+	XMVECTOR AssimpAnimations::CalcInterpolatedScalingXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
-		XMVECTOR out;
 		if (pNodeAnim->mNumScalingKeys == 1)
 		{
 			const aiVector3D& scaling = pNodeAnim->mScalingKeys[0].mValue;
-			return out = { scaling.x, scaling.y, scaling.z };
+			return { scaling.x, scaling.y, scaling.z };
 		}
 
 		int scalingIndex = FindScaling(animationTime, pNodeAnim);
@@ -27,7 +26,7 @@ namespace CPyburnRTXEngine
 		const aiVector3D& end = pNodeAnim->mScalingKeys[nextScalingIndex].mValue;
 		XMVECTOR xmEnd = { end.x, end.y, end.z };
 		XMVECTOR xmDelta = xmEnd - xmStart;
-		return out = xmStart + factor * xmDelta;
+		return xmStart + factor * xmDelta;
 	}
 	
 	//void AssimpAnimations::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
@@ -48,13 +47,12 @@ namespace CPyburnRTXEngine
 	//	out = start + factor * delta;
 	//}
 
-	XMVECTOR& AssimpAnimations::CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim)
+	XMVECTOR AssimpAnimations::CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
-		XMVECTOR out;
 		if (pNodeAnim->mNumRotationKeys == 1)
 		{
 			const aiQuaternion& rotationQ = pNodeAnim->mRotationKeys[0].mValue;
-			return out = { rotationQ.x, rotationQ.y, rotationQ.z, rotationQ.w };
+			return { rotationQ.x, rotationQ.y, rotationQ.z, rotationQ.w };
 		}
 
 		int rotationIndex = FindRotation(animationTime, pNodeAnim);
@@ -65,8 +63,7 @@ namespace CPyburnRTXEngine
 		XMVECTOR xmStartRotationQ = { startRotationQ.x, startRotationQ.y, startRotationQ.z, startRotationQ.w };
 		const aiQuaternion& endRotationQ = pNodeAnim->mRotationKeys[nextRotationIndex].mValue;
 		XMVECTOR xmEndRotationQ = { endRotationQ.x, endRotationQ.y, endRotationQ.z, endRotationQ.w };
-		out = XMQuaternionSlerp(xmStartRotationQ, xmEndRotationQ, factor);
-		return out = XMVector4Normalize(out);
+		return XMVector4Normalize(XMQuaternionSlerp(xmStartRotationQ, xmEndRotationQ, factor));
 	}
 
 	//void AssimpAnimations::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim)
@@ -105,13 +102,12 @@ namespace CPyburnRTXEngine
 	//	out = start + factor * delta;
 	//}
 
-	XMVECTOR& AssimpAnimations::CalcInterpolatedPositionXM(float animationTime, const aiNodeAnim* pNodeAnim)
+	XMVECTOR AssimpAnimations::CalcInterpolatedPositionXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
-		XMVECTOR out;
 		if (pNodeAnim->mNumPositionKeys == 1)
 		{
 			const aiVector3D& position = pNodeAnim->mPositionKeys[0].mValue;
-			return out = { position.x, position.y, position.z };
+			return { position.x, position.y, position.z };
 		}
 
 		int positionIndex = FindPosition(animationTime, pNodeAnim);
@@ -123,7 +119,7 @@ namespace CPyburnRTXEngine
 		const aiVector3D& end = pNodeAnim->mPositionKeys[nextPositionIndex].mValue;
 		XMVECTOR xmEnd = { end.x, end.y, end.z };
 		XMVECTOR xmDelta = xmEnd - xmStart;
-		return out = xmStart + factor * xmDelta;
+		return xmStart + factor * xmDelta;
 	}
 
 	int AssimpAnimations::FindScaling(float animationTime, const aiNodeAnim* pNodeAnim)
@@ -499,11 +495,20 @@ namespace CPyburnRTXEngine
 	{
 		m_animationCompute = std::make_unique<AnimationCompute>();
 		m_animationCompute->CreateDeviceDependentResources(deviceResources);
+	}
+
+	void AssimpAnimations::CreateBuffers()
+	{
 		m_animationCompute->CreateBuffers(m_assimpFactory->GetMeshEntries()[0].vertices, m_bones, m_boneInfo);
+	}
+
+	void AssimpAnimations::CreateShaderResources()
+	{
+		m_assimpFactory->GetVertexBuffer().CreateShaderResourceView();
+		m_animationCompute->CreateShaderResources();
 
 		// put the indices heap position right after the vertices heap position since they are used together shader table
-		m_assimpFactory->GetIndicesBuffer().GetNewHeapPosition(); // create new heap position for indices buffer
-		m_assimpFactory->GetIndicesBuffer().CreateShaderResourceView(); // create a shader resource view to that position
+		m_assimpFactory->GetIndicesBuffer().CreateShaderResourceView(); // create new heap position for indices buffer
 	}
 
 	void AssimpAnimations::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)

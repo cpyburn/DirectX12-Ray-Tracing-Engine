@@ -125,6 +125,8 @@ namespace CPyburnRTXEngine
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
+		void CreateShaderResources();
+
 		void ReleaseUploadResource();
 
 		void Release();

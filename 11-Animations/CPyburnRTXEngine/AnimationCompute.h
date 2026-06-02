@@ -26,6 +26,7 @@ namespace CPyburnRTXEngine
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones);
+		void CreateShaderResources();
 		
 		void Update(const std::vector<XMMATRIX>& bones);
 		void Dispatch(ID3D12GraphicsCommandList4* commandList);

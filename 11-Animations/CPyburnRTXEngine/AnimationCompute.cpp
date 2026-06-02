@@ -114,12 +114,15 @@ namespace CPyburnRTXEngine
 
         DX::ThrowIfFailed(commandAllocator->Reset());
         DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
+    }
 
+    void AnimationCompute::CreateShaderResources()
+    {
         m_baseVertices.CreateShaderResourceView();
         m_boneBuffer.CreateShaderResourceView();
         // since bones are usually small, going to use upload heap
         m_boneMatrices.CreateShaderResourceView(true);
-		m_outVertices.CreateUnorderedAccessView(L"Output Vertices Buffer");
+        m_outVertices.CreateUnorderedAccessView(L"Output Vertices Buffer");
     }
 
     void AnimationCompute::Update(const std::vector<XMMATRIX>& bones)

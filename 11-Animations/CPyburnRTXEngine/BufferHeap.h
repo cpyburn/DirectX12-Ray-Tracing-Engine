@@ -16,8 +16,6 @@ namespace CPyburnRTXEngine
         void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
         {
             m_deviceResources = deviceResources;
-
-            CreateHeapPosition();
         }
 
         void CreateHeapPosition()
@@ -114,6 +112,8 @@ namespace CPyburnRTXEngine
 
         void CreateUnorderedAccessView(const WCHAR* name = L"Upload buffer not named")
         {
+            CreateHeapPosition();
+
             UINT stride = static_cast<UINT>(sizeof(T));
             //CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(count * stride, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
             //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
@@ -159,6 +159,8 @@ namespace CPyburnRTXEngine
 
         void CreateShaderResourceView(bool useUploadHeap = false)
         {
+            CreateHeapPosition();
+
             D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER;
             srvDesc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;

@@ -67,6 +67,7 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
         m_elfAnimated->GetAssimpFactory()->CreateBuffers(commandList.Get());
+        m_elfAnimated->CreateBuffers();
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -90,17 +91,6 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CpuData = planeVertices;
 		m_planeVertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Plane Buffer");
 
-        // this is just for testing
-        for (auto& unorderedModel : Models)
-        {
-            Model& model = unorderedModel.second;
-            for (size_t texIndex = 0; texIndex < model.textures.size(); texIndex++)
-            {
-                std::string textureLocation = model.textures[texIndex];
-                Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + textureLocation, commandList.Get());
-            }
-        }
-
         // load model images
         //{
         //    if (m_elfAnimated->GetAssimpFactory()->GetMeshEntries().size() > 0)
@@ -110,6 +100,21 @@ namespace CPyburnRTXEngine
         //        //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
         //    }
         //}
+
+        // after all the buffers are created, create the shader resource views in the correct order for shader table
+        m_elfAnimated->CreateShaderResources();
+        m_materialDataBuffer.CreateShaderResourceView();
+
+        // create textures AFTER the last shader resource view 
+        for (auto& unorderedModel : Models)
+        {
+            Model& model = unorderedModel.second;
+            for (size_t texIndex = 0; texIndex < model.textures.size(); texIndex++)
+            {
+                std::string textureLocation = model.textures[texIndex];
+                Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + textureLocation, commandList.Get());
+            }
+        }
 
         // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
         DX::ThrowIfFailed(commandList->Close());
@@ -795,8 +800,6 @@ namespace CPyburnRTXEngine
 
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mTlasSrvPosition[i]));
         }
-
-        m_materialDataBuffer.CreateShaderResourceView();
     }
 
     void TestAnimations::createShaderResourcesForWindowSize()

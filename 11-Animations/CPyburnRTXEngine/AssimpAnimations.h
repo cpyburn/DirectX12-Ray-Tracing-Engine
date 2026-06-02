@@ -90,8 +90,11 @@ namespace CPyburnRTXEngine
 		// for now this is a string, but may be a map of <key, object holdind everything needed>
 		std::vector<Bone*> m_globalBones; // this is just a place for storing bones that are useful, have names, etc.
 
-		void CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
-		void CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim);
+		XMVECTOR& CalcInterpolatedScalingXM(float animationTime, const aiNodeAnim* pNodeAnim);
+		//void CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
+		XMVECTOR& CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim);
+		bool played = false;
+		//void CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim);
 		void CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
 		int FindScaling(float animationTime, const aiNodeAnim* pNodeAnim);
 		int FindRotation(float animationTime, const aiNodeAnim* pNodeAnim);

@@ -8,13 +8,14 @@ namespace CPyburnRTXEngine
 {
 	std::unordered_map<UINT, std::string> AssimpAnimations::AnimationTypes;
 	std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> AssimpAnimations::Animations;
-	
-	void AssimpAnimations::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
+
+	XMVECTOR& AssimpAnimations::CalcInterpolatedScalingXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
+		XMVECTOR out;
 		if (pNodeAnim->mNumScalingKeys == 1)
 		{
-			out = pNodeAnim->mScalingKeys[0].mValue;
-			return;
+			const aiVector3D& scaling = pNodeAnim->mScalingKeys[0].mValue;
+			return out = { scaling.x, scaling.y, scaling.z };
 		}
 
 		int scalingIndex = FindScaling(animationTime, pNodeAnim);
@@ -22,17 +23,38 @@ namespace CPyburnRTXEngine
 		float deltaTime = (float)(pNodeAnim->mScalingKeys[nextScalingIndex].mTime - pNodeAnim->mScalingKeys[scalingIndex].mTime);
 		float factor = (animationTime - (float)pNodeAnim->mScalingKeys[scalingIndex].mTime) / deltaTime;
 		const aiVector3D& start = pNodeAnim->mScalingKeys[scalingIndex].mValue;
+		XMVECTOR xmStart = { start.x, start.y, start.z };
 		const aiVector3D& end = pNodeAnim->mScalingKeys[nextScalingIndex].mValue;
-		aiVector3D delta = end - start;
-		out = start + factor * delta;
+		XMVECTOR xmEnd = { end.x, end.y, end.z };
+		XMVECTOR xmDelta = xmEnd - xmStart;
+		return out = xmStart + factor * xmDelta;
 	}
+	
+	//void AssimpAnimations::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
+	//{
+	//	if (pNodeAnim->mNumScalingKeys == 1)
+	//	{
+	//		out = pNodeAnim->mScalingKeys[0].mValue;
+	//		return;
+	//	}
 
-	void AssimpAnimations::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim)
+	//	int scalingIndex = FindScaling(animationTime, pNodeAnim);
+	//	unsigned int nextScalingIndex = (scalingIndex + 1);
+	//	float deltaTime = (float)(pNodeAnim->mScalingKeys[nextScalingIndex].mTime - pNodeAnim->mScalingKeys[scalingIndex].mTime);
+	//	float factor = (animationTime - (float)pNodeAnim->mScalingKeys[scalingIndex].mTime) / deltaTime;
+	//	const aiVector3D& start = pNodeAnim->mScalingKeys[scalingIndex].mValue;
+	//	const aiVector3D& end = pNodeAnim->mScalingKeys[nextScalingIndex].mValue;
+	//	aiVector3D delta = end - start;
+	//	out = start + factor * delta;
+	//}
+
+	XMVECTOR& AssimpAnimations::CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
+		XMVECTOR out;
 		if (pNodeAnim->mNumRotationKeys == 1)
 		{
-			out = pNodeAnim->mRotationKeys[0].mValue;
-			return;
+			const aiQuaternion& rotationQ = pNodeAnim->mRotationKeys[0].mValue;
+			return out = { rotationQ.x, rotationQ.y, rotationQ.z, rotationQ.w };
 		}
 
 		int rotationIndex = FindRotation(animationTime, pNodeAnim);
@@ -40,10 +62,30 @@ namespace CPyburnRTXEngine
 		float deltaTime = (float)(pNodeAnim->mRotationKeys[nextRotationIndex].mTime - pNodeAnim->mRotationKeys[rotationIndex].mTime);
 		float factor = (animationTime - (float)pNodeAnim->mRotationKeys[rotationIndex].mTime) / deltaTime;
 		const aiQuaternion& startRotationQ = pNodeAnim->mRotationKeys[rotationIndex].mValue;
+		XMVECTOR xmStartRotationQ = { startRotationQ.x, startRotationQ.y, startRotationQ.z, startRotationQ.w };
 		const aiQuaternion& endRotationQ = pNodeAnim->mRotationKeys[nextRotationIndex].mValue;
-		aiQuaternion::Interpolate(out, startRotationQ, endRotationQ, factor);
-		out = out.Normalize();
+		XMVECTOR xmEndRotationQ = { endRotationQ.x, endRotationQ.y, endRotationQ.z, endRotationQ.w };
+		out = XMQuaternionSlerp(xmStartRotationQ, xmEndRotationQ, factor);
+		return out = XMVector4Normalize(out);
 	}
+
+	//void AssimpAnimations::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim)
+	//{
+	//	if (pNodeAnim->mNumRotationKeys == 1)
+	//	{
+	//		out = pNodeAnim->mRotationKeys[0].mValue;
+	//		return;
+	//	}
+
+	//	int rotationIndex = FindRotation(animationTime, pNodeAnim);
+	//	unsigned int nextRotationIndex = (rotationIndex + 1);
+	//	float deltaTime = (float)(pNodeAnim->mRotationKeys[nextRotationIndex].mTime - pNodeAnim->mRotationKeys[rotationIndex].mTime);
+	//	float factor = (animationTime - (float)pNodeAnim->mRotationKeys[rotationIndex].mTime) / deltaTime;
+	//	const aiQuaternion& startRotationQ = pNodeAnim->mRotationKeys[rotationIndex].mValue;
+	//	const aiQuaternion& endRotationQ = pNodeAnim->mRotationKeys[nextRotationIndex].mValue;
+	//	aiQuaternion::Interpolate(out, startRotationQ, endRotationQ, factor);
+	//	out = out.Normalize();
+	//}
 
 	void AssimpAnimations::CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
 	{
@@ -163,33 +205,17 @@ namespace CPyburnRTXEngine
 		if (pBone->pNodeAnim)
 		{
 			// scaling
-			aiVector3D scalingCurrent;
-			CalcInterpolatedScaling(scalingCurrent, animationTimeCurrent, pBone->pNodeAnim);
-			XMVECTOR xmScalingCurrent = { scalingCurrent.x, scalingCurrent.y, scalingCurrent.z };
-
-			aiVector3D scalingTarget;
-			CalcInterpolatedScaling(scalingTarget, animationTimeTarget, pBone->pNodeAnim);
-			XMVECTOR xmScalingTarget = { scalingTarget.x, scalingTarget.y, scalingTarget.z };
-
+			XMVECTOR xmScalingCurrent = CalcInterpolatedScalingXM(animationTimeCurrent, pBone->pNodeAnim);
+			XMVECTOR xmScalingTarget = CalcInterpolatedScalingXM(animationTimeTarget, pBone->pNodeAnim);
 			XMVECTOR xmScaling = XMVectorLerp(xmScalingCurrent, xmScalingTarget, blendFactor);
 			XMMATRIX scalingBlendedM = XMMatrixScalingFromVector(xmScaling);
 
-
 			// rotation
-			aiQuaternion rotationCurrentQ;
-			CalcInterpolatedRotation(rotationCurrentQ, animationTimeCurrent, pBone->pNodeAnim);
+			XMVECTOR rotationCurrentQ = CalcInterpolatedRotationXM(animationTimeCurrent, pBone->pNodeAnim);
+			XMVECTOR rotationTargetQ = CalcInterpolatedRotationXM(animationTimeTarget, pBone->pNodeAnim);
+			XMVECTOR rotationBlendedQ = XMQuaternionSlerp(rotationCurrentQ, rotationTargetQ, blendFactor);
 
-			aiQuaternion rotationTargetQ;
-			CalcInterpolatedRotation(rotationTargetQ, animationTimeTarget, pBone->pNodeAnim);
-
-			aiQuaternion rotationBlendedQ;
-			aiQuaternion::Interpolate(rotationBlendedQ, rotationCurrentQ, rotationTargetQ, blendFactor);
-
-			XMFLOAT3X3 rotationBlended(rotationBlendedQ.GetMatrix().a1, rotationBlendedQ.GetMatrix().b1, rotationBlendedQ.GetMatrix().c1,
-				rotationBlendedQ.GetMatrix().a2, rotationBlendedQ.GetMatrix().b2, rotationBlendedQ.GetMatrix().c2,
-				rotationBlendedQ.GetMatrix().a3, rotationBlendedQ.GetMatrix().b3, rotationBlendedQ.GetMatrix().c3);
-			XMMATRIX rotationBlendedM = XMLoadFloat3x3(&rotationBlended);
-
+			XMMATRIX rotationBlendedM = XMMatrixRotationQuaternion(rotationBlendedQ);
 
 			// translation
 			aiVector3D translationCurrent;
@@ -237,17 +263,10 @@ namespace CPyburnRTXEngine
 
 		if (pBone->pNodeAnim)
 		{
-			aiVector3D scaling;
-			CalcInterpolatedScaling(scaling, animationTime, pBone->pNodeAnim);
-			XMMATRIX scalingM = XMMatrixScaling(scaling.x, scaling.y, scaling.z);
-
-			aiQuaternion rotationQ;
-			CalcInterpolatedRotation(rotationQ, animationTime, pBone->pNodeAnim);
-
-			XMFLOAT3X3 rotation(rotationQ.GetMatrix().a1, rotationQ.GetMatrix().b1, rotationQ.GetMatrix().c1,
-				rotationQ.GetMatrix().a2, rotationQ.GetMatrix().b2, rotationQ.GetMatrix().c2,
-				rotationQ.GetMatrix().a3, rotationQ.GetMatrix().b3, rotationQ.GetMatrix().c3);
-			XMMATRIX rotationM = XMLoadFloat3x3(&rotation);
+			XMVECTOR scaling = CalcInterpolatedScalingXM(animationTime, pBone->pNodeAnim);
+			XMMATRIX scalingM = XMMatrixScalingFromVector(scaling);
+			XMVECTOR rotationQ = CalcInterpolatedRotationXM(animationTime, pBone->pNodeAnim);
+			XMMATRIX rotationM = XMMatrixRotationQuaternion(rotationQ);
 
 			aiVector3D translation;
 			CalcInterpolatedPosition(translation, animationTime, pBone->pNodeAnim);
@@ -498,6 +517,13 @@ namespace CPyburnRTXEngine
 		{
 			m_animationPlayer->Update(timer);
 			m_animationCompute->Update(m_animationPlayer->GetBones());
+
+			float time = timer.GetTotalSeconds();
+			if (time > 5.0f && played == false)
+			{
+				played = true;
+				m_animationPlayer->BlendClipByAnimationType(Animation::AnimationType::action_sword, true);
+			}
 		}
 	}
 

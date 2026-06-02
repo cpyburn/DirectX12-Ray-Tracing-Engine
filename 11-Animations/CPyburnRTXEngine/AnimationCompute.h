@@ -8,7 +8,7 @@ namespace CPyburnRTXEngine
 	class AnimationCompute
 	{
 	private:
-		BufferHeap<AssimpFactory::VSVertices> m_baseVertices;
+		BufferHeap<AssimpFactory::VSVertices>* m_baseVertices = nullptr;
 		BufferHeap<AssimpAnimations::VertexBoneData> m_boneBuffer;
 		BufferHeap<XMMATRIX> m_boneMatrices;
 		BufferHeap<AssimpFactory::VSVertices> m_outVertices;
@@ -25,12 +25,10 @@ namespace CPyburnRTXEngine
 		~AnimationCompute();
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
-		void CreateBuffers(const std::vector<AssimpFactory::VSVertices>& vertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones);
+		void CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones);
 		void CreateShaderResources();
 		
 		void Update(const std::vector<XMMATRIX>& bones);
 		void Dispatch(ID3D12GraphicsCommandList4* commandList);
-		
-		//void Initialize();
 	};
 }

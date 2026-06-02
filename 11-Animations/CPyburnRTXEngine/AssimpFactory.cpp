@@ -319,18 +319,8 @@ namespace CPyburnRTXEngine
 		return newPath;
 	}
 
-	AssimpFactory::AssimpFactory() :
+	AssimpFactory::AssimpFactory(const std::string& fileName, unsigned int customFlags) :
 		m_boundingSphereRadiusTranslation(XMMatrixIdentity())
-	{
-
-	}
-
-	AssimpFactory::~AssimpFactory()
-	{
-
-	}
-
-	void AssimpFactory::Initialize(const std::string& fileName, unsigned int customFlags)
 	{
 		m_pathFileName = fileName;
 
@@ -361,6 +351,11 @@ namespace CPyburnRTXEngine
 			MeshEntry* mesh = &m_meshEntries[i];
 			CreateSingleMeshEntry(i, numVertices, numIndices, mesh);
 		}
+	}
+
+	AssimpFactory::~AssimpFactory()
+	{
+
 	}
 
 	void AssimpFactory::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)

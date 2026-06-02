@@ -66,8 +66,7 @@ namespace CPyburnRTXEngine
 
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_elfAnimated->GetAssimpFactory()->CreateBuffers(commandList.Get());
-        m_elfAnimated->CreateBuffers();
+        m_elfAnimated->CreateBuffers(commandList.Get());
 
         // create materials
         m_materialData.resize(m_instanceData.size());
@@ -102,10 +101,10 @@ namespace CPyburnRTXEngine
         //}
 
         // after all the buffers are created, create the shader resource views in the correct order for shader table
-        m_elfAnimated->CreateShaderResources();
-        m_materialDataBuffer.CreateShaderResourceView();
+        m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute, // t0, t1 for rtx shader
+        m_materialDataBuffer.CreateShaderResourceView(); // t2 for rtx shader
 
-        // create textures AFTER the last shader resource view 
+        // create textures AFTER the last shader views
         for (auto& unorderedModel : Models)
         {
             Model& model = unorderedModel.second;
@@ -895,24 +894,21 @@ namespace CPyburnRTXEngine
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
 
+        m_materialDataBuffer.CreateDeviceDependentResources(deviceResources);
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
 
+        // load all models
         for (auto& unorderedModel : Models)
         {
             Model& model = unorderedModel.second;
 
             std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
-            model.assimpFactory = std::make_unique<AssimpFactory>();
-            model.assimpFactory->Initialize(modelPath);
+            model.assimpFactory = std::make_unique<AssimpFactory>(modelPath);
             model.assimpFactory->CreateDeviceDependentResources(deviceResources);
 
             m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());
             m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
         }
-
-        // this needs to come 3 positions after the vertex buffer srv position (output vertices on animated model), since we create the Shader Table in that order and to work contiguously
-        // also material srv has to be created last of ALL heap positions for textures to work contiguously
-		m_materialDataBuffer.CreateDeviceDependentResources(deviceResources);
 
         CreateCommandObjects();
         CreateBuffers();

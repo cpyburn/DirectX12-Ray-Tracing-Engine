@@ -497,18 +497,19 @@ namespace CPyburnRTXEngine
 		m_animationCompute->CreateDeviceDependentResources(deviceResources);
 	}
 
-	void AssimpAnimations::CreateBuffers()
+	void AssimpAnimations::CreateBuffers(ID3D12GraphicsCommandList4* commandList)
 	{
-		m_animationCompute->CreateBuffers(m_assimpFactory->GetMeshEntries()[0].vertices, m_bones, m_boneInfo);
+		m_assimpFactory->CreateBuffers(commandList);
+		m_animationCompute->CreateBuffers(commandList, &m_assimpFactory->GetVertexBuffer(), m_bones, m_boneInfo);
 	}
 
 	void AssimpAnimations::CreateShaderResources()
 	{
-		m_assimpFactory->GetVertexBuffer().CreateShaderResourceView();
-		m_animationCompute->CreateShaderResources();
+		m_assimpFactory->GetVertexBuffer().CreateShaderResourceView(); // t0 for compute shader
+		m_animationCompute->CreateShaderResources(); // t1, t2, u0 for compute shader, t0 rtx shader
 
 		// put the indices heap position right after the vertices heap position since they are used together shader table
-		m_assimpFactory->GetIndicesBuffer().CreateShaderResourceView(); // create new heap position for indices buffer
+		m_assimpFactory->GetIndicesBuffer().CreateShaderResourceView(); // t1 for rtx shader
 	}
 
 	void AssimpAnimations::BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)

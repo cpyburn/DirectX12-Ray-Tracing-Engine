@@ -133,7 +133,7 @@ namespace CPyburnRTXEngine
 		~AssimpAnimations();
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
-		void CreateBuffers();
+		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 		void CreateShaderResources();
 
 		void BoneTransformBlended(float blendFactor, float timeInSecondsCurrent, float timeInSecondsTarget, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);

@@ -108,10 +108,7 @@ namespace CPyburnRTXEngine
 		BufferHeap<UINT>& GetIndicesBuffer() { return m_triangleIndicesBuffer; }
 		const aiScene* GetAiScene() { return m_pScene; }
 
-		AssimpFactory();
-		~AssimpFactory();
-
-		void Initialize(const std::string& fileName,
+		AssimpFactory(const std::string& fileName,
 			unsigned int customFlags = aiProcess_Triangulate
 			//| aiProcess_MakeLeftHanded
 			| aiProcess_GenSmoothNormals
@@ -120,8 +117,8 @@ namespace CPyburnRTXEngine
 			| aiProcess_JoinIdenticalVertices
 			| aiProcess_CalcTangentSpace
 			// todo: remove the extra processing the shaders and then enable this
-			| aiPostProcessSteps::aiProcess_LimitBoneWeights
-		);
+			| aiPostProcessSteps::aiProcess_LimitBoneWeights);
+		~AssimpFactory();
 
 		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);

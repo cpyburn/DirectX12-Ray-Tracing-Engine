@@ -73,7 +73,7 @@ namespace CPyburnRTXEngine
 		static const UINT countOfConstantBuffers = 3;
 		BufferConstant<XMFLOAT4[9]> mpConstantBuffer[countOfConstantBuffers];
 
-		AssimpFactory m_elfStatic;
+		AssimpFactory* m_elfStatic;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
 	public:

@@ -115,7 +115,6 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandAllocator->Reset());
         DX::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
 
-        const UINT count = (UINT)(vertices.size());
         m_baseVertices.CreateShaderResourceView();
         m_boneBuffer.CreateShaderResourceView();
         // since bones are usually small, going to use upload heap

@@ -17,19 +17,23 @@ namespace CPyburnRTXEngine
         {
             m_deviceResources = deviceResources;
 
-            GetNewHeapPosition();
+            CreateHeapPosition();
+        }
+
+        void CreateHeapPosition()
+        {
+            if (HeapIndex == MAXUINT)
+            {
+                HeapIndex = GraphicsContexts::GetAvailableHeapPosition();
+                CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetCpuHandle(HeapIndex));
+                GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetGpuHandle(HeapIndex));
+            }
         }
 
         void GetNewHeapPosition()
 		{
             ReleaseHeapPosition();
-
-			if (HeapIndex == MAXUINT)
-			{
-				HeapIndex = GraphicsContexts::GetAvailableHeapPosition();
-				CpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetCpuHandle(HeapIndex));
-				GpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::GetGpuHandle(HeapIndex));
-			}
+            CreateHeapPosition();
 		}
 
         BufferHeap()

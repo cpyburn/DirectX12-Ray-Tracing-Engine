@@ -102,6 +102,8 @@ namespace CPyburnRTXEngine
 		struct MaterialData
 		{
 			UINT baseColorTexIndex = 0;
+			UINT normalTexIndex = 0;
+			UINT ormTexIndex = 0;
 		};
 		std::vector<MaterialData> m_materialData;
 		BufferHeap<MaterialData> m_materialDataBuffer;

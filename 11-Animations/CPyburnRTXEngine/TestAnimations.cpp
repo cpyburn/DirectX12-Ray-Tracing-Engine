@@ -70,10 +70,6 @@ namespace CPyburnRTXEngine
 
         // create materials
         m_materialData.resize(m_instanceData.size());
-        for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
-        {
-            m_materialData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
-        }
 		m_materialDataBuffer.CpuData = m_materialData;
 		m_materialDataBuffer.CreateOnDefaultHeap(commandList.Get(), L"Material Buffer");
 
@@ -114,6 +110,24 @@ namespace CPyburnRTXEngine
                 Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + textureLocation, commandList.Get());
             }
         }
+
+        // load the normal and the ORM
+        std::string outExtension;
+        std::string fileName = RemoveExtension(Models[1].textures[0], outExtension) + "_NRM." + outExtension;
+        Texture::HeapTexture normal = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + Models[1].contentLocation + fileName, commandList.Get());
+
+        fileName = RemoveExtension(Models[1].textures[0], outExtension) + "_ORM." + outExtension;
+        Texture::HeapTexture pbrOrm = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + Models[1].contentLocation + fileName, commandList.Get());
+
+        for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
+        {
+            m_materialData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
+            m_materialData[i].normalTexIndex = normal.indexInMaterialBuffer;
+            m_materialData[i].ormTexIndex = pbrOrm.indexInMaterialBuffer;
+        }
+
+        m_materialDataBuffer.CpuData = m_materialData;
+        m_materialDataBuffer.CopyUploadToDefault(commandList.Get());
 
         // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
         DX::ThrowIfFailed(commandList->Close());

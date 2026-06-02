@@ -6,6 +6,7 @@
 
 namespace CPyburnRTXEngine
 {
+	UINT Texture::m_textureStartOnHeap = 0;
     std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_texturesUpload;
     std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_textures;
     std::unordered_map<std::string, Texture::HeapTexture> Texture::m_loadedTextures;
@@ -60,6 +61,7 @@ namespace CPyburnRTXEngine
 	Texture::HeapTexture Texture::LoadTextureHeap(const std::string& spath, ID3D12GraphicsCommandList* commandList)
     {
 		m_mutex.lock();
+
 		// check to see if texture exists
 		Texture::HeapTexture heapTexture;
 		if (Texture::TryGetTextureHeap(spath, heapTexture))
@@ -158,6 +160,13 @@ namespace CPyburnRTXEngine
 #pragma endregion
 		}
 
+		if (m_textureStartOnHeap == 0)
+		{
+			m_textureStartOnHeap = heapTexture.heapPosition;
+		}
+
+		heapTexture.indexInMaterialBuffer = heapTexture.heapPosition - m_textureStartOnHeap;
+
 		m_mutex.unlock();
 
 		return heapTexture;
@@ -167,7 +176,7 @@ namespace CPyburnRTXEngine
     {
 		m_mutex.lock();
 		// todo: revisit this
-		Texture::m_textures.clear();
+		Texture::m_textures.clear();	
 		Texture::m_loadedTextures.clear();
 		Texture::m_texturesUpload.clear();
 		m_mutex.unlock();

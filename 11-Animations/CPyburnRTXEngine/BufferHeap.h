@@ -147,7 +147,7 @@ namespace CPyburnRTXEngine
                 resourceData.SlicePitch = 0;
 
                 CD3DX12_RESOURCE_BARRIER indexBufferResourceBarrier =
-                    CD3DX12_RESOURCE_BARRIER::Transition(DefaultHeapResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+                    CD3DX12_RESOURCE_BARRIER::Transition(DefaultHeapResource.Get(), D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
                 commandList->ResourceBarrier(1, &indexBufferResourceBarrier);
 
                 UpdateSubresources(commandList, DefaultHeapResource.Get(), UploadHeapResource.Get(), 0, 0, 1, &resourceData);

@@ -1,6 +1,3 @@
-// 4.2 Ray - Tracing Shaders 04 - Shaders.hlsl
-
-// 4.3.a Ray-Generation Shader
 RaytracingAccelerationStructure gRtScene : register(t0, space0);
 RWTexture2D<float4> gOutput : register(u0, space0);
 
@@ -18,6 +15,8 @@ StructuredBuffer<uint3> gIndices : register(t1, space1);
 struct MaterialData
 {
     uint baseColorTexIndex;
+    uint normalTexIndex;
+    uint ormTexIndex;
 };
 StructuredBuffer<MaterialData> gMaterials : register(t2, space1);
 Texture2D<float4> gTextures[] : register(t3, space1);
@@ -127,22 +126,42 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v1.texture * weights.y +
         v2.texture * weights.z;
 
-    //float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
     MaterialData material = gMaterials[InstanceID()];
-    float4 texColor = gTextures[NonUniformResourceIndex(material.baseColorTexIndex)].SampleLevel(gSampler, uv, 0);
 
-    // Interpolate the normal from the vertex buffer
+    Texture2D<float4> baseColorTex = gTextures[NonUniformResourceIndex(material.baseColorTexIndex)];
+    Texture2D<float4> normalTex = gTextures[NonUniformResourceIndex(material.normalTexIndex)];
+    Texture2D<float4> ormTex = gTextures[NonUniformResourceIndex(material.ormTexIndex)];
+
+    float3 baseColor = baseColorTex.SampleLevel(gSampler, uv, 0).rgb;
+    float3 orm = ormTex.SampleLevel(gSampler, uv, 0).rgb;
+
+    float ao = orm.r;
+    float roughness = orm.g;
+    float metallic = orm.b;
+
     float3 normalOS =
         v0.normal * weights.x +
         v1.normal * weights.y +
         v2.normal * weights.z;
-
     normalOS = normalize(normalOS);
 
-    // Convert object-space normal to world-space normal
-    // This is correct for rotations/translations. If you add non-uniform scaling later,
-    // use the inverse-transpose version instead.
-    float3 normalWS = normalize(mul((float3x3) ObjectToWorld3x4(), normalOS));
+    float3 tangentOS =
+        v0.tangent * weights.x +
+        v1.tangent * weights.y +
+        v2.tangent * weights.z;
+    tangentOS = normalize(tangentOS);
+
+    float3 bitangentOS = normalize(cross(normalOS, tangentOS));
+
+    float3 normalTS = normalTex.SampleLevel(gSampler, uv, 0).xyz * 2.0f - 1.0f;
+
+    float3x3 TBN = float3x3(
+        normalize(mul((float3x3) ObjectToWorld3x4(), tangentOS)),
+        normalize(mul((float3x3) ObjectToWorld3x4(), bitangentOS)),
+        normalize(mul((float3x3) ObjectToWorld3x4(), normalOS))
+    );
+
+    float3 normalWS = normalize(mul(normalTS, TBN));
 
     float hitT = RayTCurrent();
     float3 rayOriginW = WorldRayOrigin();
@@ -150,11 +169,8 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     float3 posW = rayOriginW + hitT * rayDirW;
 
     float3 lightDir = normalize(gEnvironmentData.lightDirection);
-
-    // Flip this sign if your light direction convention is the opposite
     float ndotl = saturate(dot(normalWS, lightDir));
 
-    // Push the shadow ray off the surface along the normal to reduce acne
     RayDesc ray;
     ray.Origin = posW + normalWS * 0.01;
     ray.Direction = lightDir;
@@ -166,12 +182,75 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 
     float shadow = shadowPayload.hit ? 0.1 : 1.0;
 
-    // Simple lit shading using the normal
-    float3 ambient = 0.15 * texColor.rgb;
-    float3 diffuse = ndotl * texColor.rgb;
+    float3 ambient = 0.15 * baseColor * ao;
+    float3 diffuse = ndotl * baseColor;
 
     payload.color = (ambient + diffuse) * shadow;
 }
+
+//[shader("closesthit")]
+//void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+//{
+//    uint primIndex = PrimitiveIndex();
+//    uint3 indices = gIndices[primIndex];
+
+//    STriVertex v0 = BTriVertex[indices.x];
+//    STriVertex v1 = BTriVertex[indices.y];
+//    STriVertex v2 = BTriVertex[indices.z];
+
+//    float2 bary = attribs.barycentrics;
+//    float3 weights = float3(1.0 - bary.x - bary.y, bary.x, bary.y);
+
+//    float2 uv =
+//        v0.texture * weights.x +
+//        v1.texture * weights.y +
+//        v2.texture * weights.z;
+
+//    //float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
+//    MaterialData material = gMaterials[InstanceID()];
+//    float4 texColor = gTextures[NonUniformResourceIndex(material.baseColorTexIndex)].SampleLevel(gSampler, uv, 0);
+
+//    // Interpolate the normal from the vertex buffer
+//    float3 normalOS =
+//        v0.normal * weights.x +
+//        v1.normal * weights.y +
+//        v2.normal * weights.z;
+
+//    normalOS = normalize(normalOS);
+
+//    // Convert object-space normal to world-space normal
+//    // This is correct for rotations/translations. If you add non-uniform scaling later,
+//    // use the inverse-transpose version instead.
+//    float3 normalWS = normalize(mul((float3x3) ObjectToWorld3x4(), normalOS));
+
+//    float hitT = RayTCurrent();
+//    float3 rayOriginW = WorldRayOrigin();
+//    float3 rayDirW = WorldRayDirection();
+//    float3 posW = rayOriginW + hitT * rayDirW;
+
+//    float3 lightDir = normalize(gEnvironmentData.lightDirection);
+
+//    // Flip this sign if your light direction convention is the opposite
+//    float ndotl = saturate(dot(normalWS, lightDir));
+
+//    // Push the shadow ray off the surface along the normal to reduce acne
+//    RayDesc ray;
+//    ray.Origin = posW + normalWS * 0.01;
+//    ray.Direction = lightDir;
+//    ray.TMin = 0.01;
+//    ray.TMax = 100000.0;
+
+//    ShadowPayload shadowPayload;
+//    TraceRay(gRtScene, 0, 0xFF, 1, 0, 1, ray, shadowPayload);
+
+//    float shadow = shadowPayload.hit ? 0.1 : 1.0;
+
+//    // Simple lit shading using the normal
+//    float3 ambient = 0.15 * texColor.rgb;
+//    float3 diffuse = ndotl * texColor.rgb;
+
+//    payload.color = (ambient + diffuse) * shadow;
+//}
 
 // 12.1.a
 [shader("closesthit")]

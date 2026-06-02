@@ -367,12 +367,7 @@ namespace CPyburnRTXEngine
 				UINT modelId = v["id"].GetInt();
 				std::string name = v["name"].GetString();
 
-				for (char& c : name)
-				{
-					c = static_cast<char>(
-						std::tolower(static_cast<unsigned char>(c))
-						);
-				}
+				stringToLower(name);
 
 				AnimationTypes[modelId] = name;
 			}
@@ -399,12 +394,7 @@ namespace CPyburnRTXEngine
 
 				std::string name = v["animationName"].GetString();
 
-				for (char& c : name)
-				{
-					c = static_cast<char>(
-						std::tolower(static_cast<unsigned char>(c))
-						);
-				}
+				stringToLower(name);
 				animation.animationName = name;
 
 				animation.startFrame = v["start"].GetInt();

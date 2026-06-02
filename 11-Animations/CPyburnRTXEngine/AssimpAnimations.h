@@ -106,12 +106,7 @@ namespace CPyburnRTXEngine
 		static std::string GetAnimationTypeNameById(const UINT& modelId) { return AnimationTypes[modelId]; }
 		static UINT GetAnimationTypeIdByName(std::string name)
 		{
-			for (char& c : name)
-			{
-				c = static_cast<char>(
-					std::tolower(static_cast<unsigned char>(c))
-					);
-			}
+			stringToLower(name);
 
 			for (auto it = AnimationTypes.begin(); it != AnimationTypes.end(); ++it)
 				if (it->second == name)

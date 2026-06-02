@@ -73,6 +73,7 @@
 #include <mutex>
 #include <fstream>
 #include <sstream> // istringstream
+#include <filesystem>
 
 #ifdef _DEBUG
 #include <dxgidebug.h>
@@ -288,6 +289,20 @@ inline void SetNameIndexed(ID3D12Object*, LPCWSTR, UINT)
 {
 }
 #endif
+
+inline std::string RemoveExtension(const std::string& filename, std::string& outExtension)
+{
+    std::filesystem::path p(filename);
+
+    outExtension = p.extension().string();
+
+    if (!outExtension.empty() && outExtension[0] == '.')
+    {
+        outExtension.erase(0, 1); // remove leading dot
+    }
+
+    return p.stem().string();
+}
 
 inline void stringToLower(std::string& utf8Str)
 {

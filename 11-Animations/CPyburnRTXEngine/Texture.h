@@ -7,11 +7,13 @@ namespace CPyburnRTXEngine
 	public:
 		struct HeapTexture
 		{
-			UINT heapPosition;
-			XMINT2 textureSize;
+			UINT heapPosition = MAXUINT;
+			UINT indexInMaterialBuffer = 0;
+			XMINT2 textureSize = XMINT2(0,0);
 		};
 
 	private:
+		static UINT m_textureStartOnHeap;
 		static std::mutex m_mutex;
 
 		static std::shared_ptr<DX::DeviceResources> m_deviceResources;

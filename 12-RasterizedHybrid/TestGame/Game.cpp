@@ -242,7 +242,7 @@ void Game::CreateDeviceDependentResources()
     // m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
     // TODO: Initialize device dependent objects here (independent of window size).
-    CPyburnRTXEngine::Texture::CreateDeviceDependentResources(m_deviceResources);
+    CPyburnRTXEngine::Texture::CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 
     m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);

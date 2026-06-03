@@ -11,7 +11,7 @@ namespace CPyburnRTXEngine
     std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> Texture::m_textures;
     std::unordered_map<std::string, Texture::HeapTexture> Texture::m_loadedTextures;
     std::mutex Texture::m_mutex;
-	std::shared_ptr<DX::DeviceResources> Texture::m_deviceResources = nullptr;
+	ID3D12Device* Texture::m_d3dDevice = nullptr;
 
     bool Texture::TryGetTextureHeap(const std::string& spath, Texture::HeapTexture& textureHeap)
     {
@@ -53,9 +53,9 @@ namespace CPyburnRTXEngine
         return false;
     }
 
-	void Texture::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+	void Texture::CreateDeviceDependentResources(ID3D12Device* d3dDevice)
 	{
-		m_deviceResources = deviceResources;
+		m_d3dDevice = d3dDevice;
 	}
 
 	Texture::HeapTexture Texture::LoadTextureHeap(const std::string& spath, ID3D12GraphicsCommandList* commandList)
@@ -206,14 +206,12 @@ namespace CPyburnRTXEngine
 			return heapTexture;
 		}
 
-		ID3D12Device* device = m_deviceResources->GetD3DDevice();
-
 		Microsoft::WRL::ComPtr<ID3D12Resource> tex;
 		std::unique_ptr<uint8_t[]> ddsData;
 		std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 
 		DX::ThrowIfFailed(
-			LoadDDSTextureFromFile(device, wFileName.c_str(), tex.ReleaseAndGetAddressOf(),
+			LoadDDSTextureFromFile(m_d3dDevice, wFileName.c_str(), tex.ReleaseAndGetAddressOf(),
 				ddsData, subresources));
 
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(tex.Get(), 0,
@@ -226,7 +224,7 @@ namespace CPyburnRTXEngine
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> uploadRes;
 		DX::ThrowIfFailed(
-			device->CreateCommittedResource(
+			m_d3dDevice->CreateCommittedResource(
 				&heapProps,
 				D3D12_HEAP_FLAG_NONE,
 				&desc,
@@ -254,7 +252,7 @@ namespace CPyburnRTXEngine
 
 			UINT heapPostion = GraphicsContexts::GetAvailableHeapPosition();
 			CD3DX12_CPU_DESCRIPTOR_HANDLE cbvCpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), heapPostion, GraphicsContexts::c_descriptorSize);
-			device->CreateShaderResourceView(tex.Get(), &srvDesc, cbvCpuHandle);
+			m_d3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, cbvCpuHandle);
 
 			HeapTexture heapTexture;
 			heapTexture.heapPosition = heapPostion;
@@ -293,14 +291,12 @@ namespace CPyburnRTXEngine
 			return heapTexture;
 		}
 
-		ID3D12Device* device = m_deviceResources->GetD3DDevice();
-
 		Microsoft::WRL::ComPtr<ID3D12Resource> tex;
 		std::unique_ptr<uint8_t[]> decodedData;
 		D3D12_SUBRESOURCE_DATA subresource;
 
 		DX::ThrowIfFailed(
-			LoadWICTextureFromFile(device, wFileName.c_str(), tex.ReleaseAndGetAddressOf(),
+			LoadWICTextureFromFile(m_d3dDevice, wFileName.c_str(), tex.ReleaseAndGetAddressOf(),
 				decodedData, subresource));
 
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(tex.Get(), 0, 1);
@@ -312,7 +308,7 @@ namespace CPyburnRTXEngine
 		// Create the GPU upload buffer.
 		Microsoft::WRL::ComPtr<ID3D12Resource> uploadRes;
 		DX::ThrowIfFailed(
-			device->CreateCommittedResource(
+			m_d3dDevice->CreateCommittedResource(
 				&heapProps,
 				D3D12_HEAP_FLAG_NONE,
 				&desc,
@@ -340,7 +336,7 @@ namespace CPyburnRTXEngine
 
 			UINT heapPostion = GraphicsContexts::GetAvailableHeapPosition();
 			CD3DX12_CPU_DESCRIPTOR_HANDLE cbvCpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), heapPostion, GraphicsContexts::c_descriptorSize);
-			device->CreateShaderResourceView(tex.Get(), &srvDesc, cbvCpuHandle);
+			m_d3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, cbvCpuHandle);
 
 			HeapTexture heapTexture;
 			heapTexture.heapPosition = heapPostion;
@@ -384,9 +380,7 @@ namespace CPyburnRTXEngine
 
 		CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, width, height, 1, 1);
 
-		ID3D12Device* device = m_deviceResources->GetD3DDevice();
-
-		DX::ThrowIfFailed(device->CreateCommittedResource(
+		DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 			D3D12_HEAP_FLAG_NONE,
 			&desc,
@@ -396,7 +390,7 @@ namespace CPyburnRTXEngine
 
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(tex.Get(), 0, 1); // +D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
-		DX::ThrowIfFailed(device->CreateCommittedResource(
+		DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,
 			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
@@ -431,7 +425,7 @@ namespace CPyburnRTXEngine
 
 			UINT heapPostion = GraphicsContexts::GetAvailableHeapPosition();
 			CD3DX12_CPU_DESCRIPTOR_HANDLE cbvCpuHandle(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), heapPostion, GraphicsContexts::c_descriptorSize);
-			device->CreateShaderResourceView(tex.Get(), &srvDesc, cbvCpuHandle);
+			m_d3dDevice->CreateShaderResourceView(tex.Get(), &srvDesc, cbvCpuHandle);
 
 			HeapTexture heapTexture;
 			heapTexture.heapPosition = heapPostion;

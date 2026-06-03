@@ -16,7 +16,7 @@ namespace CPyburnRTXEngine
 		static UINT m_textureStartOnHeap;
 		static std::mutex m_mutex;
 
-		static std::shared_ptr<DX::DeviceResources> m_deviceResources;
+		static ID3D12Device* m_d3dDevice;
 
 		static std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> m_texturesUpload;
 		static std::unordered_map<UINT, Microsoft::WRL::ComPtr<ID3D12Resource>> m_textures;
@@ -26,7 +26,7 @@ namespace CPyburnRTXEngine
 		static Texture::HeapTexture LoadCustomWICTexture(ID3D12GraphicsCommandList* commandList, const std::wstring& wFileName);
 
 	public:
-		static void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
+		static void CreateDeviceDependentResources(ID3D12Device* m_d3dDevice);
 		static HeapTexture LoadTextureHeap(const std::string& path, ID3D12GraphicsCommandList* commandList);
 		static void Release();
 		static void ReleaseUploadByHeapPosition(UINT heapPosition);

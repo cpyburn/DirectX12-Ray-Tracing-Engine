@@ -23,6 +23,9 @@
     <Filter Include="Shaders\Rasterize">
       <UniqueIdentifier>{e2114134-a768-4619-9c22-1b9532b59fa4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Models\BoundingShapes">
+      <UniqueIdentifier>{29d235bb-d66f-40d5-8e34-06415a07b2b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StepTimer.h">
@@ -88,6 +91,12 @@
     <ClInclude Include="BufferBlas.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="BoundingSphereRenderer.h">
+      <Filter>Models\BoundingShapes</Filter>
+    </ClInclude>
+    <ClInclude Include="ShapeRendererHelper.h">
+      <Filter>Models\BoundingShapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -137,6 +146,12 @@
     </ClCompile>
     <ClCompile Include="BufferHeap.h">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundingSphereRenderer.cpp">
+      <Filter>Models\BoundingShapes</Filter>
+    </ClCompile>
+    <ClCompile Include="ShapeRendererHelper.cpp">
+      <Filter>Models\BoundingShapes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -31,6 +31,21 @@ namespace CPyburnRTXEngine
         CD3DX12_ROOT_SIGNATURE_DESC desc;
         desc.Init(2, params);
 
+        //CD3DX12_DESCRIPTOR_RANGE ranges[4];
+        //ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
+        //ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1); // t1 because we have to buffer
+        //ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 2); // t2
+        //ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
+
+        //CD3DX12_ROOT_PARAMETER params[4];
+        //params[0].InitAsDescriptorTable(1, &ranges[0]);
+        //params[1].InitAsDescriptorTable(1, &ranges[1]);
+        //params[2].InitAsDescriptorTable(1, &ranges[2]);
+        //params[3].InitAsDescriptorTable(1, &ranges[3]);
+
+        //CD3DX12_ROOT_SIGNATURE_DESC desc;
+        //desc.Init(4, params);
+
         Microsoft::WRL::ComPtr<ID3DBlob> sig, err;
         D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &sig, &err);
 

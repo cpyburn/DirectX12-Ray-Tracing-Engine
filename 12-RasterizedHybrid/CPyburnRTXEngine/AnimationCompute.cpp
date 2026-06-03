@@ -14,10 +14,9 @@ namespace CPyburnRTXEngine
     {
     }
 
-    void AnimationCompute::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+    void AnimationCompute::CreateDeviceDependentResources(ID3D12Device5* d3dDevice)
     {
-        m_deviceResources = deviceResources;
-        auto device = deviceResources->GetD3DDevice();
+        m_d3dDevice = d3dDevice;
 
         // Create the pipeline state, which includes compiling and loading shaders.
         Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
@@ -73,17 +72,17 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3DBlob> sig, err;
         D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &sig, &err);
 
-        device->CreateRootSignature(0, sig->GetBufferPointer(), sig->GetBufferSize(), IID_PPV_ARGS(&m_rootSig));
+        m_d3dDevice->CreateRootSignature(0, sig->GetBufferPointer(), sig->GetBufferSize(), IID_PPV_ARGS(&m_rootSig));
 
         D3D12_COMPUTE_PIPELINE_STATE_DESC pso = {};
         pso.pRootSignature = m_rootSig.Get();
         pso.CS = { shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize() };
 
-        device->CreateComputePipelineState(&pso, IID_PPV_ARGS(&m_pso));
+        m_d3dDevice->CreateComputePipelineState(&pso, IID_PPV_ARGS(&m_pso));
 
-		m_boneBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
-		m_boneMatrices.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
-		m_outVertices.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+		m_boneBuffer.CreateDeviceDependentResources(m_d3dDevice);
+		m_boneMatrices.CreateDeviceDependentResources(m_d3dDevice);
+		m_outVertices.CreateDeviceDependentResources(m_d3dDevice);
     }
 
     void AnimationCompute::CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones)

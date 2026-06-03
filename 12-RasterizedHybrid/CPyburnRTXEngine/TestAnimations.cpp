@@ -919,7 +919,7 @@ namespace CPyburnRTXEngine
             model.assimpFactory->CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
             m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());
-            m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
+            m_elfAnimated->CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
         }
 
         CreateCommandObjects();

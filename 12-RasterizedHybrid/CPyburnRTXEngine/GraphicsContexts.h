@@ -14,7 +14,7 @@ namespace CPyburnRTXEngine
 		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorLine;
 		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorTriangle;
 		static Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignaturePositionColor;
-		void CreateRootSignatureAndPipelinePositionColor(ID3D12Device* d3dDevice);
+		static void CreateRootSignatureAndPipelinePositionColor(DX::DeviceResources* deviceResources);
 #pragma endregion
 
 	public:
@@ -33,7 +33,7 @@ namespace CPyburnRTXEngine
 		static void CreateDeviceDependentResources(ID3D12Device* d3dDevice);
 		static Microsoft::WRL::ComPtr<IDxcBlob> CompileHlslLibrary(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion);
 		static Microsoft::WRL::ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
-		static void CreateRootSignatures(ID3D12Device* d3dDevice);
+		static void CreateRootSignaturesAndPipelines(DX::DeviceResources* deviceResources);
 
 
 		static void Release();

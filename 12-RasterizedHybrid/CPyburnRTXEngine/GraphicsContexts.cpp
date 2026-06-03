@@ -17,7 +17,7 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> GraphicsContexts::m_rootSignaturePos
 
 namespace CPyburnRTXEngine
 {
-	void GraphicsContexts::CreateRootSignatureAndPipelinePositionColor(ID3D12Device* d3dDevice)
+	void GraphicsContexts::CreateRootSignatureAndPipelinePositionColor(DX::DeviceResources* deviceResources)
 	{
 		CD3DX12_ROOT_PARAMETER paramCbvAll1;
 		paramCbvAll1.InitAsDescriptorTable(1, &CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0));
@@ -30,7 +30,47 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3DBlob> pSignature;
 		Microsoft::WRL::ComPtr<ID3DBlob> pError;
 		DX::ThrowIfFailed(D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, pSignature.GetAddressOf(), pError.GetAddressOf()));
-		DX::ThrowIfFailed(d3dDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignaturePositionColor)));
+		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignaturePositionColor)));
+
+		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobVs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedVertexShader.hlsl", L"main", L"vs_6_0");
+		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobPs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedPixelShader.hlsl", L"main", L"ps_6_0");
+
+		static const D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "WORLD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+			{ "WORLD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+			{ "WORLD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+			{ "WORLD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION::D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+		};
+
+		CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
+		depthStencilDesc.DepthEnable = true;
+		depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC state = {};
+		state.InputLayout = { inputLayout, _countof(inputLayout) };
+		state.pRootSignature = m_rootSignaturePositionColor.Get();
+		state.VS = { shaderBlobVs->GetBufferPointer(), shaderBlobVs->GetBufferSize() };
+		state.PS = { shaderBlobPs->GetBufferPointer(), shaderBlobPs->GetBufferSize() };;
+		state.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		state.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+		state.DepthStencilState = depthStencilDesc;
+		state.SampleMask = UINT_MAX;
+		state.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+		state.NumRenderTargets = 1;
+		state.RTVFormats[0] = deviceResources->GetBackBufferFormat();
+		state.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+		state.SampleDesc.Count = 1;
+
+		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateGraphicsPipelineState(&state, IID_PPV_ARGS(&m_pipelineStatePositionColorLine)));
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC state2 = state;
+		state2.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateGraphicsPipelineState(&state2, IID_PPV_ARGS(&m_pipelineStatePositionColorTriangle)));
 	}
 
 	GraphicsContexts::GraphicsContexts()
@@ -141,7 +181,7 @@ namespace CPyburnRTXEngine
 		c_heap->SetName(L"Descriptor Heap from GraphicsContexts");
 	}
 
-	Microsoft::WRL::ComPtr<IDxcBlob> GraphicsContexts::CompileHlslLibrary(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion)
+	Microsoft::WRL::ComPtr<IDxcBlob> GraphicsContexts::CompileHlslLibrary(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderEntry, std::wstring shaderVersion)
 	{
 		// Create the pipeline state, which includes compiling and loading shaders.
 		Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
@@ -157,7 +197,7 @@ namespace CPyburnRTXEngine
 		DX::ThrowIfFailed(compiler->Compile(
 			source.Get(),
 			filename.c_str(),
-			shaderType.c_str(),
+			shaderEntry.c_str(),
 			shaderVersion.c_str(),
 			nullptr, 0,
 			nullptr, 0,
@@ -241,8 +281,9 @@ namespace CPyburnRTXEngine
 		return dxil;
 	}
 
-	void GraphicsContexts::CreateRootSignatures(ID3D12Device* d3dDevice)
+	void GraphicsContexts::CreateRootSignaturesAndPipelines(DX::DeviceResources* deviceResources)
 	{
+		CreateRootSignatureAndPipelinePositionColor(deviceResources);
 	}
 
 	void GraphicsContexts::Release()

@@ -275,6 +275,7 @@ void DeviceResources::CreateDeviceResources()
 
     // Create device dependent resources for graphics contexts
     GraphicsContexts::CreateDeviceDependentResources(m_d3dDevice.Get());
+    GraphicsContexts::CreateRootSignaturesAndPipelines(this);
 
 #pragma region Fullscreen
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};

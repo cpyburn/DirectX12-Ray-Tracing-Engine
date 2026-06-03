@@ -20,6 +20,9 @@
     <Filter Include="Models\Animations">
       <UniqueIdentifier>{448b0b01-921d-44ae-93dc-59bf37a75047}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Rasterize">
+      <UniqueIdentifier>{e2114134-a768-4619-9c22-1b9532b59fa4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StepTimer.h">
@@ -154,6 +157,12 @@
     </CustomBuild>
     <CustomBuild Include="skinnedCompute.hlsl">
       <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="PositionColorInstancedPixelShader.hlsl">
+      <Filter>Shaders\Rasterize</Filter>
+    </CustomBuild>
+    <CustomBuild Include="PositionColorInstancedVertexShader.hlsl">
+      <Filter>Shaders\Rasterize</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

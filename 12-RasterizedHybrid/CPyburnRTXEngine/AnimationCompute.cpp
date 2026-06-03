@@ -43,8 +43,8 @@ namespace CPyburnRTXEngine
         m_d3dDevice->CreateComputePipelineState(&pso, IID_PPV_ARGS(&m_pso));
 
 		m_boneBuffer.CreateDeviceDependentResources(m_d3dDevice);
-		m_boneMatrices.CreateDeviceDependentResources(m_d3dDevice);
-		m_outVertices.CreateDeviceDependentResources(m_d3dDevice);
+		m_boneMatricesBuffer.CreateDeviceDependentResources(m_d3dDevice);
+		m_outVertexBuffer.CreateDeviceDependentResources(m_d3dDevice);
     }
 
     void AnimationCompute::CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones)
@@ -54,17 +54,17 @@ namespace CPyburnRTXEngine
         //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
         //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
-		m_baseVertices = baseVertices;
+		m_baseVertexBuffer = baseVertices;
 
 		m_boneBuffer.CpuData = boneData;
 		m_boneBuffer.CreateOnDefaultHeap(commandList, L"Bone Data Buffer");
 
-		m_boneMatrices.CpuData = bones;
-        m_boneMatrices.CreateOnUploadHeap(L"Bone Matrices Buffer");
+		m_boneMatricesBuffer.CpuData = bones;
+        m_boneMatricesBuffer.CreateOnUploadHeap(L"Bone Matrices Buffer");
 
         // Output buffer
-        m_outVertices.CpuData = m_baseVertices->CpuData;
-        m_outVertices.CreateOnDefaultHeap(commandList, L"Out Vertices Buffer", D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        m_outVertexBuffer.CpuData = m_baseVertexBuffer->CpuData;
+        m_outVertexBuffer.CreateOnDefaultHeap(commandList, L"Out Vertices Buffer", D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
         //DX::ThrowIfFailed(commandList->Close());
         //ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
@@ -79,19 +79,19 @@ namespace CPyburnRTXEngine
     {
         m_boneBuffer.CreateShaderResourceView(); // t1
         // since bones are usually small, going to use upload heap
-        m_boneMatrices.CreateShaderResourceView(true); // t2
-        m_outVertices.CreateUnorderedAccessView(L"Output Vertices Buffer"); // U0
+        m_boneMatricesBuffer.CreateShaderResourceView(true); // t2
+        m_outVertexBuffer.CreateUnorderedAccessView(L"Output Vertices Buffer"); // U0
     }
 
     void AnimationCompute::Update(const std::vector<XMMATRIX>& bones)
     {
-        if (m_boneMatrices.CpuData.size() == 0 || bones.size() == 0)
+        if (m_boneMatricesBuffer.CpuData.size() == 0 || bones.size() == 0)
         {
             return;
         }
 
-        m_boneMatrices.CpuData = bones;
-        m_boneMatrices.UpdateUploadHeap();
+        m_boneMatricesBuffer.CpuData = bones;
+        m_boneMatricesBuffer.UpdateUploadHeap();
     }
 
     void AnimationCompute::Dispatch(ID3D12GraphicsCommandList4* commandList)
@@ -105,15 +105,15 @@ namespace CPyburnRTXEngine
         commandList->SetComputeRootSignature(m_rootSig.Get());
 
         // Root parameter 0: SRVs t0-t2
-        commandList->SetComputeRootDescriptorTable(0, m_baseVertices->GpuHandle);
+        commandList->SetComputeRootDescriptorTable(0, m_baseVertexBuffer->GpuHandle);
 
         // Root parameter 1: UAV u0
-        commandList->SetComputeRootDescriptorTable(1, m_outVertices.GpuHandle);
+        commandList->SetComputeRootDescriptorTable(1, m_outVertexBuffer.GpuHandle);
 
-        const UINT groups = (static_cast<UINT>(m_baseVertices->CpuData.size()) + 255u) / 256u;
+        const UINT groups = (static_cast<UINT>(m_baseVertexBuffer->CpuData.size()) + 255u) / 256u;
         commandList->Dispatch(groups, 1, 1);
 
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(m_outVertices.DefaultHeapResource.Get()));
+        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(m_outVertexBuffer.DefaultHeapResource.Get()));
 
         PIXEndEvent(commandList);
     }
@@ -121,7 +121,7 @@ namespace CPyburnRTXEngine
     void AnimationCompute::ReleaseUploadResources()
     {
         m_boneBuffer.ReleaseUploadResource();
-        m_outVertices.ReleaseUploadResource();
+        m_outVertexBuffer.ReleaseUploadResource();
     }
 }
 

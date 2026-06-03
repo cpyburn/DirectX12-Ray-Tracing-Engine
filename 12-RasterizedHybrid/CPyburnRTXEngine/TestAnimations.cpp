@@ -152,7 +152,7 @@ namespace CPyburnRTXEngine
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
             m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources.get(), 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
+            m_blas.InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
         }
 
@@ -711,7 +711,7 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
         //*(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().GpuHandle;
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().GpuHandle;
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -895,7 +895,7 @@ namespace CPyburnRTXEngine
             D3D12_RESOURCE_BARRIER uavBarrier = {};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
             uavBarrier.UAV.pResource =
-                m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource.Get();
+                m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
 
             m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
         }

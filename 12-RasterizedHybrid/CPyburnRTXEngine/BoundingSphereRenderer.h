@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BufferHeap.h"
+
 namespace CPyburnRTXEngine
 {
 	class BoundingSphereRenderer : public BoundingSphere
@@ -13,7 +15,8 @@ namespace CPyburnRTXEngine
 
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_vertexBuffer;
+
+		BufferHeap<BoundingSphereRenderer::VSVertices> m_vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_indexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_vertexBufferUpload;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_indexBufferUpload;

@@ -8,10 +8,10 @@ namespace CPyburnRTXEngine
 	class AnimationCompute
 	{
 	private:
-		BufferHeap<AssimpFactory::VSVertices>* m_baseVertices = nullptr;
+		BufferHeap<AssimpFactory::VSVertices>* m_baseVertexBuffer = nullptr;
 		BufferHeap<AssimpAnimations::VertexBoneData> m_boneBuffer;
-		BufferHeap<XMMATRIX> m_boneMatrices;
-		BufferHeap<AssimpFactory::VSVertices> m_outVertices;
+		BufferHeap<XMMATRIX> m_boneMatricesBuffer;
+		BufferHeap<AssimpFactory::VSVertices> m_outVertexBuffer;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSig;
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pso;
@@ -19,7 +19,7 @@ namespace CPyburnRTXEngine
 		ID3D12Device5* m_d3dDevice = nullptr;
 
 	public:
-		const BufferHeap<AssimpFactory::VSVertices>& GetOutputBuffer() const { return m_outVertices; }
+		const BufferHeap<AssimpFactory::VSVertices>& GetVertexOutputBuffer() const { return m_outVertexBuffer; }
 
 		AnimationCompute();
 		~AnimationCompute();

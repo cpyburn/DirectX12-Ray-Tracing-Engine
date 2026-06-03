@@ -13,8 +13,5 @@ consider using a ring buffer for dynamic resources like bones and BLAS
 updating transposes bones in a loop, would be more efficient to do it somewhere else where it is already being looped
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> to ID3D12GraphicsCommandList4* params
 
-index buffer
-vertex buffer
-
-base ptr to vertex
+nullptr for device resources and device and device5
 

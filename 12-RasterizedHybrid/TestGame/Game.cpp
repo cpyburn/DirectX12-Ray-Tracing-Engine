@@ -246,7 +246,7 @@ void Game::CreateDeviceDependentResources()
 
     m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);
-    m_camera.CreateDeviceDependentResources(m_deviceResources);
+    m_camera.CreateDeviceDependentResources(m_deviceResources.get());
     m_gameInput.CreateDeviceDependentResources(m_deviceResources);
 }
 

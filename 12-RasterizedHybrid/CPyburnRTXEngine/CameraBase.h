@@ -20,7 +20,7 @@ namespace CPyburnRTXEngine
 		};
 
 		BufferConstant<CameraCbv> m_cameraCbv;
-		std::shared_ptr<DX::DeviceResources> m_deviceResources;
+		DX::DeviceResources* m_deviceResources;
 
 		float m_aspectRatio = 0;
 		float m_fieldOfView = 0;
@@ -41,7 +41,7 @@ namespace CPyburnRTXEngine
 
 		ID3D12Resource* GetCbv() { return m_cameraCbv.Resource.Get(); }
 
-		virtual void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
+		virtual void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		virtual void CreateWindowSizeDependentResources();
 		virtual void Update(DX::StepTimer const& timer, GameInput* gameInput);
 		//virtual void Release(); // todo:

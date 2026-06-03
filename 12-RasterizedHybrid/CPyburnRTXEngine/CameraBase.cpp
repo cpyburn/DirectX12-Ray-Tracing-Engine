@@ -12,7 +12,7 @@ namespace CPyburnRTXEngine
 
 	}
 
-	void CameraBase::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+	void CameraBase::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
 		m_deviceResources = deviceResources;		
 		m_cameraCbv.CreateCbvOnUploadHeap(deviceResources->GetD3DDevice(), L"Camera Cbv");

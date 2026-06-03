@@ -127,7 +127,7 @@ namespace CPyburnRTXEngine
 		AssimpAnimations(AssimpFactory* assimpFactory);
 		~AssimpAnimations();
 
-		void CreateDeviceDependentResources(ID3D12Device5* d3dDevice);
+		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 		void CreateShaderResources();
 

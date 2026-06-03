@@ -481,10 +481,10 @@ namespace CPyburnRTXEngine
 
 	}
 
-	void AssimpAnimations::CreateDeviceDependentResources(ID3D12Device5* d3dDevice)
+	void AssimpAnimations::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
 		m_animationCompute = std::make_unique<AnimationCompute>();
-		m_animationCompute->CreateDeviceDependentResources(d3dDevice);
+		m_animationCompute->CreateDeviceDependentResources(deviceResources);
 	}
 
 	void AssimpAnimations::CreateBuffers(ID3D12GraphicsCommandList4* commandList)

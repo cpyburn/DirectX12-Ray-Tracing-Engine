@@ -10,13 +10,13 @@ namespace CPyburnRTXEngine
 	private:
 		BufferHeap<AssimpFactory::VSVertices>* m_baseVertexBuffer = nullptr;
 		BufferHeap<AssimpAnimations::VertexBoneData> m_boneBuffer;
-		BufferHeap<XMMATRIX> m_boneMatricesBuffer;
+		BufferHeap<XMMATRIX> m_boneMatricesBuffer[DX::DeviceResources::c_backBufferCount];
 		BufferHeap<AssimpFactory::VSVertices> m_outVertexBuffer;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSig;
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pso;
 
-		ID3D12Device5* m_d3dDevice = nullptr;
+		DX::DeviceResources* m_deviceResources = nullptr;
 
 	public:
 		const BufferHeap<AssimpFactory::VSVertices>& GetVertexOutputBuffer() const { return m_outVertexBuffer; }
@@ -24,7 +24,7 @@ namespace CPyburnRTXEngine
 		AnimationCompute();
 		~AnimationCompute();
 
-		void CreateDeviceDependentResources(ID3D12Device5* d3dDevice);
+		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones);
 		void CreateShaderResources();
 		

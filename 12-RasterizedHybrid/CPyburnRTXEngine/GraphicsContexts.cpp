@@ -11,8 +11,28 @@ std::vector<UINT> GraphicsContexts::m_availableHeapPositions;
 std::unordered_map<UINT, UINT> GraphicsContexts::m_multiUseHeapPositions;
 std::mutex GraphicsContexts::m_mutexMultiUseHeapPositions;
 
+Microsoft::WRL::ComPtr<ID3D12PipelineState> GraphicsContexts::m_pipelineStatePositionColorLine;
+Microsoft::WRL::ComPtr<ID3D12PipelineState> GraphicsContexts::m_pipelineStatePositionColorTriangle;
+Microsoft::WRL::ComPtr<ID3D12RootSignature> GraphicsContexts::m_rootSignaturePositionColor;
+
 namespace CPyburnRTXEngine
 {
+	void GraphicsContexts::CreateRootSignatureAndPipelinePositionColor(ID3D12Device* d3dDevice)
+	{
+		CD3DX12_ROOT_PARAMETER paramCbvAll1;
+		paramCbvAll1.InitAsDescriptorTable(1, &CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0));
+
+		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
+		descRootSignature.Init(1, &paramCbvAll1, 0, nullptr, rootSignatureFlags);
+
+		Microsoft::WRL::ComPtr<ID3DBlob> pSignature;
+		Microsoft::WRL::ComPtr<ID3DBlob> pError;
+		DX::ThrowIfFailed(D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, pSignature.GetAddressOf(), pError.GetAddressOf()));
+		DX::ThrowIfFailed(d3dDevice->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignaturePositionColor)));
+	}
+
 	GraphicsContexts::GraphicsContexts()
 	{
 
@@ -119,6 +139,55 @@ namespace CPyburnRTXEngine
 
 		DX::ThrowIfFailed(d3dDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&c_heap)));
 		c_heap->SetName(L"Descriptor Heap from GraphicsContexts");
+	}
+
+	Microsoft::WRL::ComPtr<IDxcBlob> GraphicsContexts::CreateHlslResources(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion)
+	{
+		// Create the pipeline state, which includes compiling and loading shaders.
+		Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
+		Microsoft::WRL::ComPtr<IDxcLibrary> library;
+		Microsoft::WRL::ComPtr<IDxcBlobEncoding> source;
+
+		DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
+		DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
+
+		library->CreateBlobFromFile(GetAssetFullPath(filename.c_str()).c_str(), nullptr, &source);
+
+		Microsoft::WRL::ComPtr<IDxcOperationResult> result;
+		DX::ThrowIfFailed(compiler->Compile(
+			source.Get(),
+			filename.c_str(),
+			shaderType.c_str(),
+			shaderVersion.c_str(),
+			nullptr, 0,
+			nullptr, 0,
+			nullptr,
+			&result));
+
+		HRESULT status;
+		result->GetStatus(&status);
+
+		if (FAILED(status))
+		{
+			Microsoft::WRL::ComPtr<IDxcBlobEncoding> errors;
+			result->GetErrorBuffer(&errors);
+
+			if (errors)
+			{
+				OutputDebugStringA((char*)errors->GetBufferPointer());
+			}
+
+			DX::ThrowIfFailed(status);
+		}
+
+		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob;
+		DX::ThrowIfFailed(result->GetResult(&shaderBlob));
+
+		return shaderBlob;
+	}
+
+	void GraphicsContexts::CreateRootSignatures(ID3D12Device* d3dDevice)
+	{
 	}
 
 	void GraphicsContexts::Release()

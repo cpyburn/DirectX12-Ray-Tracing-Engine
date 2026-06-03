@@ -132,7 +132,6 @@ namespace DX
         static const float ClearColor[4];
         UINT m_rtvHeapIntermediateRenderTargetPosition = 0;
         UINT m_cbvHeapIntermediateRenderTargetPosition = 0;
-        std::unique_ptr<CPyburnRTXEngine::GraphicsContexts> m_graphicsContexts;
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;
         Microsoft::WRL::ComPtr<ID3D12RootSignature> m_postRootSignature;

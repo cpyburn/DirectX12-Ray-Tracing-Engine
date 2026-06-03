@@ -75,7 +75,6 @@ DeviceResources::DeviceResources(
     m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
     m_options(flags),
     m_deviceNotify(nullptr),
-    m_graphicsContexts(std::make_unique<GraphicsContexts>()),
     m_postViewport(0.0f, 0.0f, 0.0f, 0.0f)
 {
     if (c_backBufferCount < 2 || c_backBufferCount > MAX_BACK_BUFFER_COUNT)
@@ -275,7 +274,7 @@ void DeviceResources::CreateDeviceResources()
     }
 
     // Create device dependent resources for graphics contexts
-    m_graphicsContexts->CreateDeviceDependentResources(m_d3dDevice.Get());
+    GraphicsContexts::CreateDeviceDependentResources(m_d3dDevice.Get());
 
 #pragma region Fullscreen
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};

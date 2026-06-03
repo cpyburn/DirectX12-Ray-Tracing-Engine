@@ -18,45 +18,7 @@ namespace CPyburnRTXEngine
     {
         m_d3dDevice = d3dDevice;
 
-        // Create the pipeline state, which includes compiling and loading shaders.
-        Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
-        Microsoft::WRL::ComPtr<IDxcLibrary> library;
-        Microsoft::WRL::ComPtr<IDxcBlobEncoding> source;
-
-        DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
-        DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
-
-        library->CreateBlobFromFile(GetAssetFullPath(L"skinnedCompute.hlsl").c_str(), nullptr, &source);
-
-        Microsoft::WRL::ComPtr<IDxcOperationResult> result;
-        DX::ThrowIfFailed(compiler->Compile(
-            source.Get(),
-            L"skinnedCompute.hlsl",
-            L"CS",
-            L"cs_6_0",
-            nullptr, 0,
-            nullptr, 0,
-            nullptr,
-            &result));
-
-        HRESULT status;
-        result->GetStatus(&status);
-
-        if (FAILED(status))
-        {
-            Microsoft::WRL::ComPtr<IDxcBlobEncoding> errors;
-            result->GetErrorBuffer(&errors);
-
-            if (errors)
-            {
-                OutputDebugStringA((char*)errors->GetBufferPointer());
-            }
-
-            DX::ThrowIfFailed(status);
-        }
-
-        Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob;
-        DX::ThrowIfFailed(result->GetResult(&shaderBlob));
+        Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob = GraphicsContexts::CreateHlslResources(d3dDevice, L"skinnedCompute.hlsl", L"CS", L"cs_6_0");
 
         CD3DX12_DESCRIPTOR_RANGE ranges[2];
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0); // t0–t2

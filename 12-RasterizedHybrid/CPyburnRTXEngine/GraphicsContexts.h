@@ -10,6 +10,13 @@ namespace CPyburnRTXEngine
 		static std::unordered_map<UINT, UINT> m_multiUseHeapPositions;
 		static std::mutex m_mutexMultiUseHeapPositions;
 
+#pragma region Position Color
+		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorLine;
+		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorTriangle;
+		static Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignaturePositionColor;
+		void CreateRootSignatureAndPipelinePositionColor(ID3D12Device* d3dDevice);
+#pragma endregion
+
 	public:
 		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> c_heap;
 		static UINT c_descriptorSize;
@@ -23,8 +30,12 @@ namespace CPyburnRTXEngine
 		static bool RemoveHeapPosition(UINT heapPosition);
 		static UINT GetAvailableHeapPosition();
 
-		void CreateDeviceDependentResources(ID3D12Device* d3dDevice);
-		void Release();
+		static void CreateDeviceDependentResources(ID3D12Device* d3dDevice);
+		static Microsoft::WRL::ComPtr<IDxcBlob> CreateHlslResources(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion);
+		static void CreateRootSignatures(ID3D12Device* d3dDevice);
+
+
+		static void Release();
 	};
 }
 

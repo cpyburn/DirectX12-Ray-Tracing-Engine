@@ -141,7 +141,7 @@ namespace CPyburnRTXEngine
 		c_heap->SetName(L"Descriptor Heap from GraphicsContexts");
 	}
 
-	Microsoft::WRL::ComPtr<IDxcBlob> GraphicsContexts::CreateHlslResources(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion)
+	Microsoft::WRL::ComPtr<IDxcBlob> GraphicsContexts::CompileHlslLibrary(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion)
 	{
 		// Create the pipeline state, which includes compiling and loading shaders.
 		Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
@@ -184,6 +184,61 @@ namespace CPyburnRTXEngine
 		DX::ThrowIfFailed(result->GetResult(&shaderBlob));
 
 		return shaderBlob;
+	}
+
+	Microsoft::WRL::ComPtr<IDxcBlob> GraphicsContexts::CompileDXRLibrary(const wchar_t* filename)
+	{
+		auto sourceData = LoadBinaryFile(filename);
+
+		Microsoft::WRL::ComPtr<IDxcUtils> utils;
+		Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
+		Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
+
+		DX::ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
+		DX::ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
+		DX::ThrowIfFailed(utils->CreateDefaultIncludeHandler(&includeHandler));
+
+		DxcBuffer source = {};
+		source.Ptr = sourceData.data();
+		source.Size = sourceData.size();
+		source.Encoding = DXC_CP_UTF8;
+
+		const wchar_t* arguments[] =
+		{
+			filename,               // REQUIRED (virtual filename)
+			L"-T", L"lib_6_6",        // DXR shader library
+			L"-HV", L"2021",
+			L"-Zi",
+			L"-Qembed_debug",
+			L"-Od"
+			//, L"-WX"                   // Treat warnings as errors (optional)
+		};
+
+		Microsoft::WRL::ComPtr<IDxcResult> result;
+		DX::ThrowIfFailed(compiler->Compile(&source, arguments, _countof(arguments), includeHandler.Get(), IID_PPV_ARGS(&result)));
+
+		// Check compile status
+		HRESULT status;
+		result->GetStatus(&status);
+		if (FAILED(status))
+		{
+			Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
+			result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
+			if (errors && errors->GetStringLength())
+				OutputDebugStringA(errors->GetStringPointer());
+
+			throw std::runtime_error("DXR shader compilation failed");
+		}
+
+		// Get DXIL object
+		Microsoft::WRL::ComPtr<IDxcBlob> dxil;
+		HRESULT hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&dxil), nullptr);
+		if (FAILED(hr) || !dxil || dxil->GetBufferSize() == 0)
+		{
+			throw std::runtime_error("Failed to retrieve DXIL object");
+		}
+
+		return dxil;
 	}
 
 	void GraphicsContexts::CreateRootSignatures(ID3D12Device* d3dDevice)

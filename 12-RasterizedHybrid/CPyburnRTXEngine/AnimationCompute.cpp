@@ -18,7 +18,7 @@ namespace CPyburnRTXEngine
     {
         m_d3dDevice = d3dDevice;
 
-        Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob = GraphicsContexts::CreateHlslResources(d3dDevice, L"skinnedCompute.hlsl", L"CS", L"cs_6_0");
+        Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob = GraphicsContexts::CompileHlslLibrary(d3dDevice, L"skinnedCompute.hlsl", L"CS", L"cs_6_0");
 
         CD3DX12_DESCRIPTOR_RANGE ranges[2];
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0); // t0–t2

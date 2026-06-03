@@ -59,8 +59,7 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3D12StateObject> mpPipelineState;
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> mpEmptyRootSig;
 
-		std::vector<uint8_t> LoadBinaryFile(const wchar_t* path);
-		Microsoft::WRL::ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
+		
 
 		uint8_t* shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource = nullptr);
 		void createShaderTable();

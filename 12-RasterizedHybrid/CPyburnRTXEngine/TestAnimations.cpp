@@ -350,7 +350,7 @@ namespace CPyburnRTXEngine
 #pragma region DXIL library
         // DXIL library
         std::wstring shaderFilePath = GetAssetFullPath(L"09-Shaders.hlsl");
-        Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob = CompileDXRLibrary(shaderFilePath.c_str());
+        Microsoft::WRL::ComPtr<IDxcBlob> shaderBlob = GraphicsContexts::CompileDXRLibrary(shaderFilePath.c_str());
 
         const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kPlaneChs /* 12.3.e */, kClosestHitShader, kShadowMiss /* 12.3.b */, kShadowChs /* 12.3.b */ };
 
@@ -646,75 +646,6 @@ namespace CPyburnRTXEngine
         stateObjectDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
         DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&mpPipelineState)));
-    }
-
-    std::vector<uint8_t> TestAnimations::LoadBinaryFile(const wchar_t* path)
-    {
-        std::ifstream file(path, std::ios::binary | std::ios::ate);
-        if (!file)
-            throw std::runtime_error("Failed to open file");
-
-        size_t size = (size_t)file.tellg();
-        file.seekg(0);
-
-        std::vector<uint8_t> data(size);
-        file.read((char*)data.data(), size);
-        return data;
-    }
-
-    Microsoft::WRL::ComPtr<IDxcBlob> TestAnimations::CompileDXRLibrary(const wchar_t* filename)
-    {
-        auto sourceData = LoadBinaryFile(filename);
-
-        Microsoft::WRL::ComPtr<IDxcUtils> utils;
-        Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
-        Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
-
-        DX::ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
-        DX::ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
-        DX::ThrowIfFailed(utils->CreateDefaultIncludeHandler(&includeHandler));
-
-        DxcBuffer source = {};
-        source.Ptr = sourceData.data();
-        source.Size = sourceData.size();
-        source.Encoding = DXC_CP_UTF8;
-
-        const wchar_t* arguments[] =
-        {
-            filename,               // REQUIRED (virtual filename)
-            L"-T", L"lib_6_6",        // DXR shader library
-            L"-HV", L"2021",
-            L"-Zi",
-            L"-Qembed_debug",
-            L"-Od"
-            //, L"-WX"                   // Treat warnings as errors (optional)
-        };
-
-        Microsoft::WRL::ComPtr<IDxcResult> result;
-        DX::ThrowIfFailed(compiler->Compile(&source, arguments, _countof(arguments), includeHandler.Get(), IID_PPV_ARGS(&result)));
-
-        // Check compile status
-        HRESULT status;
-        result->GetStatus(&status);
-        if (FAILED(status))
-        {
-            Microsoft::WRL::ComPtr<IDxcBlobUtf8> errors;
-            result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
-            if (errors && errors->GetStringLength())
-                OutputDebugStringA(errors->GetStringPointer());
-
-            throw std::runtime_error("DXR shader compilation failed");
-        }
-
-        // Get DXIL object
-        Microsoft::WRL::ComPtr<IDxcBlob> dxil;
-        HRESULT hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&dxil), nullptr);
-        if (FAILED(hr) || !dxil || dxil->GetBufferSize() == 0)
-        {
-            throw std::runtime_error("Failed to retrieve DXIL object");
-        }
-
-        return dxil;
     }
 
     uint8_t* TestAnimations::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)

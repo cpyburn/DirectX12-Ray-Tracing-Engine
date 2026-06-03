@@ -323,6 +323,20 @@ inline std::string wstringToString(const std::wstring& wstr)
     //return string(utf16Str.begin(), utf16Str.end());
 }
 
+inline std::vector<uint8_t> LoadBinaryFile(const wchar_t* path)
+{
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file)
+        throw std::runtime_error("Failed to open file");
+
+    size_t size = (size_t)file.tellg();
+    file.seekg(0);
+
+    std::vector<uint8_t> data(size);
+    file.read((char*)data.data(), size);
+    return data;
+}
+
 
 // load json includes
 #include <iostream>

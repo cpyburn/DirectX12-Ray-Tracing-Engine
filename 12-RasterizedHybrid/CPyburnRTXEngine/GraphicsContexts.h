@@ -31,7 +31,8 @@ namespace CPyburnRTXEngine
 		static UINT GetAvailableHeapPosition();
 
 		static void CreateDeviceDependentResources(ID3D12Device* d3dDevice);
-		static Microsoft::WRL::ComPtr<IDxcBlob> CreateHlslResources(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion);
+		static Microsoft::WRL::ComPtr<IDxcBlob> CompileHlslLibrary(ID3D12Device* d3dDevice, std::wstring filename, std::wstring shaderType, std::wstring shaderVersion);
+		static Microsoft::WRL::ComPtr<IDxcBlob> CompileDXRLibrary(const wchar_t* filename);
 		static void CreateRootSignatures(ID3D12Device* d3dDevice);
 
 

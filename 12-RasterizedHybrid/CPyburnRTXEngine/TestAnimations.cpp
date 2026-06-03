@@ -151,8 +151,8 @@ namespace CPyburnRTXEngine
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
+            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources.get(), 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
+            m_blas.InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
         }
 

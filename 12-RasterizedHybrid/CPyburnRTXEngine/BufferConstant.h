@@ -36,7 +36,7 @@ namespace CPyburnRTXEngine
         // Persistently mapped pointer
         uint8_t* MappedData = nullptr;
 
-        void CreateCbvOnUploadHeap(Microsoft::WRL::ComPtr<ID3D12Device> device, const WCHAR* name = L"CBV not named")
+        void CreateCbvOnUploadHeap(ID3D12Device* device, const WCHAR* name = L"CBV not named")
         {
             // make sure descriptor heap is allocated
             if (HeapIndex[0] == 0)

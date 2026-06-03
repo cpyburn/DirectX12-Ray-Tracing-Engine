@@ -108,8 +108,8 @@ void Game::Render()
 	m_triangle.Render(&m_camera);
     m_deviceResources->Render();
 
-    ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(CPyburnRTXEngine::FrameResource::COMMAND_LIST_SCENE_0).Get();
-    ID3D12GraphicsCommandList4* m_postCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(CPyburnRTXEngine::FrameResource::COMMAND_LIST_POST_1).Get();
+    ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(CPyburnRTXEngine::FrameResource::COMMAND_LIST_SCENE_0);
+    ID3D12GraphicsCommandList4* m_postCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(CPyburnRTXEngine::FrameResource::COMMAND_LIST_POST_1);
 
     ID3D12CommandList* ppCommandLists[] = { m_sceneCommandList, m_postCommandList };
     //ID3D12CommandList* ppCommandLists[] = { m_sceneCommandList };

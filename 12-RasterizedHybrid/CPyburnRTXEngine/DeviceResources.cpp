@@ -259,7 +259,7 @@ void DeviceResources::CreateDeviceResources()
     for (size_t i = 0; i < _countof(m_frameResource); i++)
     {
         m_frameResource[i] = std::make_unique<FrameResource>();
-        m_frameResource[i]->Init(this);
+        m_frameResource[i]->Init(m_d3dDevice.Get());
     }
 
     // Create a fence for tracking GPU execution progress.

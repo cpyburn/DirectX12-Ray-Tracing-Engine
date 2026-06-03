@@ -18,9 +18,9 @@ namespace CPyburnRTXEngine
 		FrameResource();
 		~FrameResource();
 
-		void Init(DX::DeviceResources* deviceResources);
+		void Init(ID3D12Device* d3dDevice);
 		ID3D12GraphicsCommandList4* ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState = nullptr);
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> GetCommandList(int commandList) { return m_commandLists[commandList]; }
+		ID3D12GraphicsCommandList4* GetCommandList(int commandList) { return m_commandLists[commandList].Get(); }
 		void Release();
 	};
 }

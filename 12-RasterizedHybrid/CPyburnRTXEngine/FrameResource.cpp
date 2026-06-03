@@ -13,10 +13,8 @@ namespace CPyburnRTXEngine
         Release();
     }
 
-    void FrameResource::Init(DX::DeviceResources* deviceResources)
+    void FrameResource::Init(ID3D12Device* d3dDevice)
     {
-        Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice = deviceResources->GetD3DDevice();
-
         for (UINT i = 0; i < COMMAND_LIST_COUNT; i++)
         {
             DX::ThrowIfFailed(d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[i])));

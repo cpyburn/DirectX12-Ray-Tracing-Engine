@@ -906,8 +906,8 @@ namespace CPyburnRTXEngine
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
 
-        m_materialDataBuffer.CreateDeviceDependentResources(deviceResources);
-		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources);
+        m_materialDataBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
         // load all models
         for (auto& unorderedModel : Models)
@@ -916,7 +916,7 @@ namespace CPyburnRTXEngine
 
             std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
             model.assimpFactory = std::make_unique<AssimpFactory>(modelPath);
-            model.assimpFactory->CreateDeviceDependentResources(deviceResources);
+            model.assimpFactory->CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
             m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());
             m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);

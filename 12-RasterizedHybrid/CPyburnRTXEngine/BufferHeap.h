@@ -8,14 +8,14 @@ namespace CPyburnRTXEngine
     class BufferHeap
     {
     private:
-        std::shared_ptr<DX::DeviceResources> m_deviceResources;
+        ID3D12Device5* m_d3dDevice = nullptr;
     public:
         // Per-frame descriptor heap positions
         UINT HeapIndex = MAXUINT;
 
-        void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+        void CreateDeviceDependentResources(ID3D12Device5* d3dDevice)
         {
-            m_deviceResources = deviceResources;
+            m_d3dDevice = d3dDevice;
         }
 
         void CreateHeapPosition()
@@ -61,7 +61,7 @@ namespace CPyburnRTXEngine
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
             CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
                 &bufferDescModel,
@@ -86,7 +86,7 @@ namespace CPyburnRTXEngine
         {
             const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
             CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel, flags);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(
+            DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                 D3D12_HEAP_FLAG_NONE,
                 &bufferDesc,
@@ -134,7 +134,7 @@ namespace CPyburnRTXEngine
             uav.Buffer.CounterOffsetInBytes = 0;
             uav.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-            m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(DefaultHeapResource.Get(), nullptr, &uav, CpuHandle);
+            m_d3dDevice->CreateUnorderedAccessView(DefaultHeapResource.Get(), nullptr, &uav, CpuHandle);
         }
 
         void CopyUploadToDefault(ID3D12GraphicsCommandList4* commandList)
@@ -171,10 +171,10 @@ namespace CPyburnRTXEngine
             
             if (useUploadHeap)
             {
-                m_deviceResources->GetD3DDevice()->CreateShaderResourceView(UploadHeapResource.Get(), &srvDesc, CpuHandle);
+                m_d3dDevice->CreateShaderResourceView(UploadHeapResource.Get(), &srvDesc, CpuHandle);
             }
             else
-                m_deviceResources->GetD3DDevice()->CreateShaderResourceView(DefaultHeapResource.Get(), &srvDesc, CpuHandle);
+                m_d3dDevice->CreateShaderResourceView(DefaultHeapResource.Get(), &srvDesc, CpuHandle);
         }
 
         void ReleaseHeapPosition()

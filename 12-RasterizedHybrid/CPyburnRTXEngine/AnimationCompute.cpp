@@ -81,9 +81,9 @@ namespace CPyburnRTXEngine
 
         device->CreateComputePipelineState(&pso, IID_PPV_ARGS(&m_pso));
 
-		m_boneBuffer.CreateDeviceDependentResources(deviceResources);
-		m_boneMatrices.CreateDeviceDependentResources(deviceResources);
-		m_outVertices.CreateDeviceDependentResources(deviceResources);
+		m_boneBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+		m_boneMatrices.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+		m_outVertices.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
     }
 
     void AnimationCompute::CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones)

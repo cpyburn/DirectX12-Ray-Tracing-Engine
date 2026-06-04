@@ -76,7 +76,7 @@ Adding a shadow ray to the models and adding a NEXT/FUTURE buffer to the TLAS. T
 Creating a SRV at the end of all other heap descriptors for contigious textures
 
 ### [11-Animations and file input](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/11-Animations) 
-<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/bcb0c844-93bc-4413-b7fb-7f4ea79f2152" />
+<img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/c8f125e3-f297-4145-9d79-53992e13dcea" />
 
 Adding JSON input for reading in animations and adding animation logic
 

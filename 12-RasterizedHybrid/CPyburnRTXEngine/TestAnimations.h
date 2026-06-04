@@ -38,7 +38,7 @@ namespace CPyburnRTXEngine
 			}
 		};
 
-		std::shared_ptr<DX::DeviceResources> m_deviceResources;
+		DX::DeviceResources* m_deviceResources = nullptr;
 
 		void CreateCommandObjects();
 		void CreateBuffers();
@@ -60,8 +60,6 @@ namespace CPyburnRTXEngine
 		
 		Microsoft::WRL::ComPtr<ID3D12StateObject> mpPipelineState;
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> mpEmptyRootSig;
-
-		
 
 		uint8_t* shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource = nullptr);
 		void createShaderTable();
@@ -134,7 +132,7 @@ namespace CPyburnRTXEngine
 
 		TestAnimations();
 		~TestAnimations();
-		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
+		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
 		void Update(DX::StepTimer const& timer);
 		void Render(CameraBase* camera);

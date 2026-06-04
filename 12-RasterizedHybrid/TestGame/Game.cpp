@@ -245,9 +245,9 @@ void Game::CreateDeviceDependentResources()
     CPyburnRTXEngine::Texture::CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 
     //m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
-	m_triangle.CreateDeviceDependentResources(m_deviceResources);
+	m_triangle.CreateDeviceDependentResources(m_deviceResources.get());
     m_camera.CreateDeviceDependentResources(m_deviceResources.get());
-    m_gameInput.CreateDeviceDependentResources(m_deviceResources);
+    m_gameInput.CreateDeviceDependentResources(m_deviceResources.get());
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.

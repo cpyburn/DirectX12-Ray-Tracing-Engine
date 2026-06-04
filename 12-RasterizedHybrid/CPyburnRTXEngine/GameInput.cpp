@@ -16,7 +16,7 @@ namespace CPyburnRTXEngine
 
 	}
 
-	void GameInput::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+	void GameInput::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
 		m_mouse->SetWindow(deviceResources->GetWindow());
 	}

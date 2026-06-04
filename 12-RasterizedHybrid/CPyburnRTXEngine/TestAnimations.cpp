@@ -151,7 +151,7 @@ namespace CPyburnRTXEngine
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources.get(), 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
+            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
             m_blas.InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
             m_blas.UpdateBlas(commandList);
         }
@@ -824,11 +824,11 @@ namespace CPyburnRTXEngine
         Release();
     }
 
-    void TestAnimations::CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources)
+    void TestAnimations::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
     {
         m_deviceResources = deviceResources;
 
-        m_boundingSphereTest.CreateDeviceDependentResources(deviceResources.get());
+        m_boundingSphereTest.CreateDeviceDependentResources(deviceResources);
 
         LoadJson();
 
@@ -852,7 +852,7 @@ namespace CPyburnRTXEngine
             model.assimpFactory->CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
             m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());
-            m_elfAnimated->CreateDeviceDependentResources(m_deviceResources.get());
+            m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
         }
 
         CreateCommandObjects();
@@ -892,32 +892,32 @@ namespace CPyburnRTXEngine
     {
 
 #pragma region Testing Bounding Sphere
-        ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, GraphicsContexts::GetPipelinePositionColorInstancedLine());
+        //ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, GraphicsContexts::GetPipelinePositionColorInstancedLine());
 
-        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
-        m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
-        m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
+        //ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+        //m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        //m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
+        //m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DX::DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
-        m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
+        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DX::DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
+        //m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
 
-        // Record commands.
-        m_sceneCommandList->ClearRenderTargetView(rtvHandle, m_deviceResources->GetClearColor(), 0, nullptr);
-        m_sceneCommandList->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
+        //// Record commands.
+        //m_sceneCommandList->ClearRenderTargetView(rtvHandle, m_deviceResources->GetClearColor(), 0, nullptr);
+        //m_sceneCommandList->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
 
-        PIXBeginEvent(m_sceneCommandList, 0, L"Draw a thin rectangle");
+        //PIXBeginEvent(m_sceneCommandList, 0, L"Draw a thin rectangle");
 
-        m_boundingSphereTest.Render(m_sceneCommandList, camera);
+        //m_boundingSphereTest.Render(m_sceneCommandList, camera);
 
-        PIXEndEvent(m_sceneCommandList);
+        //PIXEndEvent(m_sceneCommandList);
 
-        DX::ThrowIfFailed(m_sceneCommandList->Close());
+        //DX::ThrowIfFailed(m_sceneCommandList->Close());
 #pragma endregion
 
 
 #pragma region Ray tracing
-        /*
+        
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
         m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
@@ -985,7 +985,7 @@ namespace CPyburnRTXEngine
 
             // 6.4.e Bind the empty root signature
             m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
-            m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
+            m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));
             m_sceneCommandList->SetComputeRootConstantBufferView(1, m_EnvironmentCb.Resource->GetGPUVirtualAddress());
             m_sceneCommandList->SetComputeRootDescriptorTable(2, GraphicsContexts::GetGpuHandle(mUavPosition));
             UINT tlasFrame = GetReadyFrameIndex();
@@ -1012,7 +1012,7 @@ namespace CPyburnRTXEngine
 
             DX::ThrowIfFailed(m_sceneCommandList->Close());
         }
-        */
+        
 #pragma endregion
         
     }

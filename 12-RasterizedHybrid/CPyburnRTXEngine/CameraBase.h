@@ -20,7 +20,7 @@ namespace CPyburnRTXEngine
 		};
 	private:
 		BufferConstant<CameraCbv> m_cameraCbv;
-		DX::DeviceResources* m_deviceResources;
+		DX::DeviceResources* m_deviceResources = nullptr;
 
 		float m_aspectRatio = 0;
 		float m_fieldOfView = 0;

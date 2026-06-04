@@ -21,7 +21,7 @@ namespace CPyburnRTXEngine
 		GameInput();
 		~GameInput();
 
-		void CreateDeviceDependentResources(const std::shared_ptr<DX::DeviceResources>& deviceResources);
+		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 
 		void Update();
 		void OnSuspending();

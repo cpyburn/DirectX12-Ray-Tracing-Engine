@@ -43,6 +43,16 @@ namespace CPyburnRTXEngine
 		m_indexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Bounding Sphere Index Buffer");
 #pragma endregion
 
+#pragma region Instance Buffer
+		// as of right now, the instances should be relatively small < 10000, so use upload heap for updating per frame. Can always benchmark if performance is issue and decide to use default
+		for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
+		{
+			m_instanceBuffer->CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+			m_instanceBuffer->ReserveMemory(1000);
+			m_instanceBuffer->CreateOnUploadHeap(L"Bounding Sphere Instance Buffer");
+		}
+#pragma endregion
+
 		DX::ThrowIfFailed(commandList->Close());
 		ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
 		deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);

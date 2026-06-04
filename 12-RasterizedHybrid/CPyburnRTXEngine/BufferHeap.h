@@ -10,6 +10,7 @@ namespace CPyburnRTXEngine
     private:
         ID3D12Device5* m_d3dDevice = nullptr;
         UINT m_bufferSize = 0;
+        UINT m_reserveSizeOfCpuData = 0;
     public:
         // Per-frame descriptor heap positions
         UINT HeapIndex = MAXUINT;
@@ -58,9 +59,21 @@ namespace CPyburnRTXEngine
         // Persistently mapped pointer
         uint8_t* MappedData = nullptr;
 
+        void ReserveMemory(const UINT& reserveSizeOfCpuData)
+        {
+            m_reserveSizeOfCpuData = reserveSizeOfCpuData;
+            CpuData.reserve(reserveSizeOfCpuData);
+        }
+
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
             m_bufferSize = static_cast<UINT>(sizeof(T) * CpuData.size());
+
+            if (m_reserveSizeOfCpuData == 0)
+            {
+                m_reserveSizeOfCpuData = static_cast<UINT>(CpuData.size());
+            }
+
             CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize);
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -79,12 +92,23 @@ namespace CPyburnRTXEngine
 
         void UpdateUploadHeap()
 		{
+            if (static_cast<UINT>(CpuData.size()) > m_reserveSizeOfCpuData)
+            {
+                DebugTrace("BufferHeap CpuData > reserved size");
+            }
+
 			memcpy(MappedData, CpuData.data(), m_bufferSize);
 		}
 
         void CreateOnDefaultHeap(ID3D12GraphicsCommandList4* commandList, const WCHAR* name = L"Dfault buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
         {
-            m_bufferSize = static_cast<UINT>(sizeof(T) * CpuData.size());
+            m_bufferSize = static_cast<UINT>(sizeof(T) * CpuData.capacity());
+
+            if (m_reserveSizeOfCpuData == 0)
+            {
+                m_reserveSizeOfCpuData = static_cast<UINT>(CpuData.size());
+            }
+
             CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize, flags);
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -129,7 +153,7 @@ namespace CPyburnRTXEngine
             uav.Format = DXGI_FORMAT_UNKNOWN;
             uav.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
             uav.Buffer.FirstElement = 0;
-            uav.Buffer.NumElements = static_cast<UINT>(CpuData.size());
+            uav.Buffer.NumElements = static_cast<UINT>(CpuData.capacity());
             uav.Buffer.StructureByteStride = stride;
             uav.Buffer.CounterOffsetInBytes = 0;
             uav.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
@@ -139,6 +163,11 @@ namespace CPyburnRTXEngine
 
         void CopyUploadToDefault(ID3D12GraphicsCommandList4* commandList)
         {
+            if (static_cast<UINT>(CpuData.size()) > m_reserveSizeOfCpuData)
+            {
+                DebugTrace("BufferHeap CpuData > reserved size");
+            }
+
             // Upload the buffer to the GPU.
             {
                 D3D12_SUBRESOURCE_DATA resourceData = {};
@@ -167,7 +196,7 @@ namespace CPyburnRTXEngine
             srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
             srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
             srvDesc.Buffer.StructureByteStride = static_cast < UINT>(sizeof(T)); // your vertex struct size goes here
-            srvDesc.Buffer.NumElements = static_cast<UINT>(CpuData.size()); // number of vertices go here
+            srvDesc.Buffer.NumElements = static_cast<UINT>(CpuData.capacity()); // number of vertices go here
             
             if (useUploadHeap)
             {

@@ -35,7 +35,12 @@ namespace CPyburnRTXEngine
 		float m_mouseSensitivity = 0.001f;
 
 		CameraCbv m_cbvData = {};
+
+		DirectX::BoundingFrustum m_boundingFrustum;
 	public:
+		const DX::DeviceResources* GetDeviceResources() { return m_deviceResources; }
+		const DirectX::BoundingFrustum& GetBoundingFrustum() { return m_boundingFrustum; }
+
 		CameraBase();
 		virtual ~CameraBase() = default;
 

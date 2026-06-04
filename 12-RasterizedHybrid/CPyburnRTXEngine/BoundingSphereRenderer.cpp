@@ -24,34 +24,51 @@ namespace CPyburnRTXEngine
 		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
 		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
-#pragma region Vertex Buffer
-		m_vertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
-		std::vector<VSVertices> vertices;
-		vertices.resize(meshData.Vertices.size());
-		for (size_t i = 0; i < vertices.size(); i++)
+		// vertex buffer
 		{
-			const ShapeRendererHelper::Vertex& vertex = meshData.Vertices[i];
-			vertices[i].position = vertex.Position;
+			m_vertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+			std::vector<VSVertices> vertices(meshData.Vertices.size());
+			for (size_t i = 0; i < vertices.size(); i++)
+			{
+				const ShapeRendererHelper::Vertex& vertex = meshData.Vertices[i];
+				vertices[i].position = vertex.Position;
+			}
+			m_vertexBuffer.CpuData = vertices;
+			m_vertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Bounding Sphere Vertex Buffer");
+
+			m_vertexBufferView.BufferLocation = m_vertexBuffer.DefaultHeapResource->GetGPUVirtualAddress();
+			m_vertexBufferView.StrideInBytes = sizeof(VSVertices);
+			m_vertexBufferView.SizeInBytes = m_vertexBuffer.BufferSize;
 		}
-		m_vertexBuffer.CpuData = vertices;
-		m_vertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Bounding Sphere Vertex Buffer");
-#pragma endregion
 
-#pragma region Index Buffer
-		m_indexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
-		m_indexBuffer.CpuData = meshData.Indices32;
-		m_indexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Bounding Sphere Index Buffer");
-#pragma endregion
-
-#pragma region Instance Buffer
-		// as of right now, the instances should be relatively small < 10000, so use upload heap for updating per frame. Can always benchmark if performance is issue and decide to use default
-		for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
+		// index buffer
 		{
-			m_instanceBuffer->CreateDeviceDependentResources(deviceResources->GetD3DDevice());
-			m_instanceBuffer->ReserveMemory(1000);
-			m_instanceBuffer->CreateOnUploadHeap(L"Bounding Sphere Instance Buffer");
+			m_indexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+			m_indexBuffer.CpuData = meshData.Indices32;
+			m_indexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Bounding Sphere Index Buffer");
+
+			m_indexBufferView.BufferLocation = m_indexBuffer.DefaultHeapResource->GetGPUVirtualAddress();
+			m_indexBufferView.SizeInBytes = m_indexBuffer.BufferSize;
+			m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+
+			// Store the index count for rendering.
+			m_indexCount = static_cast<UINT>(meshData.Indices32.size());
 		}
-#pragma endregion
+
+		// instance buffer
+		{
+			// as of right now, the instances should be relatively small < 10000, so use upload heap for updating per frame. Can always benchmark if performance is issue and decide to use default
+			for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
+			{
+				m_instanceBuffer[i].CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+				m_instanceBuffer[i].CpuData.push_back(XMMatrixIdentity()); // testing
+				m_instanceBuffer[i].CreateOnUploadHeap(L"Bounding Sphere Instance Buffer");
+
+				m_instanceBufferView[i].BufferLocation = m_instanceBuffer[i].UploadHeapResource->GetGPUVirtualAddress();
+				m_instanceBufferView[i].StrideInBytes = sizeof(XMMATRIX);
+				m_instanceBufferView[i].SizeInBytes = m_instanceBuffer[i].BufferSize;
+			}
+		}
 
 		DX::ThrowIfFailed(commandList->Close());
 		ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
@@ -63,5 +80,37 @@ namespace CPyburnRTXEngine
 
 		m_vertexBuffer.ReleaseUploadResource();
 		m_indexBuffer.ReleaseUploadResource();
+	}
+
+	void BoundingSphereRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera)
+	{
+		//const DirectX::BoundingFrustum& frustum = camera->GetBoundingFrustum();
+
+		//DirectX::BoundingSphere worldSphere;
+		//base::Transform(worldSphere, modelTransform);
+
+		//m_draw = !frustum.Intersects(worldSphere);
+	}
+
+	void BoundingSphereRenderer::Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera)
+	{
+		if (!m_draw)
+		{
+			return;
+		}
+
+		commandList->SetGraphicsRootSignature(GraphicsContexts::GetRootSignaturePositionColorInstanced());
+		commandList->SetPipelineState(GraphicsContexts::GetPipelinePositionColorInstancedLine());
+		commandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+
+		commandList->SetGraphicsRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
+
+		D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[2];
+		vertexBufferViews[0] = m_vertexBufferView;
+		vertexBufferViews[1] = m_instanceBufferView[camera->GetDeviceResources()->GetCurrentFrameIndex()];
+
+		commandList->IASetVertexBuffers(0, _countof(vertexBufferViews), &vertexBufferViews[0]);
+		commandList->IASetIndexBuffer(&m_indexBufferView);
+		commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 	}
 }

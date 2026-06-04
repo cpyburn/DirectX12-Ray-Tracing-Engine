@@ -11,16 +11,16 @@ std::vector<UINT> GraphicsContexts::m_availableHeapPositions;
 std::unordered_map<UINT, UINT> GraphicsContexts::m_multiUseHeapPositions;
 std::mutex GraphicsContexts::m_mutexMultiUseHeapPositions;
 
-Microsoft::WRL::ComPtr<ID3D12PipelineState> GraphicsContexts::m_pipelineStatePositionColorLine;
-Microsoft::WRL::ComPtr<ID3D12PipelineState> GraphicsContexts::m_pipelineStatePositionColorTriangle;
-Microsoft::WRL::ComPtr<ID3D12RootSignature> GraphicsContexts::m_rootSignaturePositionColor;
+Microsoft::WRL::ComPtr<ID3D12PipelineState> GraphicsContexts::m_pipelineStatePositionColorInstancedLine;
+Microsoft::WRL::ComPtr<ID3D12PipelineState> GraphicsContexts::m_pipelineStatePositionColorInstancedTriangle;
+Microsoft::WRL::ComPtr<ID3D12RootSignature> GraphicsContexts::m_rootSignaturePositionColorInstanced;
 
 namespace CPyburnRTXEngine
 {
 	void GraphicsContexts::CreateRootSignatureAndPipelinePositionColorInstanced(DX::DeviceResources* deviceResources)
 	{
-		CD3DX12_ROOT_PARAMETER paramCbvAll1;
-		paramCbvAll1.InitAsDescriptorTable(1, &CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0));
+		CD3DX12_ROOT_PARAMETER paramCbvAll1 = {};
+		paramCbvAll1.InitAsDescriptorTable(1, &CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0)); // camera CBV
 
 		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
@@ -30,7 +30,7 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3DBlob> pSignature;
 		Microsoft::WRL::ComPtr<ID3DBlob> pError;
 		DX::ThrowIfFailed(D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, pSignature.GetAddressOf(), pError.GetAddressOf()));
-		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignaturePositionColor)));
+		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignaturePositionColorInstanced)));
 
 		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobVs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedShaders.hlsl", L"mainVS", L"vs_6_0");
 		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobPs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedShaders.hlsl", L"mainPS", L"ps_6_0");
@@ -52,7 +52,7 @@ namespace CPyburnRTXEngine
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC state = {};
 		state.InputLayout = { inputLayout, _countof(inputLayout) };
-		state.pRootSignature = m_rootSignaturePositionColor.Get();
+		state.pRootSignature = m_rootSignaturePositionColorInstanced.Get();
 		state.VS = { shaderBlobVs->GetBufferPointer(), shaderBlobVs->GetBufferSize() };
 		state.PS = { shaderBlobPs->GetBufferPointer(), shaderBlobPs->GetBufferSize() };;
 		state.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
@@ -65,12 +65,12 @@ namespace CPyburnRTXEngine
 		state.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		state.SampleDesc.Count = 1;
 
-		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateGraphicsPipelineState(&state, IID_PPV_ARGS(&m_pipelineStatePositionColorLine)));
+		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateGraphicsPipelineState(&state, IID_PPV_ARGS(&m_pipelineStatePositionColorInstancedLine)));
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC state2 = state;
 		state2.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateGraphicsPipelineState(&state2, IID_PPV_ARGS(&m_pipelineStatePositionColorTriangle)));
+		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateGraphicsPipelineState(&state2, IID_PPV_ARGS(&m_pipelineStatePositionColorInstancedTriangle)));
 	}
 
 	GraphicsContexts::GraphicsContexts()

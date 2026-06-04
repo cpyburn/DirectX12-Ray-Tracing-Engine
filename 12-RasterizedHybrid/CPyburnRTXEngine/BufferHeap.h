@@ -9,11 +9,11 @@ namespace CPyburnRTXEngine
     {
     private:
         ID3D12Device5* m_d3dDevice = nullptr;
-        UINT m_bufferSize = 0;
         UINT m_reserveSizeOfCpuData = 0;
     public:
         // Per-frame descriptor heap positions
         UINT HeapIndex = MAXUINT;
+        UINT BufferSize = 0;
 
         void CreateDeviceDependentResources(ID3D12Device5* d3dDevice)
         {
@@ -59,7 +59,7 @@ namespace CPyburnRTXEngine
         // Persistently mapped pointer
         uint8_t* MappedData = nullptr;
 
-        void ReserveMemory(const UINT& reserveSizeOfCpuData)
+        void ReserveVectorSpace(const UINT& reserveSizeOfCpuData)
         {
             m_reserveSizeOfCpuData = reserveSizeOfCpuData;
             CpuData.reserve(reserveSizeOfCpuData);
@@ -67,14 +67,14 @@ namespace CPyburnRTXEngine
 
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
-            m_bufferSize = static_cast<UINT>(sizeof(T) * CpuData.size());
+            BufferSize = static_cast<UINT>(sizeof(T) * CpuData.size());
 
             if (m_reserveSizeOfCpuData == 0)
             {
                 m_reserveSizeOfCpuData = static_cast<UINT>(CpuData.size());
             }
 
-            CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize);
+            CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(BufferSize);
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
@@ -97,19 +97,19 @@ namespace CPyburnRTXEngine
                 DebugTrace("BufferHeap CpuData > reserved size");
             }
 
-			memcpy(MappedData, CpuData.data(), m_bufferSize);
+			memcpy(MappedData, CpuData.data(), BufferSize);
 		}
 
         void CreateOnDefaultHeap(ID3D12GraphicsCommandList4* commandList, const WCHAR* name = L"Dfault buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
         {
-            m_bufferSize = static_cast<UINT>(sizeof(T) * CpuData.capacity());
+            BufferSize = static_cast<UINT>(sizeof(T) * CpuData.capacity());
 
             if (m_reserveSizeOfCpuData == 0)
             {
                 m_reserveSizeOfCpuData = static_cast<UINT>(CpuData.size());
             }
 
-            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize, flags);
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(BufferSize, flags);
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                 D3D12_HEAP_FLAG_NONE,

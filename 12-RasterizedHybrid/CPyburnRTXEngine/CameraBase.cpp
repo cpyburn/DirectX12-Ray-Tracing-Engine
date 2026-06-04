@@ -86,6 +86,11 @@ namespace CPyburnRTXEngine
         XMMATRIX invView = XMMatrixInverse(nullptr, view);
         XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
 
+        DirectX::BoundingFrustum frustumViewSpace;
+        DirectX::BoundingFrustum::CreateFromMatrix(frustumViewSpace, proj);
+        // Convert from view space to world space
+        frustumViewSpace.Transform(m_boundingFrustum, invView);
+
         // =========================
         // 5. UPDATE CONSTANT BUFFER
         // =========================

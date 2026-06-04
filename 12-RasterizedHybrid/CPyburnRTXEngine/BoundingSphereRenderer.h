@@ -13,8 +13,12 @@ namespace CPyburnRTXEngine
 			XMFLOAT4 color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 		};
 
-		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
+		bool m_draw = true;
+		UINT m_indexCount = 0;
+
+		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView = {};
+		D3D12_INDEX_BUFFER_VIEW m_indexBufferView = {};
+		D3D12_VERTEX_BUFFER_VIEW m_instanceBufferView[DX::DeviceResources::c_backBufferCount] = {};
 
 		BufferHeap<BoundingSphereRenderer::VSVertices> m_vertexBuffer;
 		BufferHeap<UINT> m_indexBuffer;
@@ -24,6 +28,9 @@ namespace CPyburnRTXEngine
 		~BoundingSphereRenderer();
 
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
+
+		void Update(const XMMATRIX& modelTransform, CameraBase* camera);
+		void Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera);
 	};
 }
 

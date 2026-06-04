@@ -11,13 +11,20 @@ namespace CPyburnRTXEngine
 		static std::mutex m_mutexMultiUseHeapPositions;
 
 #pragma region Position Color
-		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorLine;
-		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorTriangle;
-		static Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignaturePositionColor;
+	private:
+		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorInstancedLine;
+		static Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineStatePositionColorInstancedTriangle;
+		static Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignaturePositionColorInstanced;
 		static void CreateRootSignatureAndPipelinePositionColorInstanced(DX::DeviceResources* deviceResources);
+	public:
+		static ID3D12PipelineState* GetPipelinePositionColorInstancedLine() { return m_pipelineStatePositionColorInstancedLine.Get(); }
+		static ID3D12PipelineState* GetPipelinePositionColorInstancedTriangle() { return m_pipelineStatePositionColorInstancedTriangle.Get(); }
+		static ID3D12RootSignature* GetRootSignaturePositionColorInstanced() { return m_rootSignaturePositionColorInstanced.Get(); }
 #pragma endregion
 
 	public:
+
+
 		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> c_heap;
 		static UINT c_descriptorSize;
 

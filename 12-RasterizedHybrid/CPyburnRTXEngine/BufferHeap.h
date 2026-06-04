@@ -9,6 +9,7 @@ namespace CPyburnRTXEngine
     {
     private:
         ID3D12Device5* m_d3dDevice = nullptr;
+        UINT m_bufferSize = 0;
     public:
         // Per-frame descriptor heap positions
         UINT HeapIndex = MAXUINT;
@@ -59,8 +60,8 @@ namespace CPyburnRTXEngine
 
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
-            const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
-            CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel);
+            m_bufferSize = static_cast<UINT>(sizeof(T) * CpuData.size());
+            CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize);
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                 D3D12_HEAP_FLAG_NONE,
@@ -78,14 +79,13 @@ namespace CPyburnRTXEngine
 
         void UpdateUploadHeap()
 		{
-			const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
-			memcpy(MappedData, CpuData.data(), bufferSizeModel);
+			memcpy(MappedData, CpuData.data(), m_bufferSize);
 		}
 
         void CreateOnDefaultHeap(ID3D12GraphicsCommandList4* commandList, const WCHAR* name = L"Dfault buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
         {
-            const UINT bufferSizeModel = static_cast<UINT>(sizeof(T) * CpuData.size());
-            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSizeModel, flags);
+            m_bufferSize = static_cast<UINT>(sizeof(T) * CpuData.size());
+            CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_bufferSize, flags);
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                 D3D12_HEAP_FLAG_NONE,

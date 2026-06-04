@@ -30,20 +30,18 @@ namespace CPyburnRTXEngine
         //CD3DX12_ROOT_SIGNATURE_DESC desc;
         //desc.Init(2, params);
 
-        CD3DX12_DESCRIPTOR_RANGE ranges[4];
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1); // t1 
-        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2); // t2 because we have to buffer
-        ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
+        CD3DX12_DESCRIPTOR_RANGE ranges[3];
+        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0); // t0-t1
+        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2); // t2 because we have to buffer 
+        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0); // u0
 
-        CD3DX12_ROOT_PARAMETER params[4];
+        CD3DX12_ROOT_PARAMETER params[3];
         params[0].InitAsDescriptorTable(1, &ranges[0]);
         params[1].InitAsDescriptorTable(1, &ranges[1]);
         params[2].InitAsDescriptorTable(1, &ranges[2]);
-        params[3].InitAsDescriptorTable(1, &ranges[3]);
 
         CD3DX12_ROOT_SIGNATURE_DESC desc;
-        desc.Init(4, params);
+        desc.Init(3, params);
 
         Microsoft::WRL::ComPtr<ID3DBlob> sig, err;
         D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &sig, &err);
@@ -98,7 +96,7 @@ namespace CPyburnRTXEngine
     void AnimationCompute::CreateShaderResources()
     {
         m_boneBuffer.CreateShaderResourceView(); // t1
-        // since bones are usually small, going to use upload heap
+        // since bones are small, going to use SRV upload heap like a constant buffer
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
             m_boneMatricesBuffer[i].CreateShaderResourceView(true); // t2
@@ -127,13 +125,12 @@ namespace CPyburnRTXEngine
         commandList->SetPipelineState(m_pso.Get());
         commandList->SetComputeRootSignature(m_rootSig.Get());
 
-        // Root parameter 0: SRVs t0-t2
+        // Root parameter 0: SRVs t0-t1
         commandList->SetComputeRootDescriptorTable(0, m_baseVertexBuffer->GpuHandle);
-        commandList->SetComputeRootDescriptorTable(1, m_boneBuffer.GpuHandle);
-        commandList->SetComputeRootDescriptorTable(2, m_boneMatricesBuffer[m_deviceResources->GetCurrentFrameIndex()].GpuHandle);
-
-        // Root parameter 1: UAV u0
-        commandList->SetComputeRootDescriptorTable(3, m_outVertexBuffer.GpuHandle);
+        // Root parameter 1: SRVs t2 because we have to buffer
+        commandList->SetComputeRootDescriptorTable(1, m_boneMatricesBuffer[m_deviceResources->GetCurrentFrameIndex()].GpuHandle);
+        // Root parameter 2: UAV u0
+        commandList->SetComputeRootDescriptorTable(2, m_outVertexBuffer.GpuHandle);
 
         const UINT groups = (static_cast<UINT>(m_baseVertexBuffer->CpuData.size()) + 255u) / 256u;
         commandList->Dispatch(groups, 1, 1);

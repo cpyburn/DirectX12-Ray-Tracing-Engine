@@ -187,21 +187,25 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<IDxcCompiler> compiler;
 		Microsoft::WRL::ComPtr<IDxcLibrary> library;
 		Microsoft::WRL::ComPtr<IDxcBlobEncoding> source;
-
+		Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
+		
 		DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler));
 		DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));
 
-		library->CreateBlobFromFile(GetAssetFullPath(filename.c_str()).c_str(), nullptr, &source);
+		std::wstring path = GetAssetFullPath(filename.c_str());
 
+		library->CreateIncludeHandler(&includeHandler);
+		library->CreateBlobFromFile(path.c_str(), nullptr, &source);
+		
 		Microsoft::WRL::ComPtr<IDxcOperationResult> result;
 		DX::ThrowIfFailed(compiler->Compile(
 			source.Get(),
-			filename.c_str(),
+			path.c_str(),
 			shaderEntry.c_str(),
 			shaderVersion.c_str(),
 			nullptr, 0,
 			nullptr, 0,
-			nullptr,
+			includeHandler.Get(),
 			&result));
 
 		HRESULT status;

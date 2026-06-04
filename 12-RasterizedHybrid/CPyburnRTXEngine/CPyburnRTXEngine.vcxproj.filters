@@ -179,6 +179,12 @@
     <CustomBuild Include="PositionColorInstancedVertexShader.hlsl">
       <Filter>Shaders\Rasterize</Filter>
     </CustomBuild>
+    <CustomBuild Include="Common.hlsli">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="PositionColorInstancedCommon.hlsli">
+      <Filter>Shaders\Rasterize</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ToDo.txt" />

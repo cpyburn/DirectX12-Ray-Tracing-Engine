@@ -8,7 +8,7 @@ namespace CPyburnRTXEngine
 {
 	class CameraBase
 	{
-	private:
+	public:
 		struct CameraCbv
 		{
 			XMFLOAT4X4 gView;
@@ -18,7 +18,7 @@ namespace CPyburnRTXEngine
 
 			XMFLOAT3 gCameraPos;
 		};
-
+	private:
 		BufferConstant<CameraCbv> m_cameraCbv;
 		DX::DeviceResources* m_deviceResources;
 

@@ -1,3 +1,5 @@
+#include "Common.hlsli"
+
 RaytracingAccelerationStructure gRtScene : register(t0, space0);
 RWTexture2D<float4> gOutput : register(u0, space0);
 
@@ -20,16 +22,6 @@ struct MaterialData
 StructuredBuffer<MaterialData> gMaterials : register(t2, space1);
 Texture2D<float4> gTextures[] : register(t3, space1);
 SamplerState gSampler : register(s0);
-
-cbuffer Camera : register(b0, space0)
-{
-    float4x4 gView;
-    float4x4 gProj;
-    float4x4 gInvView;
-    float4x4 gInvProj;
-
-    float3 gCameraPos;
-}
 
 struct EnvironmentData
 {

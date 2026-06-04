@@ -10,17 +10,14 @@ namespace CPyburnRTXEngine
 		struct VSVertices
 		{
 			XMFLOAT3 position;
-			XMFLOAT4 color;
+			XMFLOAT4 color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
 		};
 
 		D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 
 		BufferHeap<BoundingSphereRenderer::VSVertices> m_vertexBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_indexBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_vertexBufferUpload;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_indexBufferUpload;
-
+		BufferHeap<UINT> m_indexBuffer;
 	public:
 		BoundingSphereRenderer();
 		~BoundingSphereRenderer();

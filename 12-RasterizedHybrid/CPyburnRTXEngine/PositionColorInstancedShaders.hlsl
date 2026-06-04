@@ -1,5 +1,4 @@
 #include "Common.hlsli"
-#include "PositionColorInstancedCommon.hlsli"
 
 // Per-vertex data used as input to the vertex shader.
 struct VertexShaderInput
@@ -9,8 +8,15 @@ struct VertexShaderInput
     matrix World : WORLD;
 };
 
+// Per-pixel color data passed through the pixel shader.
+struct PixelShaderInput
+{
+    float4 pos : SV_POSITION;
+    float4 color : COLOR;
+};
+
 // Simple shader to do vertex processing on the GPU.
-PixelShaderInput main(VertexShaderInput input)
+PixelShaderInput mainVS(VertexShaderInput input)
 {
 	PixelShaderInput output;
 	float4 pos = float4(input.pos, 1.0f);
@@ -26,4 +32,10 @@ PixelShaderInput main(VertexShaderInput input)
 	output.color = input.color;
 
 	return output;
+}
+
+// A pass-through function for the (interpolated) color data.
+float4 mainPS(PixelShaderInput input) : SV_TARGET
+{
+    return input.color;
 }

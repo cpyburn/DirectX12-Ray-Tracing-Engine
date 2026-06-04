@@ -17,7 +17,7 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> GraphicsContexts::m_rootSignaturePos
 
 namespace CPyburnRTXEngine
 {
-	void GraphicsContexts::CreateRootSignatureAndPipelinePositionColor(DX::DeviceResources* deviceResources)
+	void GraphicsContexts::CreateRootSignatureAndPipelinePositionColorInstanced(DX::DeviceResources* deviceResources)
 	{
 		CD3DX12_ROOT_PARAMETER paramCbvAll1;
 		paramCbvAll1.InitAsDescriptorTable(1, &CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0));
@@ -32,8 +32,8 @@ namespace CPyburnRTXEngine
 		DX::ThrowIfFailed(D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, pSignature.GetAddressOf(), pError.GetAddressOf()));
 		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignaturePositionColor)));
 
-		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobVs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedVertexShader.hlsl", L"main", L"vs_6_0");
-		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobPs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedPixelShader.hlsl", L"main", L"ps_6_0");
+		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobVs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedShaders.hlsl", L"mainVS", L"vs_6_0");
+		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobPs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedShaders.hlsl", L"mainPS", L"ps_6_0");
 
 		static const D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
@@ -287,7 +287,7 @@ namespace CPyburnRTXEngine
 
 	void GraphicsContexts::CreateRootSignaturesAndPipelines(DX::DeviceResources* deviceResources)
 	{
-		CreateRootSignatureAndPipelinePositionColor(deviceResources);
+		CreateRootSignatureAndPipelinePositionColorInstanced(deviceResources);
 	}
 
 	void GraphicsContexts::Release()

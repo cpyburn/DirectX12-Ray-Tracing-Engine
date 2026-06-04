@@ -173,17 +173,11 @@
     <CustomBuild Include="skinnedCompute.hlsl">
       <Filter>Shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="PositionColorInstancedPixelShader.hlsl">
-      <Filter>Shaders\Rasterize</Filter>
-    </CustomBuild>
-    <CustomBuild Include="PositionColorInstancedVertexShader.hlsl">
+    <CustomBuild Include="PositionColorInstancedShaders.hlsl">
       <Filter>Shaders\Rasterize</Filter>
     </CustomBuild>
     <CustomBuild Include="Common.hlsli">
       <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="PositionColorInstancedCommon.hlsli">
-      <Filter>Shaders\Rasterize</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

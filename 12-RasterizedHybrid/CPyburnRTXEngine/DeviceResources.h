@@ -119,6 +119,7 @@ namespace DX
         ID3D12Resource* GetIntermediateRenderTarget() const noexcept { return m_intermediateRenderTarget.Get(); }
 		void IncreaseResolutionIndex() noexcept;
 		void DecreaseResolutionIndex() noexcept;
+        const float* GetClearColor() noexcept { return ClearColor; }
     private:
         struct PostVertex
         {

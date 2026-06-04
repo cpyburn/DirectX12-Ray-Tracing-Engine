@@ -63,16 +63,12 @@ namespace CPyburnRTXEngine
 				m_instanceBuffer[i].CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
 				XMMATRIX transform = XMMatrixIdentity();
-				XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
-				XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
-				transform = translation1 * XMMatrixScalingFromVector({ .5f, .5f, .5f });
-				
 				m_instanceBuffer[i].CpuData.push_back(transform); // testing
 				m_instanceBuffer[i].CreateOnUploadHeap(L"Bounding Sphere Instance Buffer");
 				m_instanceBuffer[i].CopyCpuDataToUploadHeap();
 
 				m_instanceBufferView[i].BufferLocation = m_instanceBuffer[i].UploadHeapResource->GetGPUVirtualAddress();
-				m_instanceBufferView[i].StrideInBytes = sizeof(XMMATRIX);
+				m_instanceBufferView[i].StrideInBytes = sizeof(XMFLOAT4X4);
 				m_instanceBufferView[i].SizeInBytes = m_instanceBuffer[i].BufferSize;
 			}
 		}
@@ -110,7 +106,7 @@ namespace CPyburnRTXEngine
 		commandList->SetPipelineState(GraphicsContexts::GetPipelinePositionColorInstancedLine());
 		commandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
-		commandList->SetGraphicsRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));
 
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[2];
 		vertexBufferViews[0] = m_vertexBufferView;

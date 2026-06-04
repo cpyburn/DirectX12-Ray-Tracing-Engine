@@ -44,7 +44,7 @@ namespace CPyburnRTXEngine
 		CameraBase();
 		virtual ~CameraBase() = default;
 
-		ID3D12Resource* GetCbv() { return m_cameraCbv.Resource.Get(); }
+		BufferConstant<CameraCbv>* GetCbv() { return &m_cameraCbv; }
 
 		virtual void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		virtual void CreateWindowSizeDependentResources();

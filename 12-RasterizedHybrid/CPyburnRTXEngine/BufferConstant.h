@@ -33,6 +33,11 @@ namespace CPyburnRTXEngine
         // Upload heap resource
         Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
 
+        D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddressBuffered(UINT frameIndex)
+        {
+            return Resource->GetGPUVirtualAddress() + frameIndex * AlignedSize;
+        }
+
         // Persistently mapped pointer
         uint8_t* MappedData = nullptr;
 

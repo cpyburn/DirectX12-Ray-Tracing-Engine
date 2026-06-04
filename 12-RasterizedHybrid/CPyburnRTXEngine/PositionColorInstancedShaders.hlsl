@@ -31,22 +31,18 @@ struct PixelShaderInput
 // Simple shader to do vertex processing on the GPU.
 PixelShaderInput mainVS(VertexShaderInput input)
 {
-	PixelShaderInput output;
-	float4 pos = float4(input.pos, 1.0f);
+    PixelShaderInput output;
 
     float4x4 world = float4x4(input.world0, input.world1, input.world2, input.world3);
-    
-	// Calculate the position of the vertex against the world, view, and projection matrices.
-    pos = mul(pos, world);
-	//pos = mul(pos, model);
-    pos = mul(pos, gView);
-    pos = mul(pos, gProj);
-	output.pos = pos;
 
-	// Store the texture coordinates for the pixel shader.
-	output.color = input.color;
+    float4 pos = float4(input.pos, 1.0f);
+    pos = mul(world, pos);
+    pos = mul(gView, pos);
+    pos = mul(gProj, pos);
 
-	return output;
+    output.pos = pos;
+    output.color = input.color;
+    return output;
 }
 
 // A pass-through function for the (interpolated) color data.

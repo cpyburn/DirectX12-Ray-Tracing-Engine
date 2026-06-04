@@ -828,6 +828,8 @@ namespace CPyburnRTXEngine
     {
         m_deviceResources = deviceResources;
 
+        m_boundingSphereTest.CreateDeviceDependentResources(deviceResources.get());
+
         LoadJson();
 
         // reserve the uav position and srv position
@@ -888,6 +890,34 @@ namespace CPyburnRTXEngine
 
     void TestAnimations::Render(CameraBase* camera)
     {
+
+#pragma region Testing Bounding Sphere
+        ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, GraphicsContexts::GetPipelinePositionColorInstancedLine());
+
+        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+        m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
+        m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DX::DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
+        m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
+
+        // Record commands.
+        m_sceneCommandList->ClearRenderTargetView(rtvHandle, m_deviceResources->GetClearColor(), 0, nullptr);
+        m_sceneCommandList->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
+
+        PIXBeginEvent(m_sceneCommandList, 0, L"Draw a thin rectangle");
+
+        m_boundingSphereTest.Render(m_sceneCommandList, camera);
+
+        PIXEndEvent(m_sceneCommandList);
+
+        DX::ThrowIfFailed(m_sceneCommandList->Close());
+#pragma endregion
+
+
+#pragma region Ray tracing
+        /*
         ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
         m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
@@ -982,6 +1012,9 @@ namespace CPyburnRTXEngine
 
             DX::ThrowIfFailed(m_sceneCommandList->Close());
         }
+        */
+#pragma endregion
+        
     }
 
     void TestAnimations::Release()

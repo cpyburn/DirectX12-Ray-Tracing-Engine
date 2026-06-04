@@ -90,7 +90,7 @@ namespace CPyburnRTXEngine
             DX::ThrowIfFailed(UploadHeapResource->Map(0, &readRange, reinterpret_cast<void**>(&MappedData)));
         }
 
-        void UpdateUploadHeap()
+        void CopyCpuDataToUploadHeap()
 		{
             if (static_cast<UINT>(CpuData.size()) > m_reserveSizeOfCpuData)
             {

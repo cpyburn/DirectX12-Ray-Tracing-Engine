@@ -82,14 +82,14 @@ namespace CPyburnRTXEngine
         // =========================
         XMVECTOR lookAt = m_eye + forward;
         XMMATRIX view = XMMatrixLookAtLH(m_eye, lookAt, up);
-        XMMATRIX proj = XMMatrixPerspectiveFovLH(m_fieldOfView, m_aspectRatio, 0.1f, 1000.0f);
+        XMMATRIX proj = XMMatrixPerspectiveFovLH(m_fieldOfView, m_aspectRatio, 0.1f, 10000.0f);
         XMMATRIX invView = XMMatrixInverse(nullptr, view);
         XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
 
-        DirectX::BoundingFrustum frustumViewSpace;
-        DirectX::BoundingFrustum::CreateFromMatrix(frustumViewSpace, proj);
-        // Convert from view space to world space
-        frustumViewSpace.Transform(m_boundingFrustum, invView);
+        //DirectX::BoundingFrustum frustumViewSpace;
+        //DirectX::BoundingFrustum::CreateFromMatrix(frustumViewSpace, proj);
+        //// Convert from view space to world space
+        //frustumViewSpace.Transform(m_boundingFrustum, invView);
 
         // =========================
         // 5. UPDATE CONSTANT BUFFER

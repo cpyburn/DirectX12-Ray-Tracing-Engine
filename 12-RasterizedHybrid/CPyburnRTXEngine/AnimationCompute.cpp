@@ -112,7 +112,7 @@ namespace CPyburnRTXEngine
         }
 
         m_boneMatricesBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData = bones;
-        m_boneMatricesBuffer[m_deviceResources->GetCurrentFrameIndex()].UpdateUploadHeap();
+        m_boneMatricesBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
     }
 
     void AnimationCompute::Dispatch(ID3D12GraphicsCommandList4* commandList)

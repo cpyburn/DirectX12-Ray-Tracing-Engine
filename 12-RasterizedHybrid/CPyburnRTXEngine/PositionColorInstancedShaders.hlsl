@@ -1,11 +1,24 @@
-#include "Common.hlsli"
+//#include "Common.hlsli"
+
+cbuffer Camera : register(b0, space0)
+{
+    float4x4 gView;
+    float4x4 gProj;
+    float4x4 gInvView;
+    float4x4 gInvProj;
+
+    float3 gCameraPos;
+}
 
 // Per-vertex data used as input to the vertex shader.
 struct VertexShaderInput
 {
 	float3 pos : POSITION;
 	float4 color : COLOR;
-    matrix World : WORLD;
+    float4 world0 : WORLD0;
+    float4 world1 : WORLD1;
+    float4 world2 : WORLD2;
+    float4 world3 : WORLD3;
 };
 
 // Per-pixel color data passed through the pixel shader.
@@ -21,8 +34,10 @@ PixelShaderInput mainVS(VertexShaderInput input)
 	PixelShaderInput output;
 	float4 pos = float4(input.pos, 1.0f);
 
+    float4x4 world = float4x4(input.world0, input.world1, input.world2, input.world3);
+    
 	// Calculate the position of the vertex against the world, view, and projection matrices.
-    pos = mul(pos, input.World);
+    pos = mul(pos, world);
 	//pos = mul(pos, model);
     pos = mul(pos, gView);
     pos = mul(pos, gProj);

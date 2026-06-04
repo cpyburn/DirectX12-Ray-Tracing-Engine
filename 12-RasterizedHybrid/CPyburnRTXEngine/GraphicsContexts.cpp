@@ -20,7 +20,7 @@ namespace CPyburnRTXEngine
 	void GraphicsContexts::CreateRootSignatureAndPipelinePositionColorInstanced(DX::DeviceResources* deviceResources)
 	{
 		CD3DX12_ROOT_PARAMETER paramCbvAll1 = {};
-		paramCbvAll1.InitAsDescriptorTable(1, &CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0)); // camera CBV
+		paramCbvAll1.InitAsConstantBufferView(0); // camera CBV
 
 		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
@@ -32,8 +32,28 @@ namespace CPyburnRTXEngine
 		DX::ThrowIfFailed(D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, pSignature.GetAddressOf(), pError.GetAddressOf()));
 		DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateRootSignature(0, pSignature->GetBufferPointer(), pSignature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignaturePositionColorInstanced)));
 
-		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobVs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedShaders.hlsl", L"mainVS", L"vs_6_0");
-		Microsoft::WRL::ComPtr<IDxcBlob> shaderBlobPs = GraphicsContexts::CompileHlslLibrary(deviceResources->GetD3DDevice(), L"PositionColorInstancedShaders.hlsl", L"mainPS", L"ps_6_0");
+		Microsoft::WRL::ComPtr<ID3DBlob> vertexShader;
+		Microsoft::WRL::ComPtr<ID3DBlob> pixelShader;
+		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+
+#if defined(_DEBUG)
+		// Enable better shader debugging with the graphics debugging tools.
+		UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+		UINT compileFlags = 0;
+#endif
+		HRESULT hr = D3DCompileFromFile(GetAssetFullPath(L"PositionColorInstancedShaders.hlsl").c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "mainVS", "vs_5_1", compileFlags, 0, &vertexShader, &errorBlob);
+		if (FAILED(hr) && errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		}
+		DX::ThrowIfFailed(hr);
+		hr = D3DCompileFromFile(GetAssetFullPath(L"PositionColorInstancedShaders.hlsl").c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "mainPS", "ps_5_1", compileFlags, 0, &pixelShader, &errorBlob);
+		if (FAILED(hr) && errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		}
+		DX::ThrowIfFailed(hr);
 
 		static const D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
@@ -53,8 +73,8 @@ namespace CPyburnRTXEngine
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC state = {};
 		state.InputLayout = { inputLayout, _countof(inputLayout) };
 		state.pRootSignature = m_rootSignaturePositionColorInstanced.Get();
-		state.VS = { shaderBlobVs->GetBufferPointer(), shaderBlobVs->GetBufferSize() };
-		state.PS = { shaderBlobPs->GetBufferPointer(), shaderBlobPs->GetBufferSize() };;
+		state.VS = { vertexShader->GetBufferPointer(), vertexShader->GetBufferSize() };
+		state.PS = { pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };;
 		state.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		state.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 		state.DepthStencilState = depthStencilDesc;
@@ -198,7 +218,7 @@ namespace CPyburnRTXEngine
 		library->CreateBlobFromFile(path.c_str(), nullptr, &source);
 		
 		Microsoft::WRL::ComPtr<IDxcOperationResult> result;
-		DX::ThrowIfFailed(compiler->Compile(
+		compiler->Compile(
 			source.Get(),
 			path.c_str(),
 			shaderEntry.c_str(),
@@ -206,7 +226,7 @@ namespace CPyburnRTXEngine
 			nullptr, 0,
 			nullptr, 0,
 			includeHandler.Get(),
-			&result));
+			&result);
 
 		HRESULT status;
 		result->GetStatus(&status);

@@ -86,7 +86,7 @@ void Game::Update(DX::StepTimer const& timer)
         CreateWindowSizeDependentResources();
     }
 
-    m_fullscreen.Update(timer);
+    //m_fullscreen.Update(timer);
     m_triangle.Update(timer);
     m_camera.Update(timer, &m_gameInput);
 
@@ -244,7 +244,7 @@ void Game::CreateDeviceDependentResources()
     // TODO: Initialize device dependent objects here (independent of window size).
     CPyburnRTXEngine::Texture::CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 
-    m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
+    //m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
 	m_triangle.CreateDeviceDependentResources(m_deviceResources);
     m_camera.CreateDeviceDependentResources(m_deviceResources.get());
     m_gameInput.CreateDeviceDependentResources(m_deviceResources);

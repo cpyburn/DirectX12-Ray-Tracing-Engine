@@ -61,8 +61,15 @@ namespace CPyburnRTXEngine
 			for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
 			{
 				m_instanceBuffer[i].CreateDeviceDependentResources(deviceResources->GetD3DDevice());
-				m_instanceBuffer[i].CpuData.push_back(XMMatrixIdentity()); // testing
+
+				XMMATRIX transform = XMMatrixIdentity();
+				XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
+				XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
+				transform = translation1 * XMMatrixScalingFromVector({ .5f, .5f, .5f });
+				
+				m_instanceBuffer[i].CpuData.push_back(transform); // testing
 				m_instanceBuffer[i].CreateOnUploadHeap(L"Bounding Sphere Instance Buffer");
+				m_instanceBuffer[i].CopyCpuDataToUploadHeap();
 
 				m_instanceBufferView[i].BufferLocation = m_instanceBuffer[i].UploadHeapResource->GetGPUVirtualAddress();
 				m_instanceBufferView[i].StrideInBytes = sizeof(XMMATRIX);

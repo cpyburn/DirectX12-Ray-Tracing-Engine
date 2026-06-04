@@ -70,7 +70,7 @@ private:
     // Rendering loop timer.
     DX::StepTimer                               m_timer;
 
-	CPyburnRTXEngine::TestFullscreen            m_fullscreen;
+	//CPyburnRTXEngine::TestFullscreen            m_fullscreen;
 	CPyburnRTXEngine::TestAnimations            m_triangle;
     CPyburnRTXEngine::CameraBase                m_camera;
     CPyburnRTXEngine::GameInput                 m_gameInput;

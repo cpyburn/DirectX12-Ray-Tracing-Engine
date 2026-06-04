@@ -78,6 +78,7 @@ namespace CPyburnRTXEngine
 
             // Record commands.
             m_sceneCommandList->ClearRenderTargetView(rtvHandle, ClearColor, 0, nullptr);
+            m_sceneCommandList->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
             m_sceneCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             m_sceneCommandList->IASetVertexBuffers(0, 1, &m_sceneVertexBufferView);
 

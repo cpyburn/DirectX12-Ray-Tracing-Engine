@@ -134,7 +134,7 @@ namespace CPyburnRTXEngine
 		~TestAnimations();
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
-		void Update(DX::StepTimer const& timer);
+		void Update(DX::StepTimer const& timer, CameraBase* camera);
 		void Render(CameraBase* camera);
 		void Release();
 	};

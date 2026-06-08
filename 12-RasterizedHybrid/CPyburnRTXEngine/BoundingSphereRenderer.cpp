@@ -50,9 +50,6 @@ namespace CPyburnRTXEngine
 			m_indexBufferView.BufferLocation = m_indexBuffer.DefaultHeapResource->GetGPUVirtualAddress();
 			m_indexBufferView.SizeInBytes = m_indexBuffer.BufferSize;
 			m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-
-			// Store the index count for rendering.
-			m_indexCount = static_cast<UINT>(meshData.Indices32.size());
 		}
 
 		// instance buffer
@@ -87,12 +84,12 @@ namespace CPyburnRTXEngine
 
 	void BoundingSphereRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera)
 	{
-		//const DirectX::BoundingFrustum& frustum = camera->GetBoundingFrustum();
+		const DirectX::BoundingFrustum& frustum = camera->GetBoundingFrustum();
 
 		//DirectX::BoundingSphere worldSphere;
-		//base::Transform(worldSphere, modelTransform);
+		//Transform(worldSphere, modelTransform);
 
-		//m_draw = !frustum.Intersects(worldSphere);
+		m_draw = Intersects(frustum);
 	}
 
 	void BoundingSphereRenderer::Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera)
@@ -114,6 +111,6 @@ namespace CPyburnRTXEngine
 
 		commandList->IASetVertexBuffers(0, _countof(vertexBufferViews), &vertexBufferViews[0]);
 		commandList->IASetIndexBuffer(&m_indexBufferView);
-		commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(static_cast<UINT>(m_indexBuffer.CpuData.size()), 1, 0, 0, 0);
 	}
 }

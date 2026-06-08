@@ -1,1 +1,3 @@
-Up until now we have been doing a little bit of wonky stuff, like adding a triangle geom in with the plane geom, in real practice, you may do something like this to make 1 static model, but usually each model would have its on BLAS. We are going to head that direction with this tutorial.
+<img width="1500" height="1000" alt="image" src="https://github.com/user-attachments/assets/c8f125e3-f297-4145-9d79-53992e13dcea" />
+
+Documentation will come eventually, the project should build and you should be able to backwards engineer the solution.

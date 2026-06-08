@@ -543,7 +543,7 @@ namespace CPyburnRTXEngine
 #pragma region Shader config
         // Shader config, shared between all shaders (ray-gen, miss and hit)
         D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
-        shaderConfig.MaxPayloadSizeInBytes = sizeof(XMFLOAT3); // We only need to output a color
+        shaderConfig.MaxPayloadSizeInBytes = sizeof(UINT) + sizeof(float) + sizeof(XMFLOAT3); // 12.0 hybrid, we now have a bool, a float, and color
         shaderConfig.MaxAttributeSizeInBytes = sizeof(XMFLOAT2); // Triangle hit attributes are barycentrics, which can be represented in 2 floats
 
         subobjects[index].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
@@ -568,7 +568,7 @@ namespace CPyburnRTXEngine
 #pragma endregion
 
 #pragma region Global root signature
-        D3D12_DESCRIPTOR_RANGE globalRanges[2] = {};
+        D3D12_DESCRIPTOR_RANGE globalRanges[3] = {};
 
         // u0 = output UAV
         globalRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
@@ -584,7 +584,14 @@ namespace CPyburnRTXEngine
         globalRanges[1].RegisterSpace = 0;
         globalRanges[1].OffsetInDescriptorsFromTableStart = 0;
 
-        D3D12_ROOT_PARAMETER globalParams[4] = {};
+        // t1 = depth SRV
+        globalRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        globalRanges[2].NumDescriptors = 1;
+        globalRanges[2].BaseShaderRegister = 1;
+        globalRanges[2].RegisterSpace = 0;
+        globalRanges[2].OffsetInDescriptorsFromTableStart = 0;
+
+        D3D12_ROOT_PARAMETER globalParams[5] = {};
 
         // b0 camera
         globalParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -609,6 +616,12 @@ namespace CPyburnRTXEngine
         globalParams[3].DescriptorTable.NumDescriptorRanges = 1;
         globalParams[3].DescriptorTable.pDescriptorRanges = &globalRanges[1];
         globalParams[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+        // t1 table
+        globalParams[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        globalParams[4].DescriptorTable.NumDescriptorRanges = 1;
+        globalParams[4].DescriptorTable.pDescriptorRanges = &globalRanges[2];
+        globalParams[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
         D3D12_ROOT_SIGNATURE_DESC globalDesc = {};
         globalDesc.NumParameters = _countof(globalParams);
@@ -742,6 +755,20 @@ namespace CPyburnRTXEngine
 
             m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srvDesc, GraphicsContexts::GetCpuHandle(mTlasSrvPosition[i]));
         }
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC depthSrvDesc = {};
+        depthSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        depthSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        depthSrvDesc.Format = DXGI_FORMAT_R32_FLOAT; // because your buffer stores linear -z
+        depthSrvDesc.Texture2D.MipLevels = 1;
+
+        m_DepthSrvPositionCpu = GraphicsContexts::GetCpuHandle(m_DepthSrvPosition);
+        m_DepthSrvPositionGpu = GraphicsContexts::GetGpuHandle(m_DepthSrvPosition);
+
+        m_deviceResources->GetD3DDevice()->CreateShaderResourceView(
+            m_deviceResources->GetDepthStencil(),   // use your actual depth resource getter
+            &depthSrvDesc,
+            m_DepthSrvPositionCpu);
     }
 
     void TestAnimations::createShaderResourcesForWindowSize()
@@ -839,6 +866,8 @@ namespace CPyburnRTXEngine
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
 
+        m_DepthSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+
         m_materialDataBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
@@ -892,25 +921,25 @@ namespace CPyburnRTXEngine
     {
 
 #pragma region Testing Bounding Sphere
-        //ID3D12GraphicsCommandList* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, GraphicsContexts::GetPipelinePositionColorInstancedLine());
+        ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, GraphicsContexts::GetPipelinePositionColorInstancedLine());
 
-        //ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
-        //m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        //m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
-        //m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
+        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+        m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
+        m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
 
-        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DX::DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
-        //m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DX::DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
+        m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
 
-        //// Record commands.
-        //m_sceneCommandList->ClearRenderTargetView(rtvHandle, m_deviceResources->GetClearColor(), 0, nullptr);
-        //m_sceneCommandList->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
+        // Record commands.
+        m_sceneCommandList->ClearRenderTargetView(rtvHandle, m_deviceResources->GetClearColor(), 0, nullptr);
+        m_sceneCommandList->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH, 0.0f, 0, 0, nullptr);
 
-        //PIXBeginEvent(m_sceneCommandList, 0, L"Draw a thin rectangle");
+        PIXBeginEvent(m_sceneCommandList, 0, L"Draw rasterized geom");
 
-        //m_boundingSphereTest.Render(m_sceneCommandList, camera);
+        m_boundingSphereTest.Render(m_sceneCommandList, camera);
 
-        //PIXEndEvent(m_sceneCommandList);
+        PIXEndEvent(m_sceneCommandList);
 
         //DX::ThrowIfFailed(m_sceneCommandList->Close());
 #pragma endregion
@@ -918,7 +947,7 @@ namespace CPyburnRTXEngine
 
 #pragma region Ray tracing
         
-        ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
+        //ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
         m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
         {
@@ -949,8 +978,8 @@ namespace CPyburnRTXEngine
                 //RefitOrRebuildTLASNext(); // always have the next one ready for rendering if possible (tlas buffering)
             }
 
-            ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
-            m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+            //ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+            //m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
             D3D12_RESOURCE_BARRIER barriers[2] =
             {
@@ -990,6 +1019,7 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->SetComputeRootDescriptorTable(2, GraphicsContexts::GetGpuHandle(mUavPosition));
             UINT tlasFrame = GetReadyFrameIndex();
             m_sceneCommandList->SetComputeRootDescriptorTable(3, GraphicsContexts::GetGpuHandle(mTlasSrvPosition[tlasFrame]));
+            m_sceneCommandList->SetComputeRootDescriptorTable(4, m_DepthSrvPositionGpu);
 
             // 6.4.f Set Pipeline
             m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());

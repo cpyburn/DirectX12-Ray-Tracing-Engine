@@ -1,7 +1,8 @@
 #include "Common.hlsli"
 
-RaytracingAccelerationStructure gRtScene : register(t0, space0);
-RWTexture2D<float4> gOutput : register(u0, space0);
+RaytracingAccelerationStructure gRtScene : register(t0);
+RWTexture2D<float4> gOutput : register(u0);
+Texture2D<float> gDepthBuffer : register(t1); // linear -z depth
 
 // 15.4.a
 struct STriVertex
@@ -44,10 +45,19 @@ float3 linearToSrgb(float3 c)
     return srgb;
 }
 
-// 7.1 Payload
+// 12.0 hybrid
+float GetViewDepthFromWorldPos(float3 posW)
+{
+    float3 posV = mul(gView, float4(posW, 1.0f)).xyz;
+    return -posV.z;
+}
+
+// 12.0 hybrid
 struct RayPayload
 {
     float3 color;
+    float hitViewDepth;
+    uint hit; // DXR sees a bool as 4, but c++ sees bool as 1, this is a work around to force explicit behavior
 };
 
 // 7.0
@@ -56,6 +66,10 @@ void rayGen()
 {
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
+    
+    // 12.0 hybrid
+    uint2 pixel = launchIndex.xy;
+    float rasterDepth = gDepthBuffer.Load(int3(pixel, 0));
 
     float2 uv = (launchIndex + 0.5) / launchDim;
     uv = uv * 2.0 - 1.0;
@@ -80,16 +94,32 @@ void rayGen()
     ray.TMin = 0.001;
     ray.TMax = 10000.0;
 
+    // 12.0 hybrid
     RayPayload payload;
+    payload.color = float3(0, 0, 0);
+    payload.hitViewDepth = 1e30f;
+    payload.hit = 0;
+    
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2 /* 13.4 MultiplierForGeometryContributionToShaderIndex */, 0, ray, payload);
-    float3 col = linearToSrgb(payload.color);
-    gOutput[launchIndex.xy] = float4(col, 1);
+    
+    // 12.0 hybrid
+    if (payload.hit == 0)
+    {
+        gOutput[launchIndex.xy] = float4(linearToSrgb(payload.color), 1.0f);
+    }
+    else if (payload.hitViewDepth < rasterDepth)
+    {
+        gOutput[launchIndex.xy] = float4(linearToSrgb(payload.color), 1.0f);
+    }
 }
 
 // 7.2 Miss Shader
 [shader("miss")]
 void miss(inout RayPayload payload)
 {
+    // 12.0 hybrid
+    payload.hit = 0;
+    payload.hitViewDepth = 1e30f;
     payload.color = float3(0.4, 0.6, 0.2);
 }
 
@@ -158,6 +188,10 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     float3 rayOriginW = WorldRayOrigin();
     float3 rayDirW = WorldRayDirection();
     float3 posW = rayOriginW + hitT * rayDirW;
+    
+    // 12.0 hybrid
+    payload.hit = 1;
+    payload.hitViewDepth = GetViewDepthFromWorldPos(posW);
 
     float3 lightDir = normalize(gEnvironmentData.lightDirection);
     float ndotl = saturate(dot(normalWS, lightDir));
@@ -254,6 +288,10 @@ void planeChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes
 
     // 13.5.b Find the world-space hit position
     float3 posW = rayOriginW + hitT * rayDirW;
+    
+    // 12.0 hybrid
+    payload.hit = 1;
+    payload.hitViewDepth = GetViewDepthFromWorldPos(posW);
 
     // Fire a shadow ray. The direction is hard-coded here, but can be fetched from a constant-buffer
     RayDesc ray;
@@ -275,13 +313,13 @@ void planeChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes
 [shader("closesthit")]
 void shadowChs(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    payload.hit = true;
+    payload.hit = 1;
 }
 
 // 13.1.c
 [shader("miss")]
 void shadowMiss(inout ShadowPayload payload)
 {
-    payload.hit = false;
+    payload.hit = 0;
 }
 

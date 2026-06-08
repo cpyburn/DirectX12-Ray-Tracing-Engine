@@ -380,7 +380,7 @@ void DeviceResources::CreateDeviceResources()
     // Reserve heap position for the post-process SRV.
     {
         m_rtvHeapIntermediateRenderTargetPosition = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
-        m_cbvHeapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
+        m_srvheapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
     }
 
     // Create/update the fullscreen quad vertex buffer.
@@ -704,19 +704,6 @@ void DeviceResources::HandleDeviceLost()
     }
 }
 
-// Prepare the command list and render target for rendering.
-void DeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
-{
-    if (beforeState != D3D12_RESOURCE_STATE_RENDER_TARGET)
-    {
-        FrameResource& currentFrame = *m_frameResource[m_backBufferIndex];
-        currentFrame.ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0);
-        // Transition the render target into the correct state to allow for drawing into it.
-        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
-        currentFrame.GetCommandList(FrameResource::COMMAND_LIST_SCENE_0)->ResourceBarrier(1, &barrier);
-    }
-}
-
 // Present the contents of the swap chain to the screen.
 void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
 {
@@ -917,8 +904,7 @@ void DX::DeviceResources::Render()
 
         m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-        CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
-        m_postCommandList->SetGraphicsRootDescriptorTable(0, cbvSrvHandle); // srv location GPU handle
+        m_postCommandList->SetGraphicsRootDescriptorTable(0, m_srvHeapGpuHandle); // srv location GPU handle
         m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_postCommandList->RSSetViewports(1, &m_postViewport);
         m_postCommandList->RSSetScissorRects(1, &m_postScissorRect);
@@ -1080,8 +1066,10 @@ void DeviceResources::LoadSceneResolutionDependentResources()
     }
 
     // Create SRV for the intermediate render target.
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_cbvHeapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
-    m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, cbvHandle);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHeapCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
+    m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, srvHeapCpuHandle);
+
+    m_srvHeapGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
 }
 
 void DeviceResources::UpdateTitle() noexcept

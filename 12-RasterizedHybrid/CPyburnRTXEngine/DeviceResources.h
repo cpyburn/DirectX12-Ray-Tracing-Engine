@@ -52,8 +52,6 @@ namespace DX
         bool WindowSizeChanged(int width, int height);
         void HandleDeviceLost();
         void RegisterDeviceNotify(IDeviceNotify* deviceNotify) noexcept { m_deviceNotify = deviceNotify; }
-        void Prepare(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_PRESENT,
-                     D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET);
         void Present(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET);
         void WaitForGpu() noexcept;
         void UpdateColorSpace();
@@ -132,7 +130,8 @@ namespace DX
         Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateRenderTarget;
         static const float ClearColor[4];
         UINT m_rtvHeapIntermediateRenderTargetPosition = 0;
-        UINT m_cbvHeapIntermediateRenderTargetPosition = 0;
+        UINT m_srvheapIntermediateRenderTargetPosition = 0;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE m_srvHeapGpuHandle;
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;
         Microsoft::WRL::ComPtr<ID3D12RootSignature> m_postRootSignature;

@@ -1025,7 +1025,7 @@ void DeviceResources::UpdatePostViewAndScissor() noexcept
 //    // dependent on the window size.
 //}
 
-void DeviceResources::LoadSceneResolutionDependentResources() noexcept
+void DeviceResources::LoadSceneResolutionDependentResources()
 {
     // Update resolutions shown in app title.
     UpdateTitle();

@@ -67,7 +67,7 @@ namespace CPyburnRTXEngine
 
 		CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
 		depthStencilDesc.DepthEnable = true;
-		depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+		depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_GREATER_EQUAL;
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC state = {};

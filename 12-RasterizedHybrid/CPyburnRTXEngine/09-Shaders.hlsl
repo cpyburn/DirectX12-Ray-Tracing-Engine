@@ -3,6 +3,7 @@
 RaytracingAccelerationStructure gRtScene : register(t0);
 RWTexture2D<float4> gOutput : register(u0);
 Texture2D<float> gDepthBuffer : register(t1); // linear -z depth
+Texture2D<float4> gRasterColor : register(t2);
 
 // 15.4.a
 struct STriVertex
@@ -60,31 +61,24 @@ struct RayPayload
     uint hit; // DXR sees a bool as 4, but c++ sees bool as 1, this is a work around to force explicit behavior
 };
 
-// 7.0
 [shader("raygeneration")]
 void rayGen()
 {
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
-    
-    // 12.0 hybrid
     uint2 pixel = launchIndex.xy;
+
     float rasterDepth = gDepthBuffer.Load(int3(pixel, 0));
+    float4 rasterColor = gRasterColor.Load(int3(pixel, 0));
 
-    float2 uv = (launchIndex + 0.5) / launchDim;
+    float2 uv = (launchIndex.xy + 0.5) / launchDim.xy;
     uv = uv * 2.0 - 1.0;
-
-    // Flip Y for DX coordinate space
     uv.y *= -1.0;
 
-    // Reconstruct clip space position
     float4 clip = float4(uv, 1.0, 1.0);
-
-    // View space
     float4 view = mul(gInvProj, clip);
     view /= view.w;
 
-    // World space direction
     float4 world = mul(gInvView, float4(view.xyz, 0.0));
     float3 rayDir = normalize(world.xyz);
 
@@ -94,23 +88,28 @@ void rayGen()
     ray.TMin = 0.001;
     ray.TMax = 10000.0;
 
-    // 12.0 hybrid
     RayPayload payload;
     payload.color = float3(0, 0, 0);
     payload.hitViewDepth = 1e30f;
     payload.hit = 0;
-    
-    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 2 /* 13.4 MultiplierForGeometryContributionToShaderIndex */, 0, ray, payload);
-    
-    // 12.0 hybrid
-    if (payload.hit == 0)
+
+    TraceRay(gRtScene, 0, 0xFF, 0, 2, 0, ray, payload);
+
+    float4 rayColor = float4(linearToSrgb(payload.color), 1.0f);
+    float4 finalColor = rayColor;
+
+    // Your depth buffer is linear -z, and you clear it to 0.0.
+    // So treat depth > 0 as "valid raster geometry".
+    if (rasterDepth > 0.0f && rasterDepth < payload.hitViewDepth)
     {
-        gOutput[launchIndex.xy] = float4(linearToSrgb(payload.color), 1.0f);
+        finalColor = rasterColor;
     }
-    else if (payload.hitViewDepth < rasterDepth)
-    {
-        gOutput[launchIndex.xy] = float4(linearToSrgb(payload.color), 1.0f);
-    }
+
+    //float d = gDepthBuffer.Load(int3(pixel, 0));
+
+    //gOutput[pixel] = float4(d, d, d, 1);
+    
+    gOutput[pixel] = finalColor;
 }
 
 // 7.2 Miss Shader

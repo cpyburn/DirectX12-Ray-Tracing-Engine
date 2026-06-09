@@ -35,7 +35,7 @@ namespace DX
         static constexpr unsigned int c_backBufferCount = 3;
 
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
-                        DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
+                        DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_R32_TYPELESS,
                         D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_12_2,
                         unsigned int flags = c_AllowTearing | c_ReverseDepth) noexcept(false);
         ~DeviceResources();
@@ -115,7 +115,8 @@ namespace DX
         void Render();
 		Resolution GetResolution() const noexcept { return m_resolutionOptions[m_resolutionIndex]; }
         ID3D12Resource* GetIntermediateRenderTarget() const noexcept { return m_intermediateRenderTarget.Get(); }
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE& GetIntermediateRenderTargetView() noexcept { return m_rtvHeapIntermediateRenderTargetHandleCpu; }
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE& GetIntermediateRenderTargetViewCpu() const noexcept { return m_rtvHeapIntermediateRenderTargetHandleCpu; }
+        const CD3DX12_GPU_DESCRIPTOR_HANDLE& GetSrvIntermediateGpu() const noexcept { return m_intermediateSrvHandleGpu; }
 		void IncreaseResolutionIndex() noexcept;
 		void DecreaseResolutionIndex() noexcept;
         const float* GetClearColor() noexcept { return ClearColor; }
@@ -134,8 +135,8 @@ namespace DX
         UINT m_rtvHeapIntermediateRenderTargetPosition = 0;
         CD3DX12_CPU_DESCRIPTOR_HANDLE m_rtvHeapIntermediateRenderTargetHandleCpu;
         UINT m_srvheapIntermediateRenderTargetPosition = MAXUINT;
-        CD3DX12_GPU_DESCRIPTOR_HANDLE m_srvHeapGpuHandle;
-        UINT m_DepthSrvPosition = MAXUINT;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE m_intermediateSrvHandleGpu;
+        UINT m_depthSrvPosition = MAXUINT;
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_depthSrvHandleGpu;
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;

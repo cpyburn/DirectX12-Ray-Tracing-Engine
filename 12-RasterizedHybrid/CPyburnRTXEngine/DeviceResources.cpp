@@ -381,9 +381,8 @@ void DeviceResources::CreateDeviceResources()
     {
         m_rtvHeapIntermediateRenderTargetPosition = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
         m_srvheapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the heap
-        m_srvHeapGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
-        m_DepthSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        m_depthSrvHandleGpu = GraphicsContexts::GetGpuHandle(m_DepthSrvPosition);
+        m_intermediateSrvHandleGpu = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
+        m_depthSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
     }
 
     // Create/update the fullscreen quad vertex buffer.
@@ -907,7 +906,7 @@ void DX::DeviceResources::Render()
 
         m_postCommandList->ResourceBarrier(_countof(barriers), barriers);
 
-        m_postCommandList->SetGraphicsRootDescriptorTable(0, m_srvHeapGpuHandle); // srv location GPU handle
+        m_postCommandList->SetGraphicsRootDescriptorTable(0, m_intermediateSrvHandleGpu); // srv location GPU handle
         m_postCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_postCommandList->RSSetViewports(1, &m_postViewport);
         m_postCommandList->RSSetScissorRects(1, &m_postScissorRect);
@@ -1034,6 +1033,8 @@ void DeviceResources::LoadSceneResolutionDependentResources()
     {
         m_screenViewport.Width = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Width);
         m_screenViewport.Height = static_cast<float>(m_resolutionOptions[m_resolutionIndex].Height);
+        m_screenViewport.MinDepth = 0.0f;
+        m_screenViewport.MaxDepth = 1.0f;
 
         m_scissorRect.right = static_cast<LONG>(m_resolutionOptions[m_resolutionIndex].Width);
         m_scissorRect.bottom = static_cast<LONG>(m_resolutionOptions[m_resolutionIndex].Height);
@@ -1078,6 +1079,15 @@ void DeviceResources::LoadSceneResolutionDependentResources()
     {
         if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
         {
+
+            DXGI_FORMAT depthDsvFormat = m_depthBufferFormat;
+            DXGI_FORMAT depthSrvFormat = m_depthBufferFormat;
+            if (m_depthBufferFormat == DXGI_FORMAT_R32_TYPELESS)
+            {
+                depthDsvFormat = DXGI_FORMAT_D32_FLOAT; 
+                depthSrvFormat = DXGI_FORMAT_R32_FLOAT;
+            }
+
             // Allocate a 2-D surface as the depth/stencil buffer and create a depth/stencil view
             // on this surface.
             const CD3DX12_HEAP_PROPERTIES depthHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
@@ -1091,7 +1101,7 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             );
             depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-            const CD3DX12_CLEAR_VALUE depthOptimizedClearValue(m_depthBufferFormat, (m_options & c_ReverseDepth) ? 0.0f : 1.0f, 0u);
+            const CD3DX12_CLEAR_VALUE depthOptimizedClearValue(depthDsvFormat, (m_options & c_ReverseDepth) ? 0.0f : 1.0f, 0u);
 
             ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
                 &depthHeapProperties,
@@ -1105,7 +1115,7 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             m_depthStencil->SetName(L"Depth stencil");
 
             D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-            dsvDesc.Format = m_depthBufferFormat;
+            dsvDesc.Format = depthDsvFormat;
             dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 
 #ifdef __MINGW32__
@@ -1120,15 +1130,13 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             D3D12_SHADER_RESOURCE_VIEW_DESC depthSrvDesc = {};
             depthSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
             depthSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-            depthSrvDesc.Format = DXGI_FORMAT_R32_FLOAT; // because your buffer stores linear -z
+            depthSrvDesc.Format = depthSrvFormat;
             depthSrvDesc.Texture2D.MipLevels = 1;
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE depthSrvPositionCpu = GraphicsContexts::GetCpuHandle(m_DepthSrvPosition);
+            CD3DX12_CPU_DESCRIPTOR_HANDLE depthSrvPositionCpu = GraphicsContexts::GetCpuHandle(m_depthSrvPosition);
+            m_d3dDevice->CreateShaderResourceView(m_depthStencil.Get(), &depthSrvDesc, depthSrvPositionCpu);
 
-            m_d3dDevice->CreateShaderResourceView(
-                m_depthStencil.Get(),   // use your actual depth resource getter
-                &depthSrvDesc,
-                depthSrvPositionCpu);
+            m_depthSrvHandleGpu = GraphicsContexts::GetGpuHandle(m_depthSrvPosition);
         }
     }
 }

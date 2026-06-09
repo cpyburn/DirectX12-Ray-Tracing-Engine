@@ -82,7 +82,10 @@ namespace CPyburnRTXEngine
         // =========================
         XMVECTOR lookAt = m_eye + forward;
         XMMATRIX view = XMMatrixLookAtLH(m_eye, lookAt, up);
-        XMMATRIX proj = XMMatrixPerspectiveFovLH(m_fieldOfView, m_aspectRatio, 0.1f, 10000.0f);
+        float nearPlane = 0.1f;
+        float farPlane = 10000.0f;
+        // for -z buffer, swich the near and far plane
+        XMMATRIX proj = XMMatrixPerspectiveFovLH(m_fieldOfView, m_aspectRatio, farPlane, nearPlane);
         XMMATRIX invView = XMMatrixInverse(nullptr, view);
         XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
 

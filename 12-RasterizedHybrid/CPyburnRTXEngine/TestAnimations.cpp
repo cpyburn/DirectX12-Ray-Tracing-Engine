@@ -568,7 +568,7 @@ namespace CPyburnRTXEngine
 #pragma endregion
 
 #pragma region Global root signature
-        D3D12_DESCRIPTOR_RANGE globalRanges[3] = {};
+        D3D12_DESCRIPTOR_RANGE globalRanges[4] = {};
 
         // u0 = output UAV
         globalRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
@@ -591,7 +591,14 @@ namespace CPyburnRTXEngine
         globalRanges[2].RegisterSpace = 0;
         globalRanges[2].OffsetInDescriptorsFromTableStart = 0;
 
-        D3D12_ROOT_PARAMETER globalParams[5] = {};
+        // t2 = raster SRV
+        globalRanges[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        globalRanges[3].NumDescriptors = 1;
+        globalRanges[3].BaseShaderRegister = 2;
+        globalRanges[3].RegisterSpace = 0;
+        globalRanges[3].OffsetInDescriptorsFromTableStart = 0;
+
+        D3D12_ROOT_PARAMETER globalParams[6] = {};
 
         // b0 camera
         globalParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -622,6 +629,12 @@ namespace CPyburnRTXEngine
         globalParams[4].DescriptorTable.NumDescriptorRanges = 1;
         globalParams[4].DescriptorTable.pDescriptorRanges = &globalRanges[2];
         globalParams[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+        // t2 table
+        globalParams[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        globalParams[5].DescriptorTable.NumDescriptorRanges = 1;
+        globalParams[5].DescriptorTable.pDescriptorRanges = &globalRanges[3];
+        globalParams[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
         D3D12_ROOT_SIGNATURE_DESC globalDesc = {};
         globalDesc.NumParameters = _countof(globalParams);
@@ -914,7 +927,7 @@ namespace CPyburnRTXEngine
         m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
         m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
 
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResources->GetIntermediateRenderTargetView();
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE& rtvHandle = m_deviceResources->GetIntermediateRenderTargetViewCpu();
         m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
 
         // Record commands.
@@ -925,11 +938,13 @@ namespace CPyburnRTXEngine
 
         m_boundingSphereTest.Render(m_sceneCommandList, camera);
 
+        D3D12_RESOURCE_BARRIER depthToSrv = CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetDepthStencil(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        m_sceneCommandList->ResourceBarrier(1, &depthToSrv);
+
         PIXEndEvent(m_sceneCommandList);
 
         //DX::ThrowIfFailed(m_sceneCommandList->Close());
 #pragma endregion
-
 
 #pragma region Ray tracing
 
@@ -969,11 +984,11 @@ namespace CPyburnRTXEngine
                 D3D12_RESOURCE_BARRIER barriers[2] =
                 {
                     CD3DX12_RESOURCE_BARRIER::Transition(mpOutputResource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
-                    CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetIntermediateRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST),
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetIntermediateRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
                 };
 
                 // only use the first resource barrier to transition the output resource, the second one is used later
-                m_sceneCommandList->ResourceBarrier(1, &barriers[0]);
+                m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
 
                 D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
                 raytraceDesc.Width = std::max<UINT>(m_deviceResources->GetResolution().Width, 1u);
@@ -1005,6 +1020,7 @@ namespace CPyburnRTXEngine
                 UINT tlasFrame = GetReadyFrameIndex();
                 m_sceneCommandList->SetComputeRootDescriptorTable(3, GraphicsContexts::GetGpuHandle(mTlasSrvPosition[tlasFrame]));
                 m_sceneCommandList->SetComputeRootDescriptorTable(4, m_deviceResources->GetSrvDepthStencilGpu());
+                m_sceneCommandList->SetComputeRootDescriptorTable(5, m_deviceResources->GetSrvIntermediateGpu());
 
                 // 6.4.f Set Pipeline
                 m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());
@@ -1012,8 +1028,17 @@ namespace CPyburnRTXEngine
                 // 6.4.g Dispatch
                 m_sceneCommandList->DispatchRays(&raytraceDesc);
 
+                D3D12_RESOURCE_BARRIER depthToWrite = CD3DX12_RESOURCE_BARRIER::Transition(
+                    m_deviceResources->GetDepthStencil(),
+                    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+                m_sceneCommandList->ResourceBarrier(1, &depthToWrite);
+
                 barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
                 barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+                barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+                barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
 
                 m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
                 m_sceneCommandList->CopyResource(m_deviceResources->GetIntermediateRenderTarget(), mpOutputResource.Get());
@@ -1021,6 +1046,7 @@ namespace CPyburnRTXEngine
                 barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
                 barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
+                // transition the intermediate back to render target
                 m_sceneCommandList->ResourceBarrier(1, &barriers[1]);
 
                 PIXEndEvent(m_sceneCommandList);

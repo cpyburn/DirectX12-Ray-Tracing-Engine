@@ -118,6 +118,7 @@ namespace DX
 		void IncreaseResolutionIndex() noexcept;
 		void DecreaseResolutionIndex() noexcept;
         const float* GetClearColor() noexcept { return ClearColor; }
+        CD3DX12_GPU_DESCRIPTOR_HANDLE GetSrvDepthStencilGpu() { return m_depthSrvPositionGpu; }
     private:
         struct PostVertex
         {
@@ -130,8 +131,10 @@ namespace DX
         Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateRenderTarget;
         static const float ClearColor[4];
         UINT m_rtvHeapIntermediateRenderTargetPosition = 0;
-        UINT m_srvheapIntermediateRenderTargetPosition = 0;
+        UINT m_srvheapIntermediateRenderTargetPosition = MAXUINT;
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_srvHeapGpuHandle;
+        UINT m_DepthSrvPosition = MAXUINT;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE m_depthSrvPositionGpu;
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;
         Microsoft::WRL::ComPtr<ID3D12RootSignature> m_postRootSignature;

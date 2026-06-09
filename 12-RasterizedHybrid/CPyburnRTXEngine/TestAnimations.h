@@ -72,9 +72,6 @@ namespace CPyburnRTXEngine
 
 		UINT mUavPosition = MAXUINT;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
-		UINT m_DepthSrvPosition = MAXUINT;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE m_DepthSrvPositionCpu;
-		CD3DX12_GPU_DESCRIPTOR_HANDLE m_DepthSrvPositionGpu;
 
 		std::unique_ptr<AssimpAnimations> m_elfAnimated = nullptr;
 		Texture::HeapTexture m_heapTextureDiffuse = {};

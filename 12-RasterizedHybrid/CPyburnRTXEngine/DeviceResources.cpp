@@ -382,6 +382,8 @@ void DeviceResources::CreateDeviceResources()
         m_rtvHeapIntermediateRenderTargetPosition = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
         m_srvheapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the heap
         m_srvHeapGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
+        m_DepthSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
+        m_depthSrvPositionGpu = GraphicsContexts::GetGpuHandle(m_DepthSrvPosition);
     }
 
     // Create/update the fullscreen quad vertex buffer.
@@ -1068,6 +1070,10 @@ void DeviceResources::LoadSceneResolutionDependentResources()
         m_intermediateRenderTarget->SetName(L"Intermediate Render Target");
     }
 
+    // Create SRV for the intermediate render target.
+    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHeapCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
+    m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, srvHeapCpuHandle);
+
     // create the depth stencil
     {
         if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
@@ -1110,12 +1116,21 @@ void DeviceResources::LoadSceneResolutionDependentResources()
 #endif
 
             m_d3dDevice->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, cpuHandle);
+
+            D3D12_SHADER_RESOURCE_VIEW_DESC depthSrvDesc = {};
+            depthSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            depthSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            depthSrvDesc.Format = DXGI_FORMAT_R32_FLOAT; // because your buffer stores linear -z
+            depthSrvDesc.Texture2D.MipLevels = 1;
+
+            CD3DX12_CPU_DESCRIPTOR_HANDLE depthSrvPositionCpu = GraphicsContexts::GetCpuHandle(m_DepthSrvPosition);
+
+            m_d3dDevice->CreateShaderResourceView(
+                m_depthStencil.Get(),   // use your actual depth resource getter
+                &depthSrvDesc,
+                depthSrvPositionCpu);
         }
     }
-
-    // Create SRV for the intermediate render target.
-    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHeapCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
-    m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, srvHeapCpuHandle);
 }
 
 void DeviceResources::UpdateTitle() noexcept

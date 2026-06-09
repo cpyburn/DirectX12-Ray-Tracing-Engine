@@ -380,7 +380,8 @@ void DeviceResources::CreateDeviceResources()
     // Reserve heap position for the post-process SRV.
     {
         m_rtvHeapIntermediateRenderTargetPosition = DeviceResources::c_backBufferCount; // RTV right after the swap chain RTVs. There shouldnt be a lot of RTVs in an engine, so we can keep track of these
-        m_srvheapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the CbvSrv heap
+        m_srvheapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the heap
+        m_srvHeapGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
     }
 
     // Create/update the fullscreen quad vertex buffer.
@@ -563,47 +564,47 @@ void DeviceResources::CreateWindowSizeDependentResources()
     // Reset the index to the current back buffer.
     m_backBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-    if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
-    {
-        // Allocate a 2-D surface as the depth/stencil buffer and create a depth/stencil view
-        // on this surface.
-        const CD3DX12_HEAP_PROPERTIES depthHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
-
-        D3D12_RESOURCE_DESC depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-            m_depthBufferFormat,
-            backBufferWidth,
-            backBufferHeight,
-            1, // Use a single array entry.
-            1  // Use a single mipmap level.
-        );
-        depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-        const CD3DX12_CLEAR_VALUE depthOptimizedClearValue(m_depthBufferFormat, (m_options & c_ReverseDepth) ? 0.0f : 1.0f, 0u);
-
-        ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-            &depthHeapProperties,
-            D3D12_HEAP_FLAG_NONE,
-            &depthStencilDesc,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE,
-            &depthOptimizedClearValue,
-            IID_PPV_ARGS(m_depthStencil.ReleaseAndGetAddressOf())
-        ));
-
-        m_depthStencil->SetName(L"Depth stencil");
-
-        D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-        dsvDesc.Format = m_depthBufferFormat;
-        dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-
-#ifdef __MINGW32__
-        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-        std::ignore = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
-#else
-        const auto cpuHandle = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-#endif
-
-        m_d3dDevice->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, cpuHandle);
-    }
+//    if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
+//    {
+//        // Allocate a 2-D surface as the depth/stencil buffer and create a depth/stencil view
+//        // on this surface.
+//        const CD3DX12_HEAP_PROPERTIES depthHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+//
+//        D3D12_RESOURCE_DESC depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+//            m_depthBufferFormat,
+//            backBufferWidth,
+//            backBufferHeight,
+//            1, // Use a single array entry.
+//            1  // Use a single mipmap level.
+//        );
+//        depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+//
+//        const CD3DX12_CLEAR_VALUE depthOptimizedClearValue(m_depthBufferFormat, (m_options & c_ReverseDepth) ? 0.0f : 1.0f, 0u);
+//
+//        ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
+//            &depthHeapProperties,
+//            D3D12_HEAP_FLAG_NONE,
+//            &depthStencilDesc,
+//            D3D12_RESOURCE_STATE_DEPTH_WRITE,
+//            &depthOptimizedClearValue,
+//            IID_PPV_ARGS(m_depthStencil.ReleaseAndGetAddressOf())
+//        ));
+//
+//        m_depthStencil->SetName(L"Depth stencil");
+//
+//        D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+//        dsvDesc.Format = m_depthBufferFormat;
+//        dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+//
+//#ifdef __MINGW32__
+//        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+//        std::ignore = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
+//#else
+//        const auto cpuHandle = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+//#endif
+//
+//        m_d3dDevice->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, cpuHandle);
+//    }
 
 #pragma region Handle Fullscreen
     // Set the 3D rendering viewport and scissor rectangle to target the entire window.
@@ -1063,13 +1064,58 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             IID_PPV_ARGS(&m_intermediateRenderTarget)));
         m_d3dDevice->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
         NAME_D3D12_OBJECT(m_intermediateRenderTarget);
+
+        m_intermediateRenderTarget->SetName(L"Intermediate Render Target");
+    }
+
+    // create the depth stencil
+    {
+        if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
+        {
+            // Allocate a 2-D surface as the depth/stencil buffer and create a depth/stencil view
+            // on this surface.
+            const CD3DX12_HEAP_PROPERTIES depthHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+
+            D3D12_RESOURCE_DESC depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+                m_depthBufferFormat,
+                m_resolutionOptions[m_resolutionIndex].Width,
+                m_resolutionOptions[m_resolutionIndex].Height,
+                1, // Use a single array entry.
+                1  // Use a single mipmap level.
+            );
+            depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+            const CD3DX12_CLEAR_VALUE depthOptimizedClearValue(m_depthBufferFormat, (m_options & c_ReverseDepth) ? 0.0f : 1.0f, 0u);
+
+            ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
+                &depthHeapProperties,
+                D3D12_HEAP_FLAG_NONE,
+                &depthStencilDesc,
+                D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                &depthOptimizedClearValue,
+                IID_PPV_ARGS(m_depthStencil.ReleaseAndGetAddressOf())
+            ));
+
+            m_depthStencil->SetName(L"Depth stencil");
+
+            D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+            dsvDesc.Format = m_depthBufferFormat;
+            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+#ifdef __MINGW32__
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+            std::ignore = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
+#else
+            const auto cpuHandle = m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+#endif
+
+            m_d3dDevice->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, cpuHandle);
+        }
     }
 
     // Create SRV for the intermediate render target.
     CD3DX12_CPU_DESCRIPTOR_HANDLE srvHeapCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetCPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
     m_d3dDevice->CreateShaderResourceView(m_intermediateRenderTarget.Get(), nullptr, srvHeapCpuHandle);
-
-    m_srvHeapGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
 }
 
 void DeviceResources::UpdateTitle() noexcept

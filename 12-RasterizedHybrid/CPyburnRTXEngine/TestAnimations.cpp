@@ -914,7 +914,7 @@ namespace CPyburnRTXEngine
         m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
         m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_deviceResources->GetRtvHeap()->GetCPUDescriptorHandleForHeapStart(), DX::DeviceResources::c_backBufferCount, m_deviceResources->GetRtvDescriptorSize());
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_deviceResources->GetIntermediateRenderTargetView();
         m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
 
         // Record commands.

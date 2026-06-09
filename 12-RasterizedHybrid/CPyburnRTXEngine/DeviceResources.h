@@ -115,10 +115,11 @@ namespace DX
         void Render();
 		Resolution GetResolution() const noexcept { return m_resolutionOptions[m_resolutionIndex]; }
         ID3D12Resource* GetIntermediateRenderTarget() const noexcept { return m_intermediateRenderTarget.Get(); }
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE& GetIntermediateRenderTargetView() noexcept { return m_rtvHeapIntermediateRenderTargetHandleCpu; }
 		void IncreaseResolutionIndex() noexcept;
 		void DecreaseResolutionIndex() noexcept;
         const float* GetClearColor() noexcept { return ClearColor; }
-        CD3DX12_GPU_DESCRIPTOR_HANDLE GetSrvDepthStencilGpu() { return m_depthSrvPositionGpu; }
+        const CD3DX12_GPU_DESCRIPTOR_HANDLE& GetSrvDepthStencilGpu() noexcept { return m_depthSrvHandleGpu; }
     private:
         struct PostVertex
         {
@@ -131,10 +132,11 @@ namespace DX
         Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateRenderTarget;
         static const float ClearColor[4];
         UINT m_rtvHeapIntermediateRenderTargetPosition = 0;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE m_rtvHeapIntermediateRenderTargetHandleCpu;
         UINT m_srvheapIntermediateRenderTargetPosition = MAXUINT;
         CD3DX12_GPU_DESCRIPTOR_HANDLE m_srvHeapGpuHandle;
         UINT m_DepthSrvPosition = MAXUINT;
-        CD3DX12_GPU_DESCRIPTOR_HANDLE m_depthSrvPositionGpu;
+        CD3DX12_GPU_DESCRIPTOR_HANDLE m_depthSrvHandleGpu;
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> m_postPipelineState;
         Microsoft::WRL::ComPtr<ID3D12RootSignature> m_postRootSignature;
@@ -147,7 +149,7 @@ namespace DX
         static UINT m_resolutionIndex; // Index of the current scene rendering resolution from m_resolutionOptions.
 
         void UpdatePostViewAndScissor() noexcept;
-        void LoadSceneResolutionDependentResources();
+        void LoadSceneResolutionDependentResources() noexcept;
         void UpdateTitle() noexcept;
 #pragma endregion
 

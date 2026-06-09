@@ -383,7 +383,7 @@ void DeviceResources::CreateDeviceResources()
         m_srvheapIntermediateRenderTargetPosition = GraphicsContexts::GetAvailableHeapPosition(); // SRV in the heap
         m_srvHeapGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(GraphicsContexts::c_heap->GetGPUDescriptorHandleForHeapStart(), m_srvheapIntermediateRenderTargetPosition, GraphicsContexts::c_descriptorSize);
         m_DepthSrvPosition = GraphicsContexts::GetAvailableHeapPosition();
-        m_depthSrvPositionGpu = GraphicsContexts::GetGpuHandle(m_DepthSrvPosition);
+        m_depthSrvHandleGpu = GraphicsContexts::GetGpuHandle(m_DepthSrvPosition);
     }
 
     // Create/update the fullscreen quad vertex buffer.
@@ -1025,7 +1025,7 @@ void DeviceResources::UpdatePostViewAndScissor() noexcept
 //    // dependent on the window size.
 //}
 
-void DeviceResources::LoadSceneResolutionDependentResources()
+void DeviceResources::LoadSceneResolutionDependentResources() noexcept
 {
     // Update resolutions shown in app title.
     UpdateTitle();
@@ -1056,7 +1056,7 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapIntermediateRenderTargetPosition, m_rtvDescriptorSize);
+        m_rtvHeapIntermediateRenderTargetHandleCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapIntermediateRenderTargetPosition, m_rtvDescriptorSize);
         ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
             D3D12_HEAP_FLAG_NONE,
@@ -1064,7 +1064,7 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             &clearValue,
             IID_PPV_ARGS(&m_intermediateRenderTarget)));
-        m_d3dDevice->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, rtvHandle);
+        m_d3dDevice->CreateRenderTargetView(m_intermediateRenderTarget.Get(), nullptr, m_rtvHeapIntermediateRenderTargetHandleCpu);
         NAME_D3D12_OBJECT(m_intermediateRenderTarget);
 
         m_intermediateRenderTarget->SetName(L"Intermediate Render Target");

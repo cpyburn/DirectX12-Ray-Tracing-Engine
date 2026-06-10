@@ -17,7 +17,7 @@ namespace CPyburnRTXEngine
 
 	void BoundingSphereRenderer::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
-		ShapeRendererHelper::MeshData meshData = ShapeRendererHelper::CreateSphere(Center, Radius, 1000, 1000);
+		ShapeRendererHelper::MeshData meshData = ShapeRendererHelper::CreateSphere(Center, Radius, 10, 10);
 
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
@@ -84,23 +84,19 @@ namespace CPyburnRTXEngine
 
 	void BoundingSphereRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera)
 	{
-		const DirectX::BoundingFrustum& frustum = camera->GetBoundingFrustum();
+		DirectX::BoundingSphere worldSphere;
+		Transform(worldSphere, modelTransform);
 
-		//DirectX::BoundingSphere worldSphere;
-		//Transform(worldSphere, modelTransform);
-
-		//m_draw = Intersects(frustum);
+		m_draw = worldSphere.Intersects(camera->GetBoundingFrustum());
 	}
 
 	void BoundingSphereRenderer::Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera)
 	{
-		//if (!m_draw)
-		//{
-		//	return;
-		//}
+		if (!m_draw)
+			return;
 
 		commandList->SetGraphicsRootSignature(GraphicsContexts::GetRootSignaturePositionColorInstanced());
-		commandList->SetPipelineState(GraphicsContexts::GetPipelinePositionColorInstancedLine()); //GetPipelinePositionColorInstancedTriangle
+		commandList->SetPipelineState(GraphicsContexts::GetPipelinePositionColorInstancedLine()); 
 		commandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 
 		commandList->SetGraphicsRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));

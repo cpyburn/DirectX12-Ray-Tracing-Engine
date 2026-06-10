@@ -84,15 +84,18 @@ namespace CPyburnRTXEngine
         XMMATRIX view = XMMatrixLookAtLH(m_eye, lookAt, up);
         float nearPlane = 0.1f;
         float farPlane = 10000.0f;
+
         // for -z buffer, swich the near and far plane
         XMMATRIX proj = XMMatrixPerspectiveFovLH(m_fieldOfView, m_aspectRatio, farPlane, nearPlane);
         XMMATRIX invView = XMMatrixInverse(nullptr, view);
         XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
 
+        // bounding frustum needs near and far planes in the correct order
+        XMMATRIX projForBounding = XMMatrixPerspectiveFovLH(m_fieldOfView, m_aspectRatio, nearPlane, farPlane);
+        XMMATRIX invViewForBounding = XMMatrixInverse(nullptr, view);
         DirectX::BoundingFrustum frustumViewSpace;
-        DirectX::BoundingFrustum::CreateFromMatrix(frustumViewSpace, proj);
-        // Convert from view space to world space
-        frustumViewSpace.Transform(m_boundingFrustum, invView);
+        DirectX::BoundingFrustum::CreateFromMatrix(frustumViewSpace, projForBounding);
+        frustumViewSpace.Transform(m_boundingFrustum, invViewForBounding);
 
         // =========================
         // 5. UPDATE CONSTANT BUFFER

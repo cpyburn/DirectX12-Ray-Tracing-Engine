@@ -938,122 +938,122 @@ namespace CPyburnRTXEngine
 
         m_boundingSphereTest.Render(m_sceneCommandList, camera);
 
-        D3D12_RESOURCE_BARRIER depthToSrv = CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetDepthStencil(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        m_sceneCommandList->ResourceBarrier(1, &depthToSrv);
-
         PIXEndEvent(m_sceneCommandList);
 
-        //DX::ThrowIfFailed(m_sceneCommandList->Close());
+        DX::ThrowIfFailed(m_sceneCommandList->Close());
 #pragma endregion
 
 #pragma region Ray tracing
 
-        //ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
+        //D3D12_RESOURCE_BARRIER depthToSrv = CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetDepthStencil(), D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        //m_sceneCommandList->ResourceBarrier(1, &depthToSrv);
 
-        m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
-        {
-            D3D12_RESOURCE_BARRIER uavBarrier = {};
-            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-            uavBarrier.UAV.pResource =
-                m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
+        ////ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
-            m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
-        }
+        //m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
+        //{
+        //    D3D12_RESOURCE_BARRIER uavBarrier = {};
+        //    uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        //    uavBarrier.UAV.pResource =
+        //        m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
 
-        m_blas.UpdateBlas(m_sceneCommandList);
+        //    m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
+        //}
 
-        // Populate m_sceneCommandList to render scene to intermediate render target.
-        {
-            PIXBeginEvent(m_sceneCommandList, 0, L"TestModel.");
+        //m_blas.UpdateBlas(m_sceneCommandList);
 
-            // refitting
-            {
-                //if (!m_TlasUpdated[m_deviceResources->GetCurrentFrameIndex()])
-                //{
-                //    RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true); // if the next one is not ready, fall back here, but if this happens, you should consider a different architecture as it means you are not able to keep up with the updates
-                //}
+        //// Populate m_sceneCommandList to render scene to intermediate render target.
+        //{
+        //    PIXBeginEvent(m_sceneCommandList, 0, L"TestModel.");
 
-                RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true);
+        //    // refitting
+        //    {
+        //        //if (!m_TlasUpdated[m_deviceResources->GetCurrentFrameIndex()])
+        //        //{
+        //        //    RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true); // if the next one is not ready, fall back here, but if this happens, you should consider a different architecture as it means you are not able to keep up with the updates
+        //        //}
 
-                //ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
-                //m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        //        RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true);
 
-                ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
-                m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+        //        //ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+        //        //m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-                D3D12_RESOURCE_BARRIER barriers[2] =
-                {
-                    CD3DX12_RESOURCE_BARRIER::Transition(mpOutputResource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
-                    CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetIntermediateRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
-                };
+        //        ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
+        //        m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-                // only use the first resource barrier to transition the output resource, the second one is used later
-                m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
+        //        D3D12_RESOURCE_BARRIER barriers[2] =
+        //        {
+        //            CD3DX12_RESOURCE_BARRIER::Transition(mpOutputResource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
+        //            CD3DX12_RESOURCE_BARRIER::Transition(m_deviceResources->GetIntermediateRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+        //        };
 
-                D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-                raytraceDesc.Width = std::max<UINT>(m_deviceResources->GetResolution().Width, 1u);
-                raytraceDesc.Height = std::max<UINT>(m_deviceResources->GetResolution().Height, 1u);
-                raytraceDesc.Depth = 1;
+        //        // only use the first resource barrier to transition the output resource, the second one is used later
+        //        m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
 
-                // 6.4.b RayGen is the first entry in the shader-table
-                raytraceDesc.RayGenerationShaderRecord.StartAddress = mpShaderTable->GetGPUVirtualAddress() + 0 * mShaderTableEntrySize;
-                raytraceDesc.RayGenerationShaderRecord.SizeInBytes = mShaderTableEntrySize;
+        //        D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
+        //        raytraceDesc.Width = std::max<UINT>(m_deviceResources->GetResolution().Width, 1u);
+        //        raytraceDesc.Height = std::max<UINT>(m_deviceResources->GetResolution().Height, 1u);
+        //        raytraceDesc.Depth = 1;
 
-                // 6.4.c Miss is the second entry in the shader-table
-                size_t missOffset = 1 * mShaderTableEntrySize;
-                raytraceDesc.MissShaderTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + missOffset;
-                raytraceDesc.MissShaderTable.StrideInBytes = mShaderTableEntrySize;
-                raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize * 2;   // 13.3.b 2 miss-entries
+        //        // 6.4.b RayGen is the first entry in the shader-table
+        //        raytraceDesc.RayGenerationShaderRecord.StartAddress = mpShaderTable->GetGPUVirtualAddress() + 0 * mShaderTableEntrySize;
+        //        raytraceDesc.RayGenerationShaderRecord.SizeInBytes = mShaderTableEntrySize;
 
-                // 6.4.d Hit is the third entry in the shader-table
-                size_t hitOffset = 3 * mShaderTableEntrySize; // 13.3.c
-                raytraceDesc.HitGroupTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + hitOffset;
-                raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-                // 12.3.d
-                raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 4;    // 13.3.d 8 hit-entries
+        //        // 6.4.c Miss is the second entry in the shader-table
+        //        size_t missOffset = 1 * mShaderTableEntrySize;
+        //        raytraceDesc.MissShaderTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + missOffset;
+        //        raytraceDesc.MissShaderTable.StrideInBytes = mShaderTableEntrySize;
+        //        raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize * 2;   // 13.3.b 2 miss-entries
 
-                // 6.4.e Bind the empty root signature
-                m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
-                m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));
-                m_sceneCommandList->SetComputeRootConstantBufferView(1, m_EnvironmentCb.Resource->GetGPUVirtualAddress());
-                m_sceneCommandList->SetComputeRootDescriptorTable(2, GraphicsContexts::GetGpuHandle(mUavPosition));
-                UINT tlasFrame = GetReadyFrameIndex();
-                m_sceneCommandList->SetComputeRootDescriptorTable(3, GraphicsContexts::GetGpuHandle(mTlasSrvPosition[tlasFrame]));
-                m_sceneCommandList->SetComputeRootDescriptorTable(4, m_deviceResources->GetSrvDepthStencilGpu());
-                m_sceneCommandList->SetComputeRootDescriptorTable(5, m_deviceResources->GetSrvIntermediateGpu());
+        //        // 6.4.d Hit is the third entry in the shader-table
+        //        size_t hitOffset = 3 * mShaderTableEntrySize; // 13.3.c
+        //        raytraceDesc.HitGroupTable.StartAddress = mpShaderTable->GetGPUVirtualAddress() + hitOffset;
+        //        raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
+        //        // 12.3.d
+        //        raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 4;    // 13.3.d 8 hit-entries
 
-                // 6.4.f Set Pipeline
-                m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());
+        //        // 6.4.e Bind the empty root signature
+        //        m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
+        //        m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));
+        //        m_sceneCommandList->SetComputeRootConstantBufferView(1, m_EnvironmentCb.Resource->GetGPUVirtualAddress());
+        //        m_sceneCommandList->SetComputeRootDescriptorTable(2, GraphicsContexts::GetGpuHandle(mUavPosition));
+        //        UINT tlasFrame = GetReadyFrameIndex();
+        //        m_sceneCommandList->SetComputeRootDescriptorTable(3, GraphicsContexts::GetGpuHandle(mTlasSrvPosition[tlasFrame]));
+        //        m_sceneCommandList->SetComputeRootDescriptorTable(4, m_deviceResources->GetSrvDepthStencilGpu());
+        //        m_sceneCommandList->SetComputeRootDescriptorTable(5, m_deviceResources->GetSrvIntermediateGpu());
 
-                // 6.4.g Dispatch
-                m_sceneCommandList->DispatchRays(&raytraceDesc);
+        //        // 6.4.f Set Pipeline
+        //        m_sceneCommandList->SetPipelineState1(mpPipelineState.Get());
 
-                D3D12_RESOURCE_BARRIER depthToWrite = CD3DX12_RESOURCE_BARRIER::Transition(
-                    m_deviceResources->GetDepthStencil(),
-                    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-                    D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        //        // 6.4.g Dispatch
+        //        m_sceneCommandList->DispatchRays(&raytraceDesc);
 
-                m_sceneCommandList->ResourceBarrier(1, &depthToWrite);
+        //        D3D12_RESOURCE_BARRIER depthToWrite = CD3DX12_RESOURCE_BARRIER::Transition(
+        //            m_deviceResources->GetDepthStencil(),
+        //            D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+        //            D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-                barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-                barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
-                barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-                barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+        //        m_sceneCommandList->ResourceBarrier(1, &depthToWrite);
 
-                m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
-                m_sceneCommandList->CopyResource(m_deviceResources->GetIntermediateRenderTarget(), mpOutputResource.Get());
+        //        barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        //        barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+        //        barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        //        barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
 
-                barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-                barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        //        m_sceneCommandList->ResourceBarrier(2, &barriers[0]);
+        //        m_sceneCommandList->CopyResource(m_deviceResources->GetIntermediateRenderTarget(), mpOutputResource.Get());
 
-                // transition the intermediate back to render target
-                m_sceneCommandList->ResourceBarrier(1, &barriers[1]);
+        //        barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+        //        barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
-                PIXEndEvent(m_sceneCommandList);
+        //        // transition the intermediate back to render target
+        //        m_sceneCommandList->ResourceBarrier(1, &barriers[1]);
 
-                DX::ThrowIfFailed(m_sceneCommandList->Close());
-            }
-        }
+        //        PIXEndEvent(m_sceneCommandList);
+
+        //        DX::ThrowIfFailed(m_sceneCommandList->Close());
+        //    }
+        //}
 #pragma endregion
     }
     

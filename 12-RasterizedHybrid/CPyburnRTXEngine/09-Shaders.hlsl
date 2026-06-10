@@ -47,10 +47,10 @@ float3 linearToSrgb(float3 c)
 }
 
 // 12.0 hybrid
-float GetViewDepthFromWorldPos(float3 posW)
+float GetHardwareDepthFromWorldPos(float3 posW)
 {
-    float3 posV = mul(gView, float4(posW, 1.0f)).xyz;
-    return -posV.z;
+    float4 clip = mul(gProj, mul(gView, float4(posW, 1.0f)));
+    return clip.z / clip.w; // same depth space as the raster DSV/SRV
 }
 
 // 12.0 hybrid
@@ -67,9 +67,6 @@ void rayGen()
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
     uint2 pixel = launchIndex.xy;
-
-    float rasterDepth = gDepthBuffer.Load(int3(pixel, 0));
-    float4 rasterColor = gRasterColor.Load(int3(pixel, 0));
 
     float2 uv = (launchIndex.xy + 0.5) / launchDim.xy;
     uv = uv * 2.0 - 1.0;
@@ -96,17 +93,18 @@ void rayGen()
     TraceRay(gRtScene, 0, 0xFF, 0, 2, 0, ray, payload);
 
     float4 rayColor = float4(linearToSrgb(payload.color), 1.0f);
+    float rasterDepth = gDepthBuffer.Load(int3(pixel, 0));
+    float4 rasterColor = gRasterColor.Load(int3(pixel, 0));
     float4 finalColor = rayColor;
 
-    // Your depth buffer is linear -z, and you clear it to 0.0.
-    // So treat depth > 0 as "valid raster geometry".
-    if (rasterDepth > 0.0f && rasterDepth < payload.hitViewDepth)
+    // reversed-Z: larger depth means closer
+    if (rasterDepth > 0.0f && rasterDepth > payload.hitViewDepth)
     {
         finalColor = rasterColor;
     }
 
+    // to test grayscale depth
     //float d = gDepthBuffer.Load(int3(pixel, 0));
-
     //gOutput[pixel] = float4(d, d, d, 1);
     
     gOutput[pixel] = finalColor;
@@ -118,7 +116,7 @@ void miss(inout RayPayload payload)
 {
     // 12.0 hybrid
     payload.hit = 0;
-    payload.hitViewDepth = 1e30f;
+    payload.hitViewDepth = 0.0f;
     payload.color = float3(0.4, 0.6, 0.2);
 }
 
@@ -190,7 +188,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     
     // 12.0 hybrid
     payload.hit = 1;
-    payload.hitViewDepth = GetViewDepthFromWorldPos(posW);
+    payload.hitViewDepth = GetHardwareDepthFromWorldPos(posW);
 
     float3 lightDir = normalize(gEnvironmentData.lightDirection);
     float ndotl = saturate(dot(normalWS, lightDir));
@@ -212,70 +210,6 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     payload.color = (ambient + diffuse) * shadow;
 }
 
-//[shader("closesthit")]
-//void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
-//{
-//    uint primIndex = PrimitiveIndex();
-//    uint3 indices = gIndices[primIndex];
-
-//    STriVertex v0 = BTriVertex[indices.x];
-//    STriVertex v1 = BTriVertex[indices.y];
-//    STriVertex v2 = BTriVertex[indices.z];
-
-//    float2 bary = attribs.barycentrics;
-//    float3 weights = float3(1.0 - bary.x - bary.y, bary.x, bary.y);
-
-//    float2 uv =
-//        v0.texture * weights.x +
-//        v1.texture * weights.y +
-//        v2.texture * weights.z;
-
-//    //float4 texColor = gDiffuseTexture.SampleLevel(gSampler, uv, 0);
-//    MaterialData material = gMaterials[InstanceID()];
-//    float4 texColor = gTextures[NonUniformResourceIndex(material.baseColorTexIndex)].SampleLevel(gSampler, uv, 0);
-
-//    // Interpolate the normal from the vertex buffer
-//    float3 normalOS =
-//        v0.normal * weights.x +
-//        v1.normal * weights.y +
-//        v2.normal * weights.z;
-
-//    normalOS = normalize(normalOS);
-
-//    // Convert object-space normal to world-space normal
-//    // This is correct for rotations/translations. If you add non-uniform scaling later,
-//    // use the inverse-transpose version instead.
-//    float3 normalWS = normalize(mul((float3x3) ObjectToWorld3x4(), normalOS));
-
-//    float hitT = RayTCurrent();
-//    float3 rayOriginW = WorldRayOrigin();
-//    float3 rayDirW = WorldRayDirection();
-//    float3 posW = rayOriginW + hitT * rayDirW;
-
-//    float3 lightDir = normalize(gEnvironmentData.lightDirection);
-
-//    // Flip this sign if your light direction convention is the opposite
-//    float ndotl = saturate(dot(normalWS, lightDir));
-
-//    // Push the shadow ray off the surface along the normal to reduce acne
-//    RayDesc ray;
-//    ray.Origin = posW + normalWS * 0.01;
-//    ray.Direction = lightDir;
-//    ray.TMin = 0.01;
-//    ray.TMax = 100000.0;
-
-//    ShadowPayload shadowPayload;
-//    TraceRay(gRtScene, 0, 0xFF, 1, 0, 1, ray, shadowPayload);
-
-//    float shadow = shadowPayload.hit ? 0.1 : 1.0;
-
-//    // Simple lit shading using the normal
-//    float3 ambient = 0.15 * texColor.rgb;
-//    float3 diffuse = ndotl * texColor.rgb;
-
-//    payload.color = (ambient + diffuse) * shadow;
-//}
-
 // 12.1.a
 [shader("closesthit")]
 void planeChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
@@ -290,7 +224,7 @@ void planeChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes
     
     // 12.0 hybrid
     payload.hit = 1;
-    payload.hitViewDepth = GetViewDepthFromWorldPos(posW);
+    payload.hitViewDepth = GetHardwareDepthFromWorldPos(posW);
 
     // Fire a shadow ray. The direction is hard-coded here, but can be fetched from a constant-buffer
     RayDesc ray;

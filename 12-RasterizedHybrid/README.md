@@ -1,3 +1,3 @@
-<img width="1500" height="1000" alt="image" src="https://github.com/user-attachments/assets/c8f125e3-f297-4145-9d79-53992e13dcea" />
+<img width="1282" height="752" alt="image" src="https://github.com/user-attachments/assets/c1414e3c-5c17-40e2-83fa-af3282cb73d1" />
 
 Documentation will come eventually, the project should build and you should be able to backwards engineer the solution.

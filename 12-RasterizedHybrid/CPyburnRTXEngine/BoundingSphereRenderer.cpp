@@ -15,7 +15,7 @@ namespace CPyburnRTXEngine
 
 	}
 
-	void BoundingSphereRenderer::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
+	void BoundingSphereRenderer::CreateDeviceDependentResources(DX::DeviceResources* deviceResources, const UINT& maxInstances)
 	{
 		m_deviceResources = deviceResources;
 		ShapeRendererHelper::MeshData meshData = ShapeRendererHelper::CreateSphere(Center, Radius, 10, 10);
@@ -59,9 +59,14 @@ namespace CPyburnRTXEngine
 			for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
 			{
 				m_instanceBuffer[i].CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+				m_instanceBuffer[i].CpuData.resize(maxInstances);
 
 				XMMATRIX transform = XMMatrixIdentity();
-				m_instanceBuffer[i].CpuData.push_back(transform); // testing
+				for (size_t x = 0; x < maxInstances; x++)
+				{
+					m_instanceBuffer[i].CpuData[x] = transform; // testing
+				}
+				
 				m_instanceBuffer[i].CreateOnUploadHeap(L"Bounding Sphere Instance Buffer");
 				m_instanceBuffer[i].CopyCpuDataToUploadHeap();
 
@@ -83,15 +88,35 @@ namespace CPyburnRTXEngine
 		m_indexBuffer.ReleaseUploadResource();
 	}
 
-	void BoundingSphereRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera)
+	void BoundingSphereRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera, const std::vector<XMMATRIX>* instances, const UINT& begin, const UINT& end)
 	{
+		// most of the time this will be a simple single instance
 		DirectX::BoundingSphere worldSphere;
 		this->Transform(worldSphere, modelTransform);
-
-		m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData[0] = modelTransform;
-		m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
-
 		m_draw = this->Intersects(camera->GetBoundingFrustum());
+
+		UINT capacity = static_cast<UINT>(m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData.capacity());
+		UINT count = end - begin;
+		// but we have the ability to see lots of bounding spheres for other instances
+		if (instances && count <= capacity)
+		{
+			std::vector<XMMATRIX>& cpuData = m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData;
+			cpuData.resize(count);
+			std::copy(instances->begin() + begin, instances->begin() + end, cpuData.begin());
+			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+		}
+		else if (instances && count > capacity)
+		{
+			std::vector<XMMATRIX>& cpuData = m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData;
+			cpuData.resize(capacity);
+			std::copy(instances->begin() + begin, instances->begin() + begin + capacity, cpuData.begin());
+			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+		}
+		else
+		{
+			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData[0] = modelTransform;
+			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+		}
 	}
 
 	void BoundingSphereRenderer::Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera)
@@ -111,6 +136,6 @@ namespace CPyburnRTXEngine
 
 		commandList->IASetVertexBuffers(0, _countof(vertexBufferViews), &vertexBufferViews[0]);
 		commandList->IASetIndexBuffer(&m_indexBufferView);
-		commandList->DrawIndexedInstanced(static_cast<UINT>(m_indexBuffer.CpuData.size()), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(static_cast<UINT>(m_indexBuffer.CpuData.size()), static_cast<UINT>(m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData.size()), 0, 0, 0);
 	}
 }

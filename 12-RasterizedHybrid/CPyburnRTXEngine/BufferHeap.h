@@ -59,12 +59,6 @@ namespace CPyburnRTXEngine
         // Persistently mapped pointer
         uint8_t* MappedData = nullptr;
 
-        void ReserveVectorSpace(const UINT& reserveSizeOfCpuData)
-        {
-            m_reserveSizeOfCpuData = reserveSizeOfCpuData;
-            CpuData.reserve(reserveSizeOfCpuData);
-        }
-
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {
             BufferSize = static_cast<UINT>(sizeof(T) * CpuData.size());

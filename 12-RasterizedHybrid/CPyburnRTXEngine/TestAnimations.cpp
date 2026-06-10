@@ -854,7 +854,7 @@ namespace CPyburnRTXEngine
     {
         m_deviceResources = deviceResources;
 
-        m_boundingSphereTest.CreateDeviceDependentResources(deviceResources, 2);
+        m_boundingSphereTest.CreateDeviceDependentResources(deviceResources);
 
         LoadJson();
 
@@ -875,7 +875,7 @@ namespace CPyburnRTXEngine
 
             std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
             model.assimpFactory = std::make_unique<AssimpFactory>(modelPath);
-            model.assimpFactory->CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+            model.assimpFactory->CreateDeviceDependentResources(deviceResources);
 
             m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());
             m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
@@ -908,17 +908,15 @@ namespace CPyburnRTXEngine
 
         // update the bones
         m_elfAnimated->Update(timer);
+#ifdef _DEBUG
+        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Update(m_instanceData[2].world, camera);
+#else
+
+#endif
 
         XMFLOAT3 lightDir = XMFLOAT3(0.5f, 0.5f, -0.5f);
         m_EnvironmentCb.CpuData.lightDirection = lightDir;
         m_EnvironmentCb.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
-
-        std::vector<XMMATRIX> simpleTest(3);
-        simpleTest[0] = XMMatrixTranslation(0, -1, 0);
-        simpleTest[1] = XMMatrixTranslation(1, 1, 0);
-        simpleTest[1] = XMMatrixTranslation(2, 1, 1);
-        //XMMATRIX test = 
-        m_boundingSphereTest.Update(XMMatrixIdentity(), camera, &simpleTest, 0, 3);
     }
 
     void TestAnimations::Render(CameraBase* camera)
@@ -941,6 +939,11 @@ namespace CPyburnRTXEngine
 
         PIXBeginEvent(m_sceneCommandList, 0, L"Draw rasterized geom");
 
+#ifdef _DEBUG
+        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList, camera);
+#else
+
+#endif
         m_boundingSphereTest.Render(m_sceneCommandList, camera);
 
         PIXEndEvent(m_sceneCommandList);

@@ -84,19 +84,18 @@ namespace CPyburnRTXEngine
 		// for now this is a string, but may be a map of <key, object holdind everything needed>
 		std::vector<Bone*> m_globalBones; // this is just a place for storing bones that are useful, have names, etc.
 
-		XMVECTOR CalcInterpolatedScalingXM(float animationTime, const aiNodeAnim* pNodeAnim);
-		//void CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
-		XMVECTOR CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim);
 		bool played = false;
-		//void CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim);
-		//void CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim);
+
+		XMVECTOR CalcInterpolatedScalingXM(float animationTime, const aiNodeAnim* pNodeAnim);
+		XMVECTOR CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim);
 		XMVECTOR CalcInterpolatedPositionXM(float animationTime, const aiNodeAnim* pNodeAnim);
+
 		int FindScaling(float animationTime, const aiNodeAnim* pNodeAnim);
 		int FindRotation(float animationTime, const aiNodeAnim* pNodeAnim);
 		int FindPosition(float animationTime, const aiNodeAnim* pNodeAnim);
+
 		const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const std::string& nodeName);
 		void CreateSkeletonBones(const aiNode* pNode, Bone* pBone);
-
 		void ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void ReadSkeletonBones(float animationTime, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<VertexBoneData>& bones);

@@ -359,10 +359,17 @@ namespace CPyburnRTXEngine
 
 	}
 
-	void AssimpFactory::CreateDeviceDependentResources(ID3D12Device5* d3dDevice)
+	void AssimpFactory::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
+		ID3D12Device5* d3dDevice = deviceResources->GetD3DDevice();
 		m_vertexBuffer.CreateDeviceDependentResources(d3dDevice);
 		m_indexBuffer.CreateDeviceDependentResources(d3dDevice);
+
+#ifdef _DEBUG
+		m_boundingSphere.CreateDeviceDependentResources(deviceResources);
+#else
+
+#endif
 	}
 
 	void AssimpFactory::CreateBuffers(ID3D12GraphicsCommandList4* commandList)

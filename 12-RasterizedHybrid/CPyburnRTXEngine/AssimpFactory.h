@@ -6,9 +6,12 @@
 #include <assimp/postprocess.h>     // Post processing fla
 
 #include "BufferHeap.h"
+#include "BoundingSphereRenderer.h"
 
 namespace CPyburnRTXEngine
 {
+	class BoundingSphereRenderer;
+
 	class AssimpFactory
 	{
 	public:
@@ -83,8 +86,15 @@ namespace CPyburnRTXEngine
 		std::string m_textureDISP;
 
 		bool m_isSkinned = false;
+
+#ifdef _DEBUG
+		BoundingBox m_boundingBox;
+		BoundingSphereRenderer m_boundingSphere;
+#else
 		BoundingBox m_boundingBox;
 		BoundingSphere m_boundingSphere;
+#endif
+		
 		XMMATRIX m_boundingSphereRadiusTranslation;
 
 		void DoMeshTransforms(aiNode* node, XMMATRIX parentTransform);
@@ -101,6 +111,12 @@ namespace CPyburnRTXEngine
 		BufferHeap<AssimpFactory::VSVertices> m_vertexBuffer;
 		BufferHeap<UINT> m_indexBuffer;
 	public:
+#ifdef _DEBUG
+		BoundingSphereRenderer& GetBoundingSphereRenderer() { return m_boundingSphere; }
+#else
+
+#endif
+
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>& GetVertexBuffer() { return m_vertexBuffer; }
@@ -119,7 +135,7 @@ namespace CPyburnRTXEngine
 			| aiPostProcessSteps::aiProcess_LimitBoneWeights);
 		~AssimpFactory();
 
-		void CreateDeviceDependentResources(ID3D12Device5* d3dDevice);
+		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 		void CreateShaderResources();
 

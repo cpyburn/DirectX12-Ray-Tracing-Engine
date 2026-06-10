@@ -17,6 +17,7 @@ namespace CPyburnRTXEngine
 
 	void BoundingSphereRenderer::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
+		m_deviceResources = deviceResources;
 		ShapeRendererHelper::MeshData meshData = ShapeRendererHelper::CreateSphere(Center, Radius, 10, 10);
 
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
@@ -52,7 +53,7 @@ namespace CPyburnRTXEngine
 			m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 		}
 
-		// instance buffer
+		// instance buffer (world0 in shader) not a Cbv
 		{
 			// as of right now, the instances should be relatively small < 10000, so use upload heap for updating per frame. Can always benchmark if performance is issue and decide to use default
 			for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
@@ -85,9 +86,12 @@ namespace CPyburnRTXEngine
 	void BoundingSphereRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera)
 	{
 		DirectX::BoundingSphere worldSphere;
-		Transform(worldSphere, modelTransform);
+		this->Transform(worldSphere, modelTransform);
 
-		m_draw = worldSphere.Intersects(camera->GetBoundingFrustum());
+		m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData[0] = modelTransform;
+		m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+
+		m_draw = this->Intersects(camera->GetBoundingFrustum());
 	}
 
 	void BoundingSphereRenderer::Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera)

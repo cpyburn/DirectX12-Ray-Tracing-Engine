@@ -22,6 +22,7 @@ namespace CPyburnRTXEngine
 		BufferHeap<BoundingSphereRenderer::VSVertices> m_vertexBuffer;
 		BufferHeap<UINT> m_indexBuffer;
 		BufferHeap<XMMATRIX> m_instanceBuffer[DX::DeviceResources::c_backBufferCount];
+		DX::DeviceResources* m_deviceResources = nullptr;
 	public:
 		BoundingSphereRenderer();
 		~BoundingSphereRenderer();

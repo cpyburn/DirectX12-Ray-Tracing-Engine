@@ -15,10 +15,7 @@ struct VertexShaderInput
 {
 	float3 pos : POSITION;
 	float4 color : COLOR;
-    float4 world0 : WORLD0;
-    float4 world1 : WORLD1;
-    float4 world2 : WORLD2;
-    float4 world3 : WORLD3;
+    float4x4 world0 : WORLD0;
 };
 
 // Per-pixel color data passed through the pixel shader.
@@ -33,10 +30,8 @@ PixelShaderInput mainVS(VertexShaderInput input)
 {
     PixelShaderInput output;
 
-    float4x4 world = float4x4(input.world0, input.world1, input.world2, input.world3);
-
     float4 pos = float4(input.pos, 1.0f);
-    pos = mul(world, pos);
+    pos = mul(input.world0, pos); // if you want to transpose and keep everything consistent you can, or you can swap the mul vector matrix to force the shader to do it correctly
     pos = mul(gView, pos);
     pos = mul(gProj, pos);
 

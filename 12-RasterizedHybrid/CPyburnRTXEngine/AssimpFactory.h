@@ -7,13 +7,34 @@
 
 #include "BoundingSphereRenderer.h"
 #include "BufferHeap.h"
-#include "AnimationStructs.h"
 
 namespace CPyburnRTXEngine
 {
 	class AssimpFactory
 	{
 	public:
+		struct VertexBoneData
+		{
+			unsigned int IDs[4];
+			float Weights[4];
+
+			//unsigned int IDs1[4];
+			//float Weights1[4];
+
+			void AddBoneData(int boneID, float weight)
+			{
+				for (UINT i = 0; i < 4; i++)
+				{
+					if (Weights[i] == 0.0f)
+					{
+						IDs[i] = boneID;
+						Weights[i] = weight;
+						return;
+					}
+				}
+			}
+		};
+
 		struct Model
 		{
 			UINT modelId;
@@ -23,7 +44,7 @@ namespace CPyburnRTXEngine
 			std::vector<std::string> textures;
 
 			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
-			std::shared_ptr<BufferHeap<AnimationStructs::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
+			std::shared_ptr<BufferHeap<AssimpFactory::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
 		};
 		static std::unordered_map<UINT, Model> Models;
 
@@ -94,7 +115,6 @@ namespace CPyburnRTXEngine
 				children.clear();
 			}
 		};
-
 	private:
 		struct LoadedMaterial
 		{
@@ -151,20 +171,20 @@ namespace CPyburnRTXEngine
 		// directX 12 buffers
 		BufferHeap<AssimpFactory::VSVertices> m_vertexBuffer;
 		BufferHeap<UINT> m_indexBuffer;
-		std::shared_ptr<BufferHeap<AnimationStructs::VertexBoneData>> m_boneBuffer = nullptr;
+		std::shared_ptr<BufferHeap<AssimpFactory::VertexBoneData>> m_boneBuffer = nullptr;
 
 		UINT m_numBones = 0;
 		std::vector<XMMATRIX> m_boneInfo;
 		std::unordered_map<std::string, unsigned int> m_boneMapping; // maps a bone name to its index
-		std::vector<AnimationStructs::VertexBoneData> m_bones;
-		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones);
+		std::vector<AssimpFactory::VertexBoneData> m_bones;
+		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AssimpFactory::VertexBoneData>& bones);
 	public:
 #ifdef _DEBUG
 		BoundingSphereRenderer& GetBoundingSphereRenderer() { return m_boundingSphere; }
 #else
 
 #endif
-		const std::vector<AnimationStructs::VertexBoneData>& GetBones() { return m_bones; }
+		const std::vector<AssimpFactory::VertexBoneData>& GetBones() { return m_bones; }
 		const std::unordered_map<std::string, unsigned int>& GetBoneMapping() { return m_boneMapping; }
 		const std::vector<XMMATRIX>& GetBoneInfo() { return m_boneInfo; }
 		const UINT& GetNumBones() const { return m_numBones; }
@@ -173,7 +193,7 @@ namespace CPyburnRTXEngine
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>* GetVertexBuffer() { return &m_vertexBuffer; }
 		BufferHeap<UINT>& GetIndexBuffer() { return m_indexBuffer; }
-		BufferHeap<AnimationStructs::VertexBoneData>* GetBoneBuffer() { return m_boneBuffer.get(); }
+		BufferHeap<AssimpFactory::VertexBoneData>* GetBoneBuffer() { return m_boneBuffer.get(); }
 		const aiScene* GetAiScene() { return m_pScene; }
 
 		AssimpFactory(const UINT modelId, const std::string& fileName,

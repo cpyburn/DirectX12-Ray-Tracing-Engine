@@ -324,7 +324,7 @@ namespace CPyburnRTXEngine
 		return newPath;
 	}
 
-	void AssimpFactory::LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones)
+	void AssimpFactory::LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AssimpFactory::VertexBoneData>& bones)
 	{
 		for (unsigned int i = 0; i < pMesh->mNumBones; i++)
 		{
@@ -433,7 +433,7 @@ namespace CPyburnRTXEngine
 
 		if (m_numBones > 0)
 		{
-			m_boneBuffer = std::make_shared<BufferHeap<AnimationStructs::VertexBoneData>>();
+			m_boneBuffer = std::make_shared<BufferHeap<AssimpFactory::VertexBoneData>>();
 			m_boneBuffer->CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 			m_boneBuffer->CpuData = m_bones;
 			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_modelId));

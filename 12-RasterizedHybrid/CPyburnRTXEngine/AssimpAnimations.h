@@ -3,8 +3,6 @@
 #include "AssimpFactory.h"
 #include "Animation.h"
 
-#include "AnimationStructs.h"
-
 namespace CPyburnRTXEngine
 {
 	class AnimationPlayer; // forward declaration

@@ -90,30 +90,50 @@ namespace CPyburnRTXEngine
 
 	void BoundingSphereRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera, const std::vector<XMMATRIX>* instances, const UINT& begin, const UINT& end)
 	{
-		// most of the time this will be a simple single instance
-		DirectX::BoundingSphere worldSphere;
-		this->Transform(worldSphere, modelTransform);
-		m_draw = this->Intersects(camera->GetBoundingFrustum());
+		if (instances)
+		{
+			m_draw = false;
+			std::vector<XMMATRIX> visibleInstances;
+			for (UINT i = begin; i < end; i++)
+			{
+				// most of the time this will be a simple single instance
+				DirectX::BoundingSphere worldSphere;
+				XMMATRIX instance = instances->at(i);
+				this->Transform(worldSphere, instance);
+				if (worldSphere.Intersects(camera->GetBoundingFrustum()))
+				{
+					m_draw = true;
+					visibleInstances.push_back(instance);
+				}
+			}
 
-		UINT capacity = static_cast<UINT>(m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData.capacity());
-		UINT count = end - begin;
-		// but we have the ability to see lots of bounding spheres for other instances
-		if (instances && count <= capacity)
-		{
-			std::vector<XMMATRIX>& cpuData = m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData;
-			cpuData.resize(count);
-			std::copy(instances->begin() + begin, instances->begin() + end, cpuData.begin());
-			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
-		}
-		else if (instances && count > capacity)
-		{
-			std::vector<XMMATRIX>& cpuData = m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData;
-			cpuData.resize(capacity);
-			std::copy(instances->begin() + begin, instances->begin() + begin + capacity, cpuData.begin());
-			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+			size_t capacity = m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData.capacity();
+			size_t count = visibleInstances.size();
+
+			if (count <= capacity)
+			{
+				std::vector<XMMATRIX>& cpuData = m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData;
+				cpuData.resize(count);
+				std::copy(visibleInstances.begin() + begin, visibleInstances.end(), cpuData.begin());
+				m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+			}
+			else if (count > capacity)
+			{
+				std::vector<XMMATRIX>& cpuData = m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData;
+				cpuData.resize(capacity);
+				std::copy(visibleInstances.begin() + begin, visibleInstances.begin() + begin + capacity, cpuData.begin());
+				m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+			}
+
+			return;
 		}
 		else
 		{
+			// most of the time this will be a simple single instance
+			DirectX::BoundingSphere worldSphere;
+			this->Transform(worldSphere, modelTransform);
+			m_draw = this->Intersects(camera->GetBoundingFrustum());
+
 			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData[0] = modelTransform;
 			m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
 		}

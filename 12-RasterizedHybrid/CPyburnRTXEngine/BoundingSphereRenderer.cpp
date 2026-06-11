@@ -5,7 +5,7 @@
 
 namespace CPyburnRTXEngine
 {
-	BoundingSphereRenderer::BoundingSphereRenderer() : BoundingSphere()
+	BoundingSphereRenderer::BoundingSphereRenderer() : BoundingSphere(), BoundingRendererParent()
 	{
 
 	}

@@ -1,5 +1,9 @@
 #pragma once
-class BoundingBoxRenderer
-{
-};
 
+namespace CPyburnRTXEngine
+{
+	class BoundingBoxRenderer
+	{
+	
+	};
+}

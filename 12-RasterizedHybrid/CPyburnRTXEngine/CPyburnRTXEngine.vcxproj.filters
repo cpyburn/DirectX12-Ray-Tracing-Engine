@@ -100,6 +100,9 @@
     <ClInclude Include="BoundingBoxRenderer.h">
       <Filter>Models\BoundingShapes</Filter>
     </ClInclude>
+    <ClInclude Include="BoundingRendererParent.h">
+      <Filter>Models\BoundingShapes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -157,6 +160,9 @@
       <Filter>Models\BoundingShapes</Filter>
     </ClCompile>
     <ClCompile Include="BoundingBoxRenderer.cpp">
+      <Filter>Models\BoundingShapes</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundingRendererParent.cpp">
       <Filter>Models\BoundingShapes</Filter>
     </ClCompile>
   </ItemGroup>

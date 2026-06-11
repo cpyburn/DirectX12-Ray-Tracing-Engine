@@ -54,7 +54,6 @@ namespace CPyburnRTXEngine
 
         m_deviceResources->GetD3DDevice()->CreateComputePipelineState(&pso, IID_PPV_ARGS(&m_pso));
 
-		m_boneBuffer.CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
             m_boneMatricesBuffer[i].CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
@@ -62,7 +61,7 @@ namespace CPyburnRTXEngine
 		m_outVertexBuffer.CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
     }
 
-    void AnimationCompute::CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AnimationStructs::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones)
+    void AnimationCompute::CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, BufferHeap<AnimationStructs::VertexBoneData>* boneData, const std::vector<XMMATRIX>& bones)
     {
         //Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
         //Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
@@ -71,8 +70,7 @@ namespace CPyburnRTXEngine
 
 		m_baseVertexBuffer = baseVertices;
 
-		m_boneBuffer.CpuData = boneData;
-		m_boneBuffer.CreateOnDefaultHeap(commandList, L"Bone Data Buffer");
+		m_boneBuffer = boneData;
 
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -95,7 +93,7 @@ namespace CPyburnRTXEngine
 
     void AnimationCompute::CreateShaderResources()
     {
-        m_boneBuffer.CreateShaderResourceView(); // t1
+        //m_boneBuffer.CreateShaderResourceView(); // t1
         // since bones are small, going to use SRV upload heap like a constant buffer
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -142,7 +140,6 @@ namespace CPyburnRTXEngine
 
     void AnimationCompute::ReleaseUploadResources()
     {
-        m_boneBuffer.ReleaseUploadResource();
         m_outVertexBuffer.ReleaseUploadResource();
     }
 }

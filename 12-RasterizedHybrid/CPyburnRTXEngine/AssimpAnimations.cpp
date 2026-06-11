@@ -383,13 +383,14 @@ namespace CPyburnRTXEngine
 	{
 		m_assimpFactory->CreateBuffers(commandList);
 		
-		m_animationCompute->CreateBuffers(commandList, &m_assimpFactory->GetVertexBuffer(), m_assimpFactory->GetBones(), m_assimpFactory->GetBoneInfo());
+		m_animationCompute->CreateBuffers(commandList, &m_assimpFactory->GetVertexBuffer(), m_assimpFactory->GetBoneBuffer(), m_assimpFactory->GetBoneInfo());
 	}
 
 	void AssimpAnimations::CreateShaderResources()
 	{
 		m_assimpFactory->GetVertexBuffer().CreateShaderResourceView(); // t0 for compute shader
-		m_animationCompute->CreateShaderResources(); // t1, t2, u0 for compute shader, t0 rtx shader
+		m_assimpFactory->GetBoneBuffer()->CreateShaderResourceView(); // t1 for compute shader
+		m_animationCompute->CreateShaderResources(); // t2, u0 for compute shader, t0 rtx shader
 
 		// put the indices heap position right after the vertices heap position since they are used together shader table
 		m_assimpFactory->GetIndexBuffer().CreateShaderResourceView(); // t1 for rtx shader

@@ -94,7 +94,7 @@ namespace CPyburnRTXEngine
 			memcpy(MappedData, CpuData.data(), BufferSize);
 		}
 
-        void CreateOnDefaultHeap(ID3D12GraphicsCommandList4* commandList, const WCHAR* name = L"Dfault buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
+        void CreateOnDefaultHeap(ID3D12GraphicsCommandList4* commandList, const WCHAR* name = L"Default buffer not named", const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE)
         {
             BufferSize = static_cast<UINT>(sizeof(T) * CpuData.capacity());
 

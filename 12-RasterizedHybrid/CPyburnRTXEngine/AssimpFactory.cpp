@@ -416,6 +416,8 @@ namespace CPyburnRTXEngine
 
 	void AssimpFactory::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
+		m_deviceResources = deviceResources;
+
 		ID3D12Device5* d3dDevice = deviceResources->GetD3DDevice();
 		m_vertexBuffer.CreateDeviceDependentResources(d3dDevice);
 		m_indexBuffer.CreateDeviceDependentResources(d3dDevice);
@@ -428,6 +430,14 @@ namespace CPyburnRTXEngine
 
 		m_indexBuffer.CpuData = m_meshEntries[0].indices;
 		m_indexBuffer.CreateOnDefaultHeap(commandList, L"Index Buffer");
+
+		if (m_numBones > 0)
+		{
+			m_boneBuffer = std::make_shared<BufferHeap<AnimationStructs::VertexBoneData>>();
+			m_boneBuffer->CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
+			m_boneBuffer->CpuData = m_bones;
+			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_modelId));
+		}
 	}
 
 	void AssimpFactory::CreateShaderResources()

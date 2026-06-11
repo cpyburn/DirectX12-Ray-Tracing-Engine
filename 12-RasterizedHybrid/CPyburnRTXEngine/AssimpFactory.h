@@ -109,6 +109,8 @@ namespace CPyburnRTXEngine
 			std::vector<std::string> opacityTextures;
 		};
 
+		DX::DeviceResources* m_deviceResources = nullptr;
+
 		std::vector<MeshEntry> m_meshEntries;
 		UINT m_modelId = MAXUINT;
 		std::string m_pathFileName;
@@ -149,6 +151,7 @@ namespace CPyburnRTXEngine
 		// directX 12 buffers
 		BufferHeap<AssimpFactory::VSVertices> m_vertexBuffer;
 		BufferHeap<UINT> m_indexBuffer;
+		std::shared_ptr<BufferHeap<AnimationStructs::VertexBoneData>> m_boneBuffer = nullptr;
 
 		UINT m_numBones = 0;
 		std::vector<XMMATRIX> m_boneInfo;
@@ -170,6 +173,7 @@ namespace CPyburnRTXEngine
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>& GetVertexBuffer() { return m_vertexBuffer; }
 		BufferHeap<UINT>& GetIndexBuffer() { return m_indexBuffer; }
+		BufferHeap<AnimationStructs::VertexBoneData>* GetBoneBuffer() { return m_boneBuffer.get(); }
 		const aiScene* GetAiScene() { return m_pScene; }
 
 		AssimpFactory(const UINT modelId, const std::string& fileName,

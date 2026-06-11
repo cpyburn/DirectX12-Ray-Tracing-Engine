@@ -916,7 +916,7 @@ namespace CPyburnRTXEngine
 
         PIXEndEvent(m_sceneCommandList);
 
-        DX::ThrowIfFailed(m_sceneCommandList->Close());
+        //DX::ThrowIfFailed(m_sceneCommandList->Close());
 #pragma endregion
 
 #pragma region Ray tracing

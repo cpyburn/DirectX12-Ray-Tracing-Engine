@@ -13,32 +13,6 @@ namespace CPyburnRTXEngine
 	class AssimpAnimations
 	{
 	private:
-		struct Bone
-		{
-			std::string nodeName;
-			int nodeId = 0;
-			bool hasBoneMapping = false;
-			const aiNodeAnim* pNodeAnim = nullptr;
-			XMMATRIX parentNodeTransformation = XMMatrixIdentity();
-			XMMATRIX globalNodeTransform = XMMatrixIdentity();
-			std::vector<std::unique_ptr<Bone>> children;
-
-			Bone()
-			{
-
-			}
-
-			~Bone()
-			{
-				for (size_t i = 0; i < children.size(); i++)
-				{
-					children[i] = nullptr;
-				}
-
-				children.clear();
-			}
-		};
-
 		struct GlobalBoneTransform
 		{
 			std::string pBoneName;
@@ -55,14 +29,10 @@ namespace CPyburnRTXEngine
 
 		float m_ticksPerSecond = 0;
 		float m_duration = 0;
-		std::unordered_map<std::string, unsigned int> m_boneMapping; // maps a bone name to its index
-		UINT m_numBones = 0;
-		std::vector<XMMATRIX> m_boneInfo;
-		Bone m_rootBone;
-		std::vector<AnimationStructs::VertexBoneData> m_bones;
-
+		
+		AssimpFactory::Bone m_rootBone;
 		// for now this is a string, but may be a map of <key, object holdind everything needed>
-		std::vector<Bone*> m_globalBones; // this is just a place for storing bones that are useful, have names, etc.
+		std::vector<AssimpFactory::Bone*> m_globalBones; // this is just a place for storing bones that are useful, have names, etc.
 
 		bool played = false;
 
@@ -75,10 +45,9 @@ namespace CPyburnRTXEngine
 		int FindPosition(float animationTime, const aiNodeAnim* pNodeAnim);
 
 		const aiNodeAnim* FindNodeAnim(const aiAnimation* pAnimation, const std::string& nodeName);
-		void CreateSkeletonBones(const aiNode* pNode, Bone* pBone);
-		void ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
-		void ReadSkeletonBones(float animationTime, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
-		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones);
+		void CreateSkeletonBones(const aiNode* pNode, AssimpFactory::Bone* pBone);
+		void ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, AssimpFactory::Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
+		void ReadSkeletonBones(float animationTime, AssimpFactory::Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 
 		void LoadJson();
 
@@ -97,7 +66,6 @@ namespace CPyburnRTXEngine
 		std::unique_ptr<AnimationCompute> m_animationCompute = nullptr;
 	public:
 		AssimpFactory* GetAssimpFactory() { return m_assimpFactory; }
-		const UINT& GetNumBones() const { return m_numBones; }
 		AnimationCompute* GetAnimationCompute() { return m_animationCompute.get(); }
 
 		static std::unordered_map<UINT, std::string> AnimationTypes;

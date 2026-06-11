@@ -324,6 +324,45 @@ namespace CPyburnRTXEngine
 		return newPath;
 	}
 
+	void AssimpFactory::LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones)
+	{
+		for (unsigned int i = 0; i < pMesh->mNumBones; i++)
+		{
+			int boneIndex = 0;
+			std::string BoneName(pMesh->mBones[i]->mName.data);
+
+			if (m_boneMapping.find(BoneName) == m_boneMapping.end())
+			{
+				// Allocate an index for bone
+				boneIndex = m_numBones;
+				m_numBones++;
+				XMMATRIX boneOffsetMatrix = XMMatrixSet(pMesh->mBones[i]->mOffsetMatrix.a1, pMesh->mBones[i]->mOffsetMatrix.a2, pMesh->mBones[i]->mOffsetMatrix.a3, pMesh->mBones[i]->mOffsetMatrix.a4,
+					pMesh->mBones[i]->mOffsetMatrix.b1, pMesh->mBones[i]->mOffsetMatrix.b2, pMesh->mBones[i]->mOffsetMatrix.b3, pMesh->mBones[i]->mOffsetMatrix.b4,
+					pMesh->mBones[i]->mOffsetMatrix.c1, pMesh->mBones[i]->mOffsetMatrix.c2, pMesh->mBones[i]->mOffsetMatrix.c3, pMesh->mBones[i]->mOffsetMatrix.c4,
+					pMesh->mBones[i]->mOffsetMatrix.d1, pMesh->mBones[i]->mOffsetMatrix.d2, pMesh->mBones[i]->mOffsetMatrix.d3, pMesh->mBones[i]->mOffsetMatrix.d4);
+
+				//XMFLOAT4X4 boneOffsetMatrix = XMFLOAT4X4(pMesh->mBones[i]->mOffsetMatrix.a1, pMesh->mBones[i]->mOffsetMatrix.b1, pMesh->mBones[i]->mOffsetMatrix.c1, pMesh->mBones[i]->mOffsetMatrix.d1,
+				//										pMesh->mBones[i]->mOffsetMatrix.a2, pMesh->mBones[i]->mOffsetMatrix.b2, pMesh->mBones[i]->mOffsetMatrix.c2, pMesh->mBones[i]->mOffsetMatrix.d2,
+				//										pMesh->mBones[i]->mOffsetMatrix.a3, pMesh->mBones[i]->mOffsetMatrix.b3, pMesh->mBones[i]->mOffsetMatrix.c3, pMesh->mBones[i]->mOffsetMatrix.d3,
+				//										pMesh->mBones[i]->mOffsetMatrix.a4, pMesh->mBones[i]->mOffsetMatrix.b4, pMesh->mBones[i]->mOffsetMatrix.c4, pMesh->mBones[i]->mOffsetMatrix.d4);
+
+				m_boneInfo.push_back(boneOffsetMatrix);
+				m_boneMapping[BoneName] = boneIndex;
+			}
+			else
+			{
+				boneIndex = m_boneMapping[BoneName];
+			}
+
+			for (unsigned int j = 0; j < pMesh->mBones[i]->mNumWeights; j++)
+			{
+				int vertexID = m_meshEntries[meshIndex].baseVertex + pMesh->mBones[i]->mWeights[j].mVertexId;
+				float weight = pMesh->mBones[i]->mWeights[j].mWeight;
+				bones[vertexID].AddBoneData(boneIndex, weight);
+			}
+		}
+	}
+
 	AssimpFactory::AssimpFactory(const UINT modelId, const std::string& fileName, unsigned int customFlags) :
 		m_boundingSphereRadiusTranslation(XMMatrixIdentity())
 	{
@@ -356,6 +395,19 @@ namespace CPyburnRTXEngine
 		{
 			MeshEntry* mesh = &m_meshEntries[i];
 			CreateSingleMeshEntry(i, numVertices, numIndices, mesh);
+		}
+
+		bool hasBones = false;
+		// Initialize the meshes in the scene one by one
+		for (UINT i = 0; i < m_meshEntries.size(); i++)
+		{
+			if (m_meshEntries[i].hasBones)
+			{
+				hasBones = true;
+				const aiMesh* paiMesh = m_pScene->mMeshes[i];
+				m_bones.resize(m_bones.size() + m_meshEntries[i].numVerts);
+				LoadBones(i, paiMesh, m_bones);
+			}
 		}
 	}
 

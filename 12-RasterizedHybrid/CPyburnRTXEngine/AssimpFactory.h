@@ -69,6 +69,32 @@ namespace CPyburnRTXEngine
 			}
 		};
 
+		struct Bone
+		{
+			std::string nodeName;
+			int nodeId = 0;
+			bool hasBoneMapping = false;
+			const aiNodeAnim* pNodeAnim = nullptr;
+			XMMATRIX parentNodeTransformation = XMMatrixIdentity();
+			XMMATRIX globalNodeTransform = XMMatrixIdentity();
+			std::vector<std::unique_ptr<Bone>> children;
+
+			Bone()
+			{
+
+			}
+
+			~Bone()
+			{
+				for (size_t i = 0; i < children.size(); i++)
+				{
+					children[i] = nullptr;
+				}
+
+				children.clear();
+			}
+		};
+
 	private:
 		struct LoadedMaterial
 		{
@@ -123,12 +149,22 @@ namespace CPyburnRTXEngine
 		// directX 12 buffers
 		BufferHeap<AssimpFactory::VSVertices> m_vertexBuffer;
 		BufferHeap<UINT> m_indexBuffer;
+
+		UINT m_numBones = 0;
+		std::vector<XMMATRIX> m_boneInfo;
+		std::unordered_map<std::string, unsigned int> m_boneMapping; // maps a bone name to its index
+		std::vector<AnimationStructs::VertexBoneData> m_bones;
+		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones);
 	public:
 #ifdef _DEBUG
 		BoundingSphereRenderer& GetBoundingSphereRenderer() { return m_boundingSphere; }
 #else
 
 #endif
+		const std::vector<AnimationStructs::VertexBoneData>& GetBones() { return m_bones; }
+		const std::unordered_map<std::string, unsigned int>& GetBoneMapping() { return m_boneMapping; }
+		const std::vector<XMMATRIX>& GetBoneInfo() { return m_boneInfo; }
+		const UINT& GetNumBones() const { return m_numBones; }
 		const UINT& GetModelId() { return m_modelId; }
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }

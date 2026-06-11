@@ -8,16 +8,16 @@ namespace CPyburnRTXEngine
 	AnimationPlayer::AnimationPlayer(AssimpAnimations* skinnedMesh) :
 		m_skinnedMesh(skinnedMesh)
 	{
-		m_currentClip.bones.resize(skinnedMesh->GetNumBones());
-		m_currentClip.noGlobalBones.resize(skinnedMesh->GetNumBones());
-		m_currentClip.global.resize(skinnedMesh->GetNumBones());
+		m_currentClip.bones.resize(skinnedMesh->GetAssimpFactory()->GetNumBones());
+		m_currentClip.noGlobalBones.resize(skinnedMesh->GetAssimpFactory()->GetNumBones());
+		m_currentClip.global.resize(skinnedMesh->GetAssimpFactory()->GetNumBones());
 
-		m_targetClip.bones.resize(skinnedMesh->GetNumBones());
-		m_targetClip.noGlobalBones.resize(skinnedMesh->GetNumBones());
-		m_targetClip.global.resize(skinnedMesh->GetNumBones());
+		m_targetClip.bones.resize(skinnedMesh->GetAssimpFactory()->GetNumBones());
+		m_targetClip.noGlobalBones.resize(skinnedMesh->GetAssimpFactory()->GetNumBones());
+		m_targetClip.global.resize(skinnedMesh->GetAssimpFactory()->GetNumBones());
 
 		// todo: GetModelId()
-		//m_animationsByModelId = &AssimpAnimations::Animations[skinnedMesh->GetModelId()];
+		//m_animationsByModelId = &AssimpAnimations::Animations[skinnedMesh->GetAssimpFactory()->GetModelId()];
 		m_animationsByModelId = &AssimpAnimations::Animations[1];
 	}
 

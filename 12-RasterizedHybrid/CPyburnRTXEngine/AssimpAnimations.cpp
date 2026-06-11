@@ -119,7 +119,7 @@ namespace CPyburnRTXEngine
 		return NULL;
 	}
 
-	void AssimpAnimations::CreateSkeletonBones(const aiNode* pNode, Bone* pBone)
+	void AssimpAnimations::CreateSkeletonBones(const aiNode* pNode, AssimpFactory::Bone* pBone)
 	{
 		pBone->nodeName = pNode->mName.data;
 		pBone->pNodeAnim = FindNodeAnim(m_assimpFactory->GetAiScene()->mAnimations[0], pBone->nodeName);
@@ -145,10 +145,10 @@ namespace CPyburnRTXEngine
 		//	}
 		//}
 
-		if (m_boneMapping.find(pBone->nodeName) != m_boneMapping.end())
+		if (m_assimpFactory->GetBoneMapping().find(pBone->nodeName) != m_assimpFactory->GetBoneMapping().end())
 		{
 			pBone->hasBoneMapping = true;
-			pBone->nodeId = m_boneMapping[pBone->nodeName];
+			pBone->nodeId = m_assimpFactory->GetBoneMapping().at(pBone->nodeName);
 
 			// store useful bones
 			m_globalBones.push_back(pBone);
@@ -156,12 +156,12 @@ namespace CPyburnRTXEngine
 
 		for (unsigned int i = 0; i < pNode->mNumChildren; i++)
 		{
-			pBone->children.push_back(std::make_unique<Bone>());
+			pBone->children.push_back(std::make_unique<AssimpFactory::Bone>());
 			CreateSkeletonBones(pNode->mChildren[i], pBone->children.back().get());
 		}
 	}
 
-	void AssimpAnimations::ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
+	void AssimpAnimations::ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, AssimpFactory::Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
 	{
 		XMMATRIX nodeTransformation = pBone->parentNodeTransformation;
 
@@ -195,7 +195,7 @@ namespace CPyburnRTXEngine
 
 		if (pBone->hasBoneMapping)
 		{
-			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * m_boneInfo[pBone->nodeId];
+			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * m_assimpFactory->GetBoneInfo()[pBone->nodeId];
 			global[pBone->nodeId] = parent;
 
 			XMMATRIX finalTransformationConversion = parent * noGlobalBones[pBone->nodeId];
@@ -215,7 +215,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void AssimpAnimations::ReadSkeletonBones(float animationTime, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
+	void AssimpAnimations::ReadSkeletonBones(float animationTime, AssimpFactory::Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global)
 	{
 		XMMATRIX nodeTransformation = pBone->parentNodeTransformation;
 
@@ -236,7 +236,7 @@ namespace CPyburnRTXEngine
 
 		if (pBone->hasBoneMapping)
 		{
-			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * m_boneInfo[pBone->nodeId];
+			noGlobalBones[pBone->nodeId] = xmTransposedNodeTransformation * m_assimpFactory->GetBoneInfo()[pBone->nodeId];
 			global[pBone->nodeId] = parent;
 
 			XMMATRIX finalTransformationConversion = parent * noGlobalBones[pBone->nodeId];
@@ -253,45 +253,6 @@ namespace CPyburnRTXEngine
 		for (size_t i = 0; i < pBone->children.size(); i++)
 		{
 			ReadSkeletonBones(animationTime, pBone->children[i].get(), globalTransformation, bones, noGlobalBones, global);
-		}
-	}
-
-	void AssimpAnimations::LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones)
-	{
-		for (unsigned int i = 0; i < pMesh->mNumBones; i++)
-		{
-			int boneIndex = 0;
-			std::string BoneName(pMesh->mBones[i]->mName.data);
-
-			if (m_boneMapping.find(BoneName) == m_boneMapping.end())
-			{
-				// Allocate an index for bone
-				boneIndex = m_numBones;
-				m_numBones++;
-				XMMATRIX boneOffsetMatrix = XMMatrixSet(pMesh->mBones[i]->mOffsetMatrix.a1, pMesh->mBones[i]->mOffsetMatrix.a2, pMesh->mBones[i]->mOffsetMatrix.a3, pMesh->mBones[i]->mOffsetMatrix.a4,
-					pMesh->mBones[i]->mOffsetMatrix.b1, pMesh->mBones[i]->mOffsetMatrix.b2, pMesh->mBones[i]->mOffsetMatrix.b3, pMesh->mBones[i]->mOffsetMatrix.b4,
-					pMesh->mBones[i]->mOffsetMatrix.c1, pMesh->mBones[i]->mOffsetMatrix.c2, pMesh->mBones[i]->mOffsetMatrix.c3, pMesh->mBones[i]->mOffsetMatrix.c4,
-					pMesh->mBones[i]->mOffsetMatrix.d1, pMesh->mBones[i]->mOffsetMatrix.d2, pMesh->mBones[i]->mOffsetMatrix.d3, pMesh->mBones[i]->mOffsetMatrix.d4);
-
-				//XMFLOAT4X4 boneOffsetMatrix = XMFLOAT4X4(pMesh->mBones[i]->mOffsetMatrix.a1, pMesh->mBones[i]->mOffsetMatrix.b1, pMesh->mBones[i]->mOffsetMatrix.c1, pMesh->mBones[i]->mOffsetMatrix.d1,
-				//										pMesh->mBones[i]->mOffsetMatrix.a2, pMesh->mBones[i]->mOffsetMatrix.b2, pMesh->mBones[i]->mOffsetMatrix.c2, pMesh->mBones[i]->mOffsetMatrix.d2,
-				//										pMesh->mBones[i]->mOffsetMatrix.a3, pMesh->mBones[i]->mOffsetMatrix.b3, pMesh->mBones[i]->mOffsetMatrix.c3, pMesh->mBones[i]->mOffsetMatrix.d3,
-				//										pMesh->mBones[i]->mOffsetMatrix.a4, pMesh->mBones[i]->mOffsetMatrix.b4, pMesh->mBones[i]->mOffsetMatrix.c4, pMesh->mBones[i]->mOffsetMatrix.d4);
-
-				m_boneInfo.push_back(boneOffsetMatrix);
-				m_boneMapping[BoneName] = boneIndex;
-			}
-			else
-			{
-				boneIndex = m_boneMapping[BoneName];
-			}
-
-			for (unsigned int j = 0; j < pMesh->mBones[i]->mNumWeights; j++)
-			{
-				int vertexID = m_assimpFactory->GetMeshEntries()[meshIndex].baseVertex + pMesh->mBones[i]->mWeights[j].mVertexId;
-				float weight = pMesh->mBones[i]->mWeights[j].mWeight;
-				bones[vertexID].AddBoneData(boneIndex, weight);
-			}
 		}
 	}
 
@@ -385,24 +346,9 @@ namespace CPyburnRTXEngine
 	{
 		m_assimpFactory = assimpFactory;
 
-		std::vector<AssimpFactory::MeshEntry>& meshEntries = m_assimpFactory->GetMeshEntries();
-		const aiScene* pScene = m_assimpFactory->GetAiScene();
-
-		bool hasBones = false;
-		// Initialize the meshes in the scene one by one
-		for (UINT i = 0; i < meshEntries.size(); i++)
+		if (m_assimpFactory->GetNumBones() > 0)
 		{
-			if (meshEntries[i].hasBones)
-			{
-				hasBones = true;
-				const aiMesh* paiMesh = pScene->mMeshes[i];
-				m_bones.resize(m_bones.size() + meshEntries[i].numVerts);
-				LoadBones(i, paiMesh, m_bones);
-			}
-		}
-
-		if (hasBones)
-		{
+			const aiScene* pScene = m_assimpFactory->GetAiScene();
 			LoadJson(); // this only loads once, so it is ok to call this for every model that has bones
 
 			CreateSkeletonBones(pScene->mRootNode, &m_rootBone);
@@ -437,7 +383,7 @@ namespace CPyburnRTXEngine
 	{
 		m_assimpFactory->CreateBuffers(commandList);
 		
-		m_animationCompute->CreateBuffers(commandList, &m_assimpFactory->GetVertexBuffer(), m_bones, m_boneInfo);
+		m_animationCompute->CreateBuffers(commandList, &m_assimpFactory->GetVertexBuffer(), m_assimpFactory->GetBones(), m_assimpFactory->GetBoneInfo());
 	}
 
 	void AssimpAnimations::CreateShaderResources()

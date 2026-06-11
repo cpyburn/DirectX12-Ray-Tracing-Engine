@@ -383,12 +383,12 @@ namespace CPyburnRTXEngine
 	{
 		m_assimpFactory->CreateBuffers(commandList);
 		
-		m_animationCompute->CreateBuffers(commandList, &m_assimpFactory->GetVertexBuffer(), m_assimpFactory->GetBoneBuffer(), m_assimpFactory->GetBoneInfo());
+		m_animationCompute->CreateBuffers(commandList, m_assimpFactory->GetVertexBuffer(), m_assimpFactory->GetBoneBuffer(), m_assimpFactory->GetBoneInfo());
 	}
 
 	void AssimpAnimations::CreateShaderResources()
 	{
-		m_assimpFactory->GetVertexBuffer().CreateShaderResourceView(); // t0 for compute shader
+		m_assimpFactory->GetVertexBuffer()->CreateShaderResourceView(); // t0 for compute shader
 		m_assimpFactory->GetBoneBuffer()->CreateShaderResourceView(); // t1 for compute shader
 		m_animationCompute->CreateShaderResources(); // t2, u0 for compute shader, t0 rtx shader
 

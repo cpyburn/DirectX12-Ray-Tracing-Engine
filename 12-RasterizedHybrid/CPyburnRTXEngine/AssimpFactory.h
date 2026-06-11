@@ -171,7 +171,7 @@ namespace CPyburnRTXEngine
 		const UINT& GetModelId() { return m_modelId; }
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
-		BufferHeap<AssimpFactory::VSVertices>& GetVertexBuffer() { return m_vertexBuffer; }
+		BufferHeap<AssimpFactory::VSVertices>* GetVertexBuffer() { return &m_vertexBuffer; }
 		BufferHeap<UINT>& GetIndexBuffer() { return m_indexBuffer; }
 		BufferHeap<AnimationStructs::VertexBoneData>* GetBoneBuffer() { return m_boneBuffer.get(); }
 		const aiScene* GetAiScene() { return m_pScene; }

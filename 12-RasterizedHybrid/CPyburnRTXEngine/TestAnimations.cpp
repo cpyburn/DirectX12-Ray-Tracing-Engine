@@ -852,8 +852,6 @@ namespace CPyburnRTXEngine
     {
         m_deviceResources = deviceResources;
 
-        m_boundingSphereTest.CreateDeviceDependentResources(deviceResources);
-
         LoadJson();
 
         // reserve the uav position and srv position
@@ -955,7 +953,6 @@ namespace CPyburnRTXEngine
 #else
 
 #endif
-        m_boundingSphereTest.Render(m_sceneCommandList, camera);
 
         PIXEndEvent(m_sceneCommandList);
 

@@ -7,8 +7,6 @@
 #include "BufferHeap.h"
 #include "BufferBlas.h"
 
-#include "BoundingSphereRenderer.h"
-
 namespace CPyburnRTXEngine
 {
 	class TestAnimations
@@ -124,8 +122,6 @@ namespace CPyburnRTXEngine
 
 		
 		void LoadJson();
-
-		BoundingSphereRenderer m_boundingSphereTest;
 
 	public:
 		static std::unordered_map<UINT, Model> Models;

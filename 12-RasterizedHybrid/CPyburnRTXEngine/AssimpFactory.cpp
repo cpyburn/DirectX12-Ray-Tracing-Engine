@@ -397,13 +397,11 @@ namespace CPyburnRTXEngine
 			CreateSingleMeshEntry(i, numVertices, numIndices, mesh);
 		}
 
-		bool hasBones = false;
 		// Initialize the meshes in the scene one by one
 		for (UINT i = 0; i < m_meshEntries.size(); i++)
 		{
 			if (m_meshEntries[i].hasBones)
 			{
-				hasBones = true;
 				const aiMesh* paiMesh = m_pScene->mMeshes[i];
 				m_bones.resize(m_bones.size() + m_meshEntries[i].numVerts);
 				LoadBones(i, paiMesh, m_bones);

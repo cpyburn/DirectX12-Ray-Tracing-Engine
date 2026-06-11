@@ -3,6 +3,8 @@
 #include "AssimpFactory.h"
 #include "Animation.h"
 
+#include "AnimationStructs.h"
+
 namespace CPyburnRTXEngine
 {
 	class AnimationPlayer; // forward declaration
@@ -10,28 +12,6 @@ namespace CPyburnRTXEngine
 
 	class AssimpAnimations
 	{
-	public:
-		struct VertexBoneData
-		{
-			unsigned int IDs[4];
-			float Weights[4];
-
-			//unsigned int IDs1[4];
-			//float Weights1[4];
-
-			void AddBoneData(int boneID, float weight)
-			{
-				for (UINT i = 0; i < 4; i++)
-				{
-					if (Weights[i] == 0.0f)
-					{
-						IDs[i] = boneID;
-						Weights[i] = weight;
-						return;
-					}
-				}
-			}
-		};
 	private:
 		struct Bone
 		{
@@ -79,7 +59,7 @@ namespace CPyburnRTXEngine
 		UINT m_numBones = 0;
 		std::vector<XMMATRIX> m_boneInfo;
 		Bone m_rootBone;
-		std::vector<VertexBoneData> m_bones;
+		std::vector<AnimationStructs::VertexBoneData> m_bones;
 
 		// for now this is a string, but may be a map of <key, object holdind everything needed>
 		std::vector<Bone*> m_globalBones; // this is just a place for storing bones that are useful, have names, etc.
@@ -98,7 +78,7 @@ namespace CPyburnRTXEngine
 		void CreateSkeletonBones(const aiNode* pNode, Bone* pBone);
 		void ReadSkeletonBonesBlended(float blendFactor, float animationTimeCurrent, float animationTimeTarget, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
 		void ReadSkeletonBones(float animationTime, Bone* pBone, const XMMATRIX& parent, XMMATRIX* bones, XMMATRIX* noGlobalBones, XMMATRIX* global);
-		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<VertexBoneData>& bones);
+		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones);
 
 		void LoadJson();
 

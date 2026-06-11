@@ -100,6 +100,9 @@
     <ClInclude Include="BoundingBoxRenderer.h">
       <Filter>Models\BoundingShapes</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationStructs.h">
+      <Filter>Models\Animations</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">

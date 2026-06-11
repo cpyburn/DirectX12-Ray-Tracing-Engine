@@ -62,7 +62,7 @@ namespace CPyburnRTXEngine
 		m_outVertexBuffer.CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
     }
 
-    void AnimationCompute::CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AssimpAnimations::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones)
+    void AnimationCompute::CreateBuffers(ID3D12GraphicsCommandList4* commandList, BufferHeap<AssimpFactory::VSVertices>* baseVertices, const std::vector<AnimationStructs::VertexBoneData>& boneData, const std::vector<XMMATRIX>& bones)
     {
         //Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
         //Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;

@@ -152,6 +152,7 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationCompute.h" />
     <ClInclude Include="AnimationPlayer.h" />
+    <ClInclude Include="AnimationStructs.h" />
     <ClInclude Include="AssimpAnimations.h" />
     <ClInclude Include="BoundingBoxRenderer.h" />
     <ClInclude Include="BoundingSphereRenderer.h" />

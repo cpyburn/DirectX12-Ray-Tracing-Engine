@@ -256,7 +256,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void AssimpAnimations::LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<VertexBoneData>& bones)
+	void AssimpAnimations::LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AnimationStructs::VertexBoneData>& bones)
 	{
 		for (unsigned int i = 0; i < pMesh->mNumBones; i++)
 		{

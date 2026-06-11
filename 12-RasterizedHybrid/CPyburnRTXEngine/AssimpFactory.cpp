@@ -378,8 +378,6 @@ namespace CPyburnRTXEngine
 
 		m_indexBuffer.CpuData = m_meshEntries[0].indices;
 		m_indexBuffer.CreateOnDefaultHeap(commandList, L"Index Buffer");
-
-
 	}
 
 	void AssimpFactory::CreateShaderResources()

@@ -7,11 +7,10 @@
 
 #include "BoundingSphereRenderer.h"
 #include "BufferHeap.h"
+#include "AnimationStructs.h"
 
 namespace CPyburnRTXEngine
 {
-	class AssimpAnimations;
-
 	class AssimpFactory
 	{
 	public:
@@ -24,7 +23,7 @@ namespace CPyburnRTXEngine
 			std::vector<std::string> textures;
 
 			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
-			std::shared_ptr<AssimpAnimations> assimpAnimations = nullptr; // pointer to the ONE copy of the animations and resources
+			std::shared_ptr<BufferHeap<AnimationStructs::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
 		};
 		static std::unordered_map<UINT, Model> Models;
 

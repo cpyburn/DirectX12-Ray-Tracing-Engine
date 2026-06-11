@@ -28,24 +28,6 @@ namespace CPyburnRTXEngine
 		XMVECTOR xmDelta = xmEnd - xmStart;
 		return xmStart + factor * xmDelta;
 	}
-	
-	//void AssimpAnimations::CalcInterpolatedScaling(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
-	//{
-	//	if (pNodeAnim->mNumScalingKeys == 1)
-	//	{
-	//		out = pNodeAnim->mScalingKeys[0].mValue;
-	//		return;
-	//	}
-
-	//	int scalingIndex = FindScaling(animationTime, pNodeAnim);
-	//	unsigned int nextScalingIndex = (scalingIndex + 1);
-	//	float deltaTime = (float)(pNodeAnim->mScalingKeys[nextScalingIndex].mTime - pNodeAnim->mScalingKeys[scalingIndex].mTime);
-	//	float factor = (animationTime - (float)pNodeAnim->mScalingKeys[scalingIndex].mTime) / deltaTime;
-	//	const aiVector3D& start = pNodeAnim->mScalingKeys[scalingIndex].mValue;
-	//	const aiVector3D& end = pNodeAnim->mScalingKeys[nextScalingIndex].mValue;
-	//	aiVector3D delta = end - start;
-	//	out = start + factor * delta;
-	//}
 
 	XMVECTOR AssimpAnimations::CalcInterpolatedRotationXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
@@ -65,42 +47,6 @@ namespace CPyburnRTXEngine
 		XMVECTOR xmEndRotationQ = { endRotationQ.x, endRotationQ.y, endRotationQ.z, endRotationQ.w };
 		return XMVector4Normalize(XMQuaternionSlerp(xmStartRotationQ, xmEndRotationQ, factor));
 	}
-
-	//void AssimpAnimations::CalcInterpolatedRotation(aiQuaternion& out, float animationTime, const aiNodeAnim* pNodeAnim)
-	//{
-	//	if (pNodeAnim->mNumRotationKeys == 1)
-	//	{
-	//		out = pNodeAnim->mRotationKeys[0].mValue;
-	//		return;
-	//	}
-
-	//	int rotationIndex = FindRotation(animationTime, pNodeAnim);
-	//	unsigned int nextRotationIndex = (rotationIndex + 1);
-	//	float deltaTime = (float)(pNodeAnim->mRotationKeys[nextRotationIndex].mTime - pNodeAnim->mRotationKeys[rotationIndex].mTime);
-	//	float factor = (animationTime - (float)pNodeAnim->mRotationKeys[rotationIndex].mTime) / deltaTime;
-	//	const aiQuaternion& startRotationQ = pNodeAnim->mRotationKeys[rotationIndex].mValue;
-	//	const aiQuaternion& endRotationQ = pNodeAnim->mRotationKeys[nextRotationIndex].mValue;
-	//	aiQuaternion::Interpolate(out, startRotationQ, endRotationQ, factor);
-	//	out = out.Normalize();
-	//}
-
-	//void AssimpAnimations::CalcInterpolatedPosition(aiVector3D& out, float animationTime, const aiNodeAnim* pNodeAnim)
-	//{
-	//	if (pNodeAnim->mNumPositionKeys == 1)
-	//	{
-	//		out = pNodeAnim->mPositionKeys[0].mValue;
-	//		return;
-	//	}
-
-	//	int positionIndex = FindPosition(animationTime, pNodeAnim);
-	//	unsigned int nextPositionIndex = (positionIndex + 1);
-	//	float deltaTime = (float)(pNodeAnim->mPositionKeys[nextPositionIndex].mTime - pNodeAnim->mPositionKeys[positionIndex].mTime);
-	//	float factor = (animationTime - (float)pNodeAnim->mPositionKeys[positionIndex].mTime) / deltaTime;
-	//	const aiVector3D& start = pNodeAnim->mPositionKeys[positionIndex].mValue;
-	//	const aiVector3D& end = pNodeAnim->mPositionKeys[nextPositionIndex].mValue;
-	//	aiVector3D delta = end - start;
-	//	out = start + factor * delta;
-	//}
 
 	XMVECTOR AssimpAnimations::CalcInterpolatedPositionXM(float animationTime, const aiNodeAnim* pNodeAnim)
 	{
@@ -490,6 +436,7 @@ namespace CPyburnRTXEngine
 	void AssimpAnimations::CreateBuffers(ID3D12GraphicsCommandList4* commandList)
 	{
 		m_assimpFactory->CreateBuffers(commandList);
+		
 		m_animationCompute->CreateBuffers(commandList, &m_assimpFactory->GetVertexBuffer(), m_bones, m_boneInfo);
 	}
 

@@ -1036,7 +1036,7 @@ namespace CPyburnRTXEngine
 
     TestModel::TestModel()
     {
-        m_elfStatic = new AssimpFactory("..\\..\\Assets\\Models\\Elf\\Elf-ranger.X");
+        m_elfStatic = new AssimpFactory(1, "..\\..\\Assets\\Models\\Elf\\Elf-ranger.X");
         //m_assimpFactory.Initialize("Terrain\\terrainplane.obj");
     }
 

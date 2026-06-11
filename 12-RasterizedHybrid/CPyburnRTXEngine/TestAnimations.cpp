@@ -6,8 +6,6 @@
 
 namespace CPyburnRTXEngine
 {
-    std::unordered_map<UINT, TestAnimations::Model> TestAnimations::Models;
-
     static const WCHAR* kRayGenShader = L"rayGen";
     static const WCHAR* kMissShader = L"miss";
     static const WCHAR* kClosestHitShader = L"chs";
@@ -99,9 +97,9 @@ namespace CPyburnRTXEngine
         m_materialDataBuffer.CreateShaderResourceView(); // t2 for rtx shader
 
         // create textures AFTER the last shader views
-        for (auto& unorderedModel : Models)
+        for (auto& unorderedModel : AssimpFactory::Models)
         {
-            Model& model = unorderedModel.second;
+            AssimpFactory::Model& model = unorderedModel.second;
             for (size_t texIndex = 0; texIndex < model.textures.size(); texIndex++)
             {
                 std::string textureLocation = model.textures[texIndex];
@@ -111,11 +109,11 @@ namespace CPyburnRTXEngine
 
         // load the normal and the ORM
         std::string outExtension;
-        std::string fileName = RemoveExtension(Models[1].textures[0], outExtension) + "_NRM." + outExtension;
-        Texture::HeapTexture normal = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + Models[1].contentLocation + fileName, commandList.Get());
+        std::string fileName = RemoveExtension(AssimpFactory::Models[1].textures[0], outExtension) + "_NRM." + outExtension;
+        Texture::HeapTexture normal = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + AssimpFactory::Models[1].contentLocation + fileName, commandList.Get());
 
-        fileName = RemoveExtension(Models[1].textures[0], outExtension) + "_ORM." + outExtension;
-        Texture::HeapTexture pbrOrm = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + Models[1].contentLocation + fileName, commandList.Get());
+        fileName = RemoveExtension(AssimpFactory::Models[1].textures[0], outExtension) + "_ORM." + outExtension;
+        Texture::HeapTexture pbrOrm = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + AssimpFactory::Models[1].contentLocation + fileName, commandList.Get());
 
         for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
         {
@@ -800,44 +798,6 @@ namespace CPyburnRTXEngine
         }
     }
 
-    void TestAnimations::LoadJson()
-    {
-        // see if animations have already been loaded
-        if (Models.size() > 0)
-        {
-            return;
-        }
-
-        {
-            std::string filePath = "../../Assets/Json/Models.json";
-            rapidjson::Document doc = LoadJsonDocument(filePath);
-
-            const auto& arr = doc["models"];
-
-            Model model;
-            for (auto& v : arr.GetArray()) {
-                model.modelId = v["id"].GetInt();
-                model.name = v["name"].GetString();
-                model.meshEntryLocation = v["meshEntryLocation"].GetInt();
-                model.contentLocation = v["contentLocation"].GetString();
-
-                const auto& textures = v["textureBaseColorList"];
-                for (auto& tex : textures.GetArray()) {
-                    model.textures.push_back(tex.GetString());
-                }
-
-                //for (char& c : name)
-                //{
-                //	c = static_cast<char>(
-                //		std::tolower(static_cast<unsigned char>(c))
-                //		);
-                //}
-
-                Models[model.modelId] = model;
-            }
-        }
-    }
-
     TestAnimations::TestAnimations()
     {
 
@@ -852,7 +812,7 @@ namespace CPyburnRTXEngine
     {
         m_deviceResources = deviceResources;
 
-        LoadJson();
+        AssimpFactory::LoadJson();
 
         // reserve the uav position and srv position
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
@@ -865,12 +825,12 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
         // load all models
-        for (auto& unorderedModel : Models)
+        for (auto& unorderedModel : AssimpFactory::Models)
         {
-            Model& model = unorderedModel.second;
+            AssimpFactory::Model& model = unorderedModel.second;
 
             std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
-            model.assimpFactory = std::make_unique<AssimpFactory>(modelPath);
+            model.assimpFactory = std::make_unique<AssimpFactory>(model.modelId, modelPath);
             model.assimpFactory->CreateDeviceDependentResources(deviceResources);
 
             m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());

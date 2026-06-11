@@ -5,16 +5,29 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing fla
 
-#include "BufferHeap.h"
 #include "BoundingSphereRenderer.h"
+#include "BufferHeap.h"
 
 namespace CPyburnRTXEngine
 {
-	class BoundingSphereRenderer;
+	class AssimpAnimations;
 
 	class AssimpFactory
 	{
 	public:
+		struct Model
+		{
+			UINT modelId;
+			std::string name;
+			UINT meshEntryLocation;
+			std::string contentLocation;
+			std::vector<std::string> textures;
+
+			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
+			std::shared_ptr<AssimpAnimations> assimpAnimations = nullptr; // pointer to the ONE copy of the animations and resources
+		};
+		static std::unordered_map<UINT, Model> Models;
+
 		struct VSVertices
 		{
 			XMFLOAT3 position;
@@ -72,6 +85,7 @@ namespace CPyburnRTXEngine
 		};
 
 		std::vector<MeshEntry> m_meshEntries;
+		UINT m_modelId = MAXUINT;
 		std::string m_pathFileName;
 		std::string m_fileName;
 		std::string m_pathDirectory;
@@ -116,14 +130,14 @@ namespace CPyburnRTXEngine
 #else
 
 #endif
-
+		const UINT& GetModelId() { return m_modelId; }
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>& GetVertexBuffer() { return m_vertexBuffer; }
 		BufferHeap<UINT>& GetIndexBuffer() { return m_indexBuffer; }
 		const aiScene* GetAiScene() { return m_pScene; }
 
-		AssimpFactory(const std::string& fileName,
+		AssimpFactory(const UINT modelId, const std::string& fileName,
 			unsigned int customFlags = aiProcess_Triangulate
 			//| aiProcess_MakeLeftHanded
 			| aiProcess_GenSmoothNormals
@@ -139,8 +153,9 @@ namespace CPyburnRTXEngine
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 		void CreateShaderResources();
 
-		void ReleaseUploadResources();
+		static void LoadJson();
 
+		void ReleaseUploadResources();
 		void Release();
 	};
 }

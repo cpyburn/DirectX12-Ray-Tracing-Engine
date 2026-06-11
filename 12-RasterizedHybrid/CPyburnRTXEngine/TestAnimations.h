@@ -108,24 +108,7 @@ namespace CPyburnRTXEngine
 		BufferBlas<AssimpFactory::VSVertices> m_blas;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 
-		// todo: this will move eventually, but for now we can just load the model in the test class
-		struct Model
-		{
-			UINT modelId;
-			std::string name;
-			UINT meshEntryLocation;
-			std::string contentLocation;
-			std::vector<std::string> textures;
-
-			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
-		};
-
-		
-		void LoadJson();
-
 	public:
-		static std::unordered_map<UINT, Model> Models;
-
 		TestAnimations();
 		~TestAnimations();
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);

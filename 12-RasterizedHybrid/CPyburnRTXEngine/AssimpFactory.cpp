@@ -1,8 +1,12 @@
 #include "pchlib.h"
 #include "AssimpFactory.h"
 
+#include "AssimpAnimations.h"
+
 namespace CPyburnRTXEngine
 {
+	std::unordered_map<UINT, AssimpFactory::Model> AssimpFactory::Models;
+
 	void AssimpFactory::DoMeshTransforms(aiNode* node, XMMATRIX parentTransform)
 	{
 		XMMATRIX nodeTransform = XMMatrixIdentity();
@@ -320,9 +324,10 @@ namespace CPyburnRTXEngine
 		return newPath;
 	}
 
-	AssimpFactory::AssimpFactory(const std::string& fileName, unsigned int customFlags) :
+	AssimpFactory::AssimpFactory(const UINT modelId, const std::string& fileName, unsigned int customFlags) :
 		m_boundingSphereRadiusTranslation(XMMatrixIdentity())
 	{
+		m_modelId = modelId;
 		m_pathFileName = fileName;
 
 		char drive[_MAX_DRIVE];
@@ -373,12 +378,52 @@ namespace CPyburnRTXEngine
 
 		m_indexBuffer.CpuData = m_meshEntries[0].indices;
 		m_indexBuffer.CreateOnDefaultHeap(commandList, L"Index Buffer");
+
+
 	}
 
 	void AssimpFactory::CreateShaderResources()
 	{
 		m_vertexBuffer.CreateShaderResourceView();
 		m_indexBuffer.CreateShaderResourceView();
+	}
+
+	void AssimpFactory::LoadJson()
+	{
+		// see if animations have already been loaded
+		if (AssimpFactory::Models.size() > 0)
+		{
+			return;
+		}
+
+		{
+			std::string filePath = "../../Assets/Json/Models.json";
+			rapidjson::Document doc = LoadJsonDocument(filePath);
+
+			const auto& arr = doc["models"];
+
+			Model model;
+			for (auto& v : arr.GetArray()) {
+				model.modelId = v["id"].GetInt();
+				model.name = v["name"].GetString();
+				model.meshEntryLocation = v["meshEntryLocation"].GetInt();
+				model.contentLocation = v["contentLocation"].GetString();
+
+				const auto& textures = v["textureBaseColorList"];
+				for (auto& tex : textures.GetArray()) {
+					model.textures.push_back(tex.GetString());
+				}
+
+				//for (char& c : name)
+				//{
+				//	c = static_cast<char>(
+				//		std::tolower(static_cast<unsigned char>(c))
+				//		);
+				//}
+
+				AssimpFactory::Models[model.modelId] = model;
+			}
+		}
 	}
 
 	void AssimpFactory::ReleaseUploadResources()

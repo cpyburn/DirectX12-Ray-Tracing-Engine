@@ -11,9 +11,4 @@ namespace CPyburnRTXEngine
 
 		commandList->SetGraphicsRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));
 	}
-
-	void BoundingRendererParent::CreateDeviceDependentResources(DX::DeviceResources* deviceResources, const UINT& maxInstances)
-	{
-	
-	}
 }

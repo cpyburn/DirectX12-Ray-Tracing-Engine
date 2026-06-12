@@ -80,7 +80,7 @@ Creating a SRV at the end of all other heap descriptors for contigious textures
 
 Adding JSON input for reading in animations and adding animation logic
 
-### [12-Rasterized Hybrid](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/12-RasterizedHybrid) 
+### [12-Rasterized Hybrid, rasterized geom on top of RTX geom](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/12-RasterizedHybrid) 
 
 <img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/c1414e3c-5c17-40e2-83fa-af3282cb73d1" />
 

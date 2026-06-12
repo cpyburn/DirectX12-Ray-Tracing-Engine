@@ -28,6 +28,6 @@ namespace CPyburnRTXEngine
 		static void RenderBegin(ID3D12GraphicsCommandList* commandList, CameraBase* camera);
 		virtual void CreateDeviceDependentResources(DX::DeviceResources* deviceResources, const UINT& maxInstances = 1);
 		virtual void Update(const XMMATRIX& modelTransform, CameraBase* camera, const std::vector<XMMATRIX>* instances = nullptr, const UINT& begin = 0, const UINT& end = 0) = 0;
-		virtual void Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera) = 0;
+		virtual void Render(ID3D12GraphicsCommandList* commandList) = 0;
 	};
 }

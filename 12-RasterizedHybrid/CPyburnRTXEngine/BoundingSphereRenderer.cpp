@@ -139,14 +139,14 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void BoundingSphereRenderer::Render(ID3D12GraphicsCommandList* commandList, CameraBase* camera)
+	void BoundingSphereRenderer::Render(ID3D12GraphicsCommandList* commandList)
 	{
 		if (!m_draw)
 			return;
 
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[2];
 		vertexBufferViews[0] = m_vertexBufferView;
-		vertexBufferViews[1] = m_instanceBufferView[camera->GetDeviceResources()->GetCurrentFrameIndex()];
+		vertexBufferViews[1] = m_instanceBufferView[m_deviceResources->GetCurrentFrameIndex()];
 
 		commandList->IASetVertexBuffers(0, _countof(vertexBufferViews), &vertexBufferViews[0]);
 		commandList->IASetIndexBuffer(&m_indexBufferView);

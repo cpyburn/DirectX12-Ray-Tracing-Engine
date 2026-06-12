@@ -910,7 +910,7 @@ namespace CPyburnRTXEngine
 
 #ifdef _DEBUG
         BoundingRendererParent::RenderBegin(m_sceneCommandList, camera);
-        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList, camera);
+        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);
 #else
 
 #endif

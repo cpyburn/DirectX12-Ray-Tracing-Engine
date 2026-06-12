@@ -94,7 +94,7 @@
     <ClInclude Include="BoundingSphereRenderer.h">
       <Filter>Models\BoundingShapes</Filter>
     </ClInclude>
-    <ClInclude Include="ShapeRendererHelper.h">
+    <ClInclude Include="ShapeHelper.h">
       <Filter>Models\BoundingShapes</Filter>
     </ClInclude>
     <ClInclude Include="BoundingBoxRenderer.h">
@@ -156,7 +156,7 @@
     <ClCompile Include="BoundingSphereRenderer.cpp">
       <Filter>Models\BoundingShapes</Filter>
     </ClCompile>
-    <ClCompile Include="ShapeRendererHelper.cpp">
+    <ClCompile Include="ShapeHelper.cpp">
       <Filter>Models\BoundingShapes</Filter>
     </ClCompile>
     <ClCompile Include="BoundingBoxRenderer.cpp">

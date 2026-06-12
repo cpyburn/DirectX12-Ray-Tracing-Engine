@@ -1,7 +1,7 @@
 #include "pchlib.h"
 #include "BoundingSphereRenderer.h"
 
-#include "ShapeRendererHelper.h"
+#include "ShapeHelper.h"
 
 namespace CPyburnRTXEngine
 {
@@ -18,7 +18,7 @@ namespace CPyburnRTXEngine
 	void BoundingSphereRenderer::CreateDeviceDependentResources(DX::DeviceResources* deviceResources, const UINT& maxInstances)
 	{
 		m_deviceResources = deviceResources;
-		ShapeRendererHelper::MeshData meshData = ShapeRendererHelper::CreateSphere(Center, Radius, 10, 10);
+		ShapeHelper::MeshData meshData = ShapeHelper::CreateSphere(Center, Radius, 10, 10);
 
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
@@ -31,7 +31,7 @@ namespace CPyburnRTXEngine
 			std::vector<VSVertices> vertices(meshData.Vertices.size());
 			for (size_t i = 0; i < vertices.size(); i++)
 			{
-				const ShapeRendererHelper::Vertex& vertex = meshData.Vertices[i];
+				const ShapeHelper::Vertex& vertex = meshData.Vertices[i];
 				vertices[i].position = vertex.Position;
 			}
 			m_vertexBuffer.CpuData = vertices;
@@ -143,12 +143,6 @@ namespace CPyburnRTXEngine
 	{
 		if (!m_draw)
 			return;
-
-		commandList->SetGraphicsRootSignature(GraphicsContexts::GetRootSignaturePositionColorInstanced());
-		commandList->SetPipelineState(GraphicsContexts::GetPipelinePositionColorInstancedLine()); 
-		commandList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-		commandList->SetGraphicsRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));
 
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferViews[2];
 		vertexBufferViews[0] = m_vertexBufferView;

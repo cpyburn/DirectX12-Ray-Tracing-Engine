@@ -165,7 +165,7 @@
     <ClInclude Include="GameInput.h" />
     <ClInclude Include="AssimpFactory.h" />
     <ClInclude Include="Random.h" />
-    <ClInclude Include="ShapeRendererHelper.h" />
+    <ClInclude Include="ShapeHelper.h" />
     <ClInclude Include="TestAnimations.h" />
     <ClInclude Include="TestFullscreen.h" />
     <ClInclude Include="GraphicsContexts.h" />
@@ -188,7 +188,7 @@
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameInput.cpp" />
     <ClCompile Include="AssimpFactory.cpp" />
-    <ClCompile Include="ShapeRendererHelper.cpp" />
+    <ClCompile Include="ShapeHelper.cpp" />
     <ClCompile Include="TestAnimations.cpp" />
     <ClCompile Include="TestFullscreen.cpp" />
     <ClCompile Include="GraphicsContexts.cpp" />

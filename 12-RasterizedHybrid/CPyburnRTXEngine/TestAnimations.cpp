@@ -909,6 +909,7 @@ namespace CPyburnRTXEngine
         PIXBeginEvent(m_sceneCommandList, 0, L"Draw rasterized geom");
 
 #ifdef _DEBUG
+        BoundingRendererParent::RenderBegin(m_sceneCommandList, camera);
         m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList, camera);
 #else
 

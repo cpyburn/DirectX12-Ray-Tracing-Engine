@@ -1,7 +1,7 @@
 #pragma once
 namespace CPyburnRTXEngine
 {
-	class ShapeRendererHelper
+	class ShapeHelper
 	{
 	public:
 		struct Vertex

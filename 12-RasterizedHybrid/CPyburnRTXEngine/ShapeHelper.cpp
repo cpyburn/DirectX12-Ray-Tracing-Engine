@@ -1,9 +1,9 @@
 #include "pchlib.h"
-#include "ShapeRendererHelper.h"
+#include "ShapeHelper.h"
 
 namespace CPyburnRTXEngine
 {
-	ShapeRendererHelper::MeshData ShapeRendererHelper::CreateBox(float width, float height, float depth, UINT numSubdivisions)
+	ShapeHelper::MeshData ShapeHelper::CreateBox(float width, float height, float depth, UINT numSubdivisions)
 	{
 		MeshData meshData;
 
@@ -96,7 +96,7 @@ namespace CPyburnRTXEngine
 		return meshData;
 	}
 
-	ShapeRendererHelper::MeshData ShapeRendererHelper::CreateSphere(const XMFLOAT3& center, float radius, UINT sliceCount, UINT stackCount)
+	ShapeHelper::MeshData ShapeHelper::CreateSphere(const XMFLOAT3& center, float radius, UINT sliceCount, UINT stackCount)
 	{
 		MeshData meshData;
 
@@ -207,7 +207,7 @@ namespace CPyburnRTXEngine
 		return meshData;
 	}
 
-	void ShapeRendererHelper::Subdivide(MeshData& meshData)
+	void ShapeHelper::Subdivide(MeshData& meshData)
 	{
 		// Save a copy of the input geometry.
 		MeshData inputCopy = meshData;
@@ -270,7 +270,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	ShapeRendererHelper::Vertex ShapeRendererHelper::MidPoint(const Vertex& v0, const Vertex& v1)
+	ShapeHelper::Vertex ShapeHelper::MidPoint(const Vertex& v0, const Vertex& v1)
 	{
 		XMVECTOR p0 = XMLoadFloat3(&v0.Position);
 		XMVECTOR p1 = XMLoadFloat3(&v1.Position);
@@ -300,7 +300,7 @@ namespace CPyburnRTXEngine
 		return v;
 	}
 
-	ShapeRendererHelper::MeshData ShapeRendererHelper::CreateGeosphere(float radius, UINT numSubdivisions)
+	ShapeHelper::MeshData ShapeHelper::CreateGeosphere(float radius, UINT numSubdivisions)
 	{
 		MeshData meshData;
 
@@ -375,7 +375,7 @@ namespace CPyburnRTXEngine
 		return meshData;
 	}
 
-	ShapeRendererHelper::MeshData ShapeRendererHelper::CreateCylinder(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount)
+	ShapeHelper::MeshData ShapeHelper::CreateCylinder(float bottomRadius, float topRadius, float height, UINT sliceCount, UINT stackCount)
 	{
 		MeshData meshData;
 
@@ -469,7 +469,7 @@ namespace CPyburnRTXEngine
 		return meshData;
 	}
 
-	void ShapeRendererHelper::BuildCylinderTopCap(float bottomRadius, float topRadius, float height,
+	void ShapeHelper::BuildCylinderTopCap(float bottomRadius, float topRadius, float height,
 		UINT sliceCount, UINT stackCount, MeshData& meshData)
 	{
 		UINT baseIndex = (UINT)meshData.Vertices.size();
@@ -505,7 +505,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void ShapeRendererHelper::BuildCylinderBottomCap(float bottomRadius, float topRadius, float height,
+	void ShapeHelper::BuildCylinderBottomCap(float bottomRadius, float topRadius, float height,
 		UINT sliceCount, UINT stackCount, MeshData& meshData)
 	{
 		// 
@@ -544,7 +544,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	ShapeRendererHelper::MeshData ShapeRendererHelper::CreateGrid(float width, float depth, UINT m, UINT n)
+	ShapeHelper::MeshData ShapeHelper::CreateGrid(float width, float depth, UINT m, UINT n)
 	{
 		MeshData meshData;
 
@@ -609,7 +609,7 @@ namespace CPyburnRTXEngine
 		return meshData;
 	}
 
-	ShapeRendererHelper::MeshData ShapeRendererHelper::CreateQuad(float x, float y, float w, float h, float depth)
+	ShapeHelper::MeshData ShapeHelper::CreateQuad(float x, float y, float w, float h, float depth)
 	{
 		MeshData meshData;
 

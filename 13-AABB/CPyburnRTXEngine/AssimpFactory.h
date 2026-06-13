@@ -5,6 +5,7 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing fla
 
+#include "BoundingBoxRenderer.h"
 #include "BoundingSphereRenderer.h"
 #include "BufferHeap.h"
 
@@ -149,7 +150,7 @@ namespace CPyburnRTXEngine
 		bool m_isSkinned = false;
 
 #ifdef _DEBUG
-		BoundingBox m_boundingBox;
+		BoundingBoxRenderer m_boundingBox;
 		BoundingSphereRenderer m_boundingSphere;
 #else
 		BoundingBox m_boundingBox;
@@ -180,6 +181,7 @@ namespace CPyburnRTXEngine
 		void LoadBones(int meshIndex, const aiMesh* pMesh, std::vector<AssimpFactory::VertexBoneData>& bones);
 	public:
 #ifdef _DEBUG
+		BoundingBoxRenderer& GetBoundingBoxRenderer() { return m_boundingBox; }
 		BoundingSphereRenderer& GetBoundingSphereRenderer() { return m_boundingSphere; }
 #else
 

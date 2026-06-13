@@ -18,6 +18,7 @@ namespace CPyburnRTXEngine
 	void BoundingSphereRenderer::CreateDeviceDependentResources(DX::DeviceResources* deviceResources, const UINT& maxInstances)
 	{
 		m_deviceResources = deviceResources;
+
 		ShapeHelper::MeshData meshData = ShapeHelper::CreateSphere(Center, Radius, 10, 10);
 
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList;
@@ -33,6 +34,7 @@ namespace CPyburnRTXEngine
 			{
 				const ShapeHelper::Vertex& vertex = meshData.Vertices[i];
 				vertices[i].position = vertex.Position;
+				vertices[i].color = m_lineColor;
 			}
 			m_vertexBuffer.CpuData = vertices;
 			m_vertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Bounding Sphere Vertex Buffer");

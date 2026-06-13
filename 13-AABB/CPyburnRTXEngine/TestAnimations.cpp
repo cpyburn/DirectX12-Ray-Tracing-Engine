@@ -839,6 +839,7 @@ namespace CPyburnRTXEngine
             // todo: move this eventually, really only testing right now
             m_instanceData.resize(18); // this is RTX instances, so it includes planes and other things, make sure the testing only includes the range, a better way would be to have an instance vector for models, which we will make eventually
 #ifdef _DEBUG
+            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
             m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
 #else
 
@@ -878,6 +879,7 @@ namespace CPyburnRTXEngine
         {
             testingBoundingSphereInstances[i - 1] = m_instanceData[i].world;
         }
+        m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
         m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
 #else
 
@@ -910,7 +912,8 @@ namespace CPyburnRTXEngine
 
 #ifdef _DEBUG
         BoundingRendererParent::RenderBegin(m_sceneCommandList, camera);
-        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);
+        m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Render(m_sceneCommandList);
+        //m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);
 #else
 
 #endif

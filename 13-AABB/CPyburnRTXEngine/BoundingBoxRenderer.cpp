@@ -17,91 +17,63 @@ namespace CPyburnRTXEngine
 		float maxZ = XMVectorGetZ(bbMax);
 
 		// note that [0] is directly diagonal from [6]
-
+		BufferHeap<BoundingRendererParent::VSVertices>& vertexBuffer = m_vertexBuffer[m_deviceResources->GetCurrentFrameIndex()];
 		// 0
-		m_vertexBuffer->CpuData[i * 8 + 0].position = XMFLOAT3(minX, maxY, maxZ);
-		m_vertexBuffer->CpuData[i * 8 + 0].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 0].position = XMFLOAT3(minX, maxY, maxZ);
+		vertexBuffer.CpuData[i * 8 + 0].color = m_lineColor;
 		// 1
-		m_vertexBuffer->CpuData[i * 8 + 1].position = XMFLOAT3(maxX, maxY, maxZ);
-		m_vertexBuffer->CpuData[i * 8 + 1].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 1].position = XMFLOAT3(maxX, maxY, maxZ);
+		vertexBuffer.CpuData[i * 8 + 1].color = m_lineColor;
 		// 2
-		m_vertexBuffer->CpuData[i * 8 + 2].position = XMFLOAT3(maxX, minY, maxZ);
-		m_vertexBuffer->CpuData[i * 8 + 2].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 2].position = XMFLOAT3(maxX, minY, maxZ);
+		vertexBuffer.CpuData[i * 8 + 2].color = m_lineColor;
 		// 3
-		m_vertexBuffer->CpuData[i * 8 + 3].position = XMFLOAT3(minX, minY, maxZ);
-		m_vertexBuffer->CpuData[i * 8 + 3].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 3].position = XMFLOAT3(minX, minY, maxZ);
+		vertexBuffer.CpuData[i * 8 + 3].color = m_lineColor;
 		// 4
-		m_vertexBuffer->CpuData[i * 8 + 4].position = XMFLOAT3(minX, maxY, minZ);
-		m_vertexBuffer->CpuData[i * 8 + 4].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 4].position = XMFLOAT3(minX, maxY, minZ);
+		vertexBuffer.CpuData[i * 8 + 4].color = m_lineColor;
 		// 5
-		m_vertexBuffer->CpuData[i * 8 + 5].position = XMFLOAT3(maxX, maxY, minZ);
-		m_vertexBuffer->CpuData[i * 8 + 5].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 5].position = XMFLOAT3(maxX, maxY, minZ);
+		vertexBuffer.CpuData[i * 8 + 5].color = m_lineColor;
 		// 6
-		m_vertexBuffer->CpuData[i * 8 + 6].position = XMFLOAT3(maxX, minY, minZ);
-		m_vertexBuffer->CpuData[i * 8 + 6].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 6].position = XMFLOAT3(maxX, minY, minZ);
+		vertexBuffer.CpuData[i * 8 + 6].color = m_lineColor;
 		// 7
-		m_vertexBuffer->CpuData[i * 8 + 7].position = XMFLOAT3(minX, minY, minZ);
-		m_vertexBuffer->CpuData[i * 8 + 7].color = m_lineColor;
+		vertexBuffer.CpuData[i * 8 + 7].position = XMFLOAT3(minX, minY, minZ);
+		vertexBuffer.CpuData[i * 8 + 7].color = m_lineColor;
 	}
 
 	void BoundingBoxRenderer::FillIndices(const UINT& i)
 	{
-		m_indexBuffer->CpuData[i * 24 + 0] = i * 24 + 0;
-		m_indexBuffer->CpuData[i * 24 + 1] = i * 24 + 1;
-		m_indexBuffer->CpuData[i * 24 + 2] = i * 24 + 1;
-		m_indexBuffer->CpuData[i * 24 + 3] = i * 24 + 2;
-		m_indexBuffer->CpuData[i * 24 + 4] = i * 24 + 2;
-		m_indexBuffer->CpuData[i * 24 + 5] = i * 24 + 3;
-		m_indexBuffer->CpuData[i * 24 + 6] = i * 24 + 3;
-		m_indexBuffer->CpuData[i * 24 + 7] = i * 24 + 0;
+		BufferHeap<UINT>& indexBuffer = m_indexBuffer[m_deviceResources->GetCurrentFrameIndex()];
 
-		m_indexBuffer->CpuData[i * 24 + 8] = i * 24 + 4;
-		m_indexBuffer->CpuData[i * 24 + 9] = i * 24 + 5;
-		m_indexBuffer->CpuData[i * 24 + 10] = i * 24 + 5;
-		m_indexBuffer->CpuData[i * 24 + 11] = i * 24 + 6;
-		m_indexBuffer->CpuData[i * 24 + 12] = i * 24 + 6;
-		m_indexBuffer->CpuData[i * 24 + 13] = i * 24 + 7;
-		m_indexBuffer->CpuData[i * 24 + 14] = i * 24 + 7;
-		m_indexBuffer->CpuData[i * 24 + 15] = i * 24 + 4;
+		indexBuffer.CpuData[i * 24 + 0] = i * 8 + 0;
+		indexBuffer.CpuData[i * 24 + 1] = i * 8 + 1;
+		indexBuffer.CpuData[i * 24 + 2] = i * 8 + 1;
+		indexBuffer.CpuData[i * 24 + 3] = i * 8 + 2;
+		indexBuffer.CpuData[i * 24 + 4] = i * 8 + 2;
+		indexBuffer.CpuData[i * 24 + 5] = i * 8 + 3;
+		indexBuffer.CpuData[i * 24 + 6] = i * 8 + 3;
+		indexBuffer.CpuData[i * 24 + 7] = i * 8 + 0;
 
-		m_indexBuffer->CpuData[i * 24 + 16] = i * 24 + 0;
-		m_indexBuffer->CpuData[i * 24 + 17] = i * 24 + 4;
-		m_indexBuffer->CpuData[i * 24 + 18] = i * 24 + 1;
-		m_indexBuffer->CpuData[i * 24 + 19] = i * 24 + 5;
-		m_indexBuffer->CpuData[i * 24 + 20] = i * 24 + 2;
-		m_indexBuffer->CpuData[i * 24 + 21] = i * 24 + 6;
-		m_indexBuffer->CpuData[i * 24 + 22] = i * 24 + 3;
-		m_indexBuffer->CpuData[i * 24 + 23] = i * 24 + 7;
+		indexBuffer.CpuData[i * 24 + 8] = i * 8 + 4;
+		indexBuffer.CpuData[i * 24 + 9] = i * 8 + 5;
+		indexBuffer.CpuData[i * 24 + 10] = i * 8 + 5;
+		indexBuffer.CpuData[i * 24 + 11] = i * 8 + 6;
+		indexBuffer.CpuData[i * 24 + 12] = i * 8 + 6;
+		indexBuffer.CpuData[i * 24 + 13] = i * 8 + 7;
+		indexBuffer.CpuData[i * 24 + 14] = i * 8 + 7;
+		indexBuffer.CpuData[i * 24 + 15] = i * 8 + 4;
 
-		//std::vector<UINT> indices =
-		//{
-		//	0, 
-		//	1,
-		//	1, 
-		//	2,
-		//	2, 
-		//	3,
-		//	3, 
-		//	0,
-
-		//	4, 
-		//	5,
-		//	5, 
-		//	6,
-		//	6, 
-		//	7,
-		//	7, 
-		//	4,
-
-		//	0, 
-		//	4,
-		//	1, 
-		//	5,
-		//	2, 
-		//	6,
-		//	3, 
-		//	7
-		//};
+		indexBuffer.CpuData[i * 24 + 16] = i * 8 + 0;
+		indexBuffer.CpuData[i * 24 + 17] = i * 8 + 4;
+		indexBuffer.CpuData[i * 24 + 18] = i * 8 + 1;
+		indexBuffer.CpuData[i * 24 + 19] = i * 8 + 5;
+		indexBuffer.CpuData[i * 24 + 20] = i * 8 + 2;
+		indexBuffer.CpuData[i * 24 + 21] = i * 8 + 6;
+		indexBuffer.CpuData[i * 24 + 22] = i * 8 + 3;
+		indexBuffer.CpuData[i * 24 + 23] = i * 8 + 7;
 	}
 
 	BoundingBoxRenderer::BoundingBoxRenderer() : BoundingBox(), BoundingRendererParent()
@@ -180,6 +152,9 @@ namespace CPyburnRTXEngine
 
 	void BoundingBoxRenderer::Update(const XMMATRIX& modelTransform, CameraBase* camera, const std::vector<XMMATRIX>* instances, const UINT& begin, const UINT& end)
 	{
+		BufferHeap<BoundingRendererParent::VSVertices>& vertexBuffer = m_vertexBuffer[m_deviceResources->GetCurrentFrameIndex()];
+		BufferHeap<UINT>& indexBuffer = m_indexBuffer[m_deviceResources->GetCurrentFrameIndex()];
+
 		if (instances)
 		{
 			m_draw = false;
@@ -197,33 +172,33 @@ namespace CPyburnRTXEngine
 				}
 			}
 
-			size_t capacity = m_vertexBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData.capacity() / 8;
-			size_t count = visibleBoundingBoxes.size();
+			UINT capacity = static_cast<UINT>(vertexBuffer.CpuData.capacity() / 8);
+			UINT count = static_cast<UINT>(visibleBoundingBoxes.size());
 
 			if (count <= capacity)
 			{
 				// count = size
-				m_vertexBuffer->CpuData.resize(count * 8);
-				m_indexBuffer->CpuData.resize(count * 24);
-				for (size_t i = 0; i < count; i++)
+				vertexBuffer.CpuData.resize(count * 8);
+				indexBuffer.CpuData.resize(count * 24);
+				for (UINT i = 0; i < count; i++)
 				{
 					FillVertices(i, visibleBoundingBoxes[i]);
-					m_vertexBuffer->CopyCpuDataToUploadHeap();
+					vertexBuffer.CopyCpuDataToUploadHeap();
 					FillIndices(i);
-					m_indexBuffer->CopyCpuDataToUploadHeap();
+					indexBuffer.CopyCpuDataToUploadHeap();
 				}
 			}
 			else if (count > capacity)
 			{
 				// capacity = size
-				m_vertexBuffer->CpuData.resize(capacity * 8);
-				m_indexBuffer->CpuData.resize(capacity * 24);
-				for (size_t i = 0; i < capacity; i++)
+				vertexBuffer.CpuData.resize(capacity * 8);
+				indexBuffer.CpuData.resize(capacity * 24);
+				for (UINT i = 0; i < capacity; i++)
 				{
 					FillVertices(i, visibleBoundingBoxes[i]);
-					m_vertexBuffer->CopyCpuDataToUploadHeap();
+					vertexBuffer.CopyCpuDataToUploadHeap();
 					FillIndices(i);
-					m_indexBuffer->CopyCpuDataToUploadHeap();
+					indexBuffer.CopyCpuDataToUploadHeap();
 				}
 			}
 
@@ -232,12 +207,14 @@ namespace CPyburnRTXEngine
 		else
 		{
 			// most of the time this will be a simple single instance
-			//DirectX::BoundingBox worldBox;
-			//this->Transform(worldBox, modelTransform);
-			//m_draw = this->Intersects(camera->GetBoundingFrustum());
+			DirectX::BoundingBox worldBox;
+			this->Transform(worldBox, modelTransform);
+			m_draw = this->Intersects(camera->GetBoundingFrustum());
 
-			//m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CpuData[0] = modelTransform;
-			//m_instanceBuffer[m_deviceResources->GetCurrentFrameIndex()].CopyCpuDataToUploadHeap();
+			FillVertices(0, worldBox);
+			vertexBuffer.CopyCpuDataToUploadHeap();
+			FillIndices(0);
+			indexBuffer.CopyCpuDataToUploadHeap();
 		}
 	}
 

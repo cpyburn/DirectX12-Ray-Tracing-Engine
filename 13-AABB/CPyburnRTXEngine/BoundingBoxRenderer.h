@@ -15,6 +15,8 @@ namespace CPyburnRTXEngine
 		BufferHeap<UINT> m_indexBuffer[DX::DeviceResources::c_backBufferCount];
 		BufferHeap<XMMATRIX> m_instanceBuffer;
 
+		UINT m_drawCount = 0;
+
 		void FillVertices(const UINT& i, const DirectX::BoundingBox boundingBox);
 		void FillIndices(const UINT& i);
 	public:

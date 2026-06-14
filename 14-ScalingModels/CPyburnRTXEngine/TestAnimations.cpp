@@ -627,7 +627,7 @@ namespace CPyburnRTXEngine
         D3D12_ROOT_SIGNATURE_DESC globalDesc = {};
         globalDesc.NumParameters = _countof(globalParams);
         globalDesc.pParameters = globalParams;
-        globalDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+        globalDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 
         Microsoft::WRL::ComPtr<ID3DBlob> pSigBlobGlobal;
         Microsoft::WRL::ComPtr<ID3DBlob> pErrorBlobGlobal;

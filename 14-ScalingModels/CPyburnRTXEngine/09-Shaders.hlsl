@@ -135,12 +135,18 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     uint3 indices = gIndices[primIndex];
     
     MaterialData material = gMaterials[InstanceID()];
-    ByteAddressBuffer vb = ResourceDescriptorHeap[material.verticesSrvIndex];
-    ByteAddressBuffer ib = ResourceDescriptorHeap[material.indicesSrvIndex];
+    StructuredBuffer<STriVertex> vb = ResourceDescriptorHeap[NonUniformResourceIndex(material.verticesSrvIndex)];
+    StructuredBuffer<uint> ib = ResourceDescriptorHeap[NonUniformResourceIndex(material.indicesSrvIndex)];
 
-    STriVertex v0 = BTriVertex[indices.x];
-    STriVertex v1 = BTriVertex[indices.y];
-    STriVertex v2 = BTriVertex[indices.z];
+    uint triBase = PrimitiveIndex() * 3;
+    uint i0 = ib[triBase + 0];
+    uint i1 = ib[triBase + 1];
+    uint i2 = ib[triBase + 2];
+    
+    // Vertex offset lets you pack many meshes into one vertex pool.
+    STriVertex v0 = vb[i0];
+    STriVertex v1 = vb[i1];
+    STriVertex v2 = vb[i2];
 
     float2 bary = attribs.barycentrics;
     float3 weights = float3(1.0 - bary.x - bary.y, bary.x, bary.y);

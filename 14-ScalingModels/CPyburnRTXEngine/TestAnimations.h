@@ -98,6 +98,8 @@ namespace CPyburnRTXEngine
 
 		struct MaterialData
 		{
+			UINT verticesSrvIndex = MAXUINT;
+			UINT indicesSrvIndex = MAXUINT;
 			UINT baseColorTexIndex = 0;
 			UINT normalTexIndex = 0;
 			UINT ormTexIndex = 0;

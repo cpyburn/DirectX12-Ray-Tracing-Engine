@@ -107,6 +107,8 @@ namespace CPyburnRTXEngine
 
         for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
         {
+            m_materialData[i].verticesSrvIndex = m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
+            m_materialData[i].indicesSrvIndex = m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().HeapIndex;
             m_materialData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
             m_materialData[i].normalTexIndex = normal.indexInMaterialBuffer;
             m_materialData[i].ormTexIndex = pbrOrm.indexInMaterialBuffer;

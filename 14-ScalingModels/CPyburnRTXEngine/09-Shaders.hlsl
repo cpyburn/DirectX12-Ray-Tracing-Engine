@@ -17,6 +17,8 @@ StructuredBuffer<STriVertex> BTriVertex : register(t0, space1);
 StructuredBuffer<uint3> gIndices : register(t1, space1);
 struct MaterialData
 {
+    uint verticesSrvIndex;
+    uint indicesSrvIndex;
     uint baseColorTexIndex;
     uint normalTexIndex;
     uint ormTexIndex;
@@ -131,6 +133,10 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 {
     uint primIndex = PrimitiveIndex();
     uint3 indices = gIndices[primIndex];
+    
+    MaterialData material = gMaterials[InstanceID()];
+    ByteAddressBuffer vb = ResourceDescriptorHeap[material.verticesSrvIndex];
+    ByteAddressBuffer ib = ResourceDescriptorHeap[material.indicesSrvIndex];
 
     STriVertex v0 = BTriVertex[indices.x];
     STriVertex v1 = BTriVertex[indices.y];
@@ -143,8 +149,6 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v0.texture * weights.x +
         v1.texture * weights.y +
         v2.texture * weights.z;
-
-    MaterialData material = gMaterials[InstanceID()];
 
     Texture2D<float4> baseColorTex = gTextures[NonUniformResourceIndex(material.baseColorTexIndex)];
     Texture2D<float4> normalTex = gTextures[NonUniformResourceIndex(material.normalTexIndex)];

@@ -82,16 +82,6 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CpuData = planeVertices;
 		m_planeVertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Plane Buffer");
 
-        // load model images
-        //{
-        //    if (m_elfAnimated->GetAssimpFactory()->GetMeshEntries().size() > 0)
-        //    {
-        //        m_heapTextureDiffuse = Texture::LoadTextureHeap(m_elfAnimated->GetAssimpFactory()->GetTextureDiffuse(), commandList.Get());
-        //        // todo: always a good idea to release the upload if isn't going to be used anymore
-        //        //Texture::ReleaseUploadByHeapPosition(m_heapTextureDiffuse.heapPosition);
-        //    }
-        //}
-
         // after all the buffers are created, create the shader resource views in the correct order for shader table
         m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute, // t0, t1 for rtx shader
         m_materialDataBuffer.CreateShaderResourceView(); // t2 for rtx shader
@@ -840,6 +830,7 @@ namespace CPyburnRTXEngine
             m_instanceData.resize(18); // this is RTX instances, so it includes planes and other things, make sure the testing only includes the range, a better way would be to have an instance vector for models, which we will make eventually
 #ifdef _DEBUG
             m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
+            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
             m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
 #else
 
@@ -913,7 +904,7 @@ namespace CPyburnRTXEngine
 #ifdef _DEBUG
         BoundingRendererParent::RenderBegin(m_sceneCommandList, camera);
         m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Render(m_sceneCommandList);
-        //m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);
+        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);
 #else
 
 #endif

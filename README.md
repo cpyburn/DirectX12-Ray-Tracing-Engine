@@ -86,8 +86,8 @@ Adding JSON input for reading in animations and adding animation logic
 
 We will be adding rasterization and showing how to use the zbuffer to display it on top of ray traced geometry using a bounding sphere that can also be checked for collision.
 
-### [13-Rasterized AABB and real game setup](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/13-AABB)
+### [13-Rasterized AABB](https://github.com/cpyburn/DirectX12-Ray-Tracing-Engine/tree/main/13-AABB)
 
 <img width="150" height="100" alt="image" src="https://github.com/user-attachments/assets/41d10068-0485-4063-9c4c-014e5fb701ab" />
 
-In this tutorial we will be creating an AABB for models and other assets and also moving all the code into a "REAL" type of game setup. No more doing testing in the Engine code.
+In this tutorial we will be creating an AABB for models and other assets

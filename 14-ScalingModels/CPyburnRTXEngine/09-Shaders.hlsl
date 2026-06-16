@@ -134,9 +134,9 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     uint primIndex = PrimitiveIndex();
     uint3 indices = gIndices[primIndex];
     
-    RtxModelData material = gModels[InstanceID()];
-    StructuredBuffer<STriVertex> vb = ResourceDescriptorHeap[NonUniformResourceIndex(material.verticesSrvIndex)];
-    StructuredBuffer<uint> ib = ResourceDescriptorHeap[NonUniformResourceIndex(material.indicesSrvIndex)];
+    RtxModelData models = gModels[InstanceID()];
+    StructuredBuffer<STriVertex> vb = ResourceDescriptorHeap[NonUniformResourceIndex(models.verticesSrvIndex)];
+    StructuredBuffer<uint> ib = ResourceDescriptorHeap[NonUniformResourceIndex(models.indicesSrvIndex)];
 
     uint triBase = PrimitiveIndex() * 3;
     uint i0 = ib[triBase + 0];
@@ -156,9 +156,9 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
         v1.texture * weights.y +
         v2.texture * weights.z;
 
-    Texture2D<float4> baseColorTex = gTextures[NonUniformResourceIndex(material.baseColorTexIndex)];
-    Texture2D<float4> normalTex = gTextures[NonUniformResourceIndex(material.normalTexIndex)];
-    Texture2D<float4> ormTex = gTextures[NonUniformResourceIndex(material.ormTexIndex)];
+    Texture2D<float4> baseColorTex = gTextures[NonUniformResourceIndex(models.baseColorTexIndex)];
+    Texture2D<float4> normalTex = gTextures[NonUniformResourceIndex(models.normalTexIndex)];
+    Texture2D<float4> ormTex = gTextures[NonUniformResourceIndex(models.ormTexIndex)];
 
     float3 baseColor = baseColorTex.SampleLevel(gSampler, uv, 0).rgb;
     float3 orm = ormTex.SampleLevel(gSampler, uv, 0).rgb;

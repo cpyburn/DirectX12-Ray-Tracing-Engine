@@ -68,9 +68,11 @@ namespace CPyburnRTXEngine
                 m_reserveSizeOfCpuData = static_cast<UINT>(CpuData.size());
             }
 
+            auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
             CD3DX12_RESOURCE_DESC bufferDescModel = CD3DX12_RESOURCE_DESC::Buffer(BufferSize);
+
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+                &heapProperties,
                 D3D12_HEAP_FLAG_NONE,
                 &bufferDescModel,
                 D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -103,9 +105,11 @@ namespace CPyburnRTXEngine
                 m_reserveSizeOfCpuData = static_cast<UINT>(CpuData.size());
             }
 
+            auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(BufferSize, flags);
+
             DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-                &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                &heapProperties,
                 D3D12_HEAP_FLAG_NONE,
                 &bufferDesc,
                 D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,

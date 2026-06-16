@@ -399,18 +399,23 @@ void DeviceResources::CreateDeviceResources()
 
         const UINT vertexBufferSize = sizeof(quadVertices);
 
+        auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
+
         ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            &heapPropertiesDefault,
             D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+            &resourceDesc,
             D3D12_RESOURCE_STATE_COMMON,
             nullptr,
             IID_PPV_ARGS(&m_postVertexBuffer)));
 
+        auto heapPropertiesUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+
         ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+            &heapPropertiesUpload,
             D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+            &resourceDesc,
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(&postVertexBufferUpload)));
@@ -426,7 +431,8 @@ void DeviceResources::CreateDeviceResources()
         postVertexBufferUpload->Unmap(0, nullptr);
 
         commandList->CopyBufferRegion(m_postVertexBuffer.Get(), 0, postVertexBufferUpload.Get(), 0, vertexBufferSize);
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_postVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+        auto resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(m_postVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        commandList->ResourceBarrier(1, &resourceBarrier);
 
         // Initialize the vertex buffer views.
         m_postVertexBufferView.BufferLocation = m_postVertexBuffer->GetGPUVirtualAddress();
@@ -1057,9 +1063,10 @@ void DeviceResources::LoadSceneResolutionDependentResources()
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
             D3D12_TEXTURE_LAYOUT_UNKNOWN, 0u);
 
+        auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
         m_rtvHeapIntermediateRenderTargetHandleCpu = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_rtvHeapIntermediateRenderTargetPosition, m_rtvDescriptorSize);
         ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &renderTargetDesc,
             D3D12_RESOURCE_STATE_RENDER_TARGET,

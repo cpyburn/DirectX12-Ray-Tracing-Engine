@@ -379,9 +379,9 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::ComPtr<ID3D12Resource> uploadRes;
 
 		CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(format, width, height, 1, 1);
-
+		auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 		DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			&heapPropertiesDefault,
 			D3D12_HEAP_FLAG_NONE,
 			&desc,
 			D3D12_RESOURCE_STATE_COMMON,
@@ -390,10 +390,12 @@ namespace CPyburnRTXEngine
 
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(tex.Get(), 0, 1); // +D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
+		auto heapPropertiesUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 		DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			&heapPropertiesUpload,
 			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+			&resourceDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&uploadRes)));

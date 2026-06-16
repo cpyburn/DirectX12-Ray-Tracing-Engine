@@ -197,11 +197,12 @@ namespace CPyburnRTXEngine
         else
         {
             //ComPtr<ID3D12Resource> pScratch;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
+            auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
 
             m_bufDesc.Width = info.ResultDataMaxSizeInBytes;
             //ComPtr<ID3D12Resource> pResult;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
             mTlasSize = info.ResultDataMaxSizeInBytes;
 
             // The instance desc should be inside a buffer, create and map the buffer
@@ -209,7 +210,8 @@ namespace CPyburnRTXEngine
             m_bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size());
 
             //ComPtr<ID3D12Resource> pInstanceDescResource;
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
+            auto heapPropertiesUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
         }
 
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
@@ -687,7 +689,8 @@ namespace CPyburnRTXEngine
         m_bufDesc.SampleDesc.Quality = 0;
         m_bufDesc.Width = shaderTableSize;
 
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
+        auto heapPropertiesUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpShaderTable)));
 
         // Map the buffer
         uint8_t* pData;
@@ -759,7 +762,9 @@ namespace CPyburnRTXEngine
         resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
         resDesc.MipLevels = 1;
         resDesc.SampleDesc.Count = 1;
-        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
+
+        auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&mpOutputResource))); // Starting as copy-source to simplify onFrameRender()
 
         // Create the UAV. Based on the root signature we created it should be the first entry
         D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -867,11 +872,14 @@ namespace CPyburnRTXEngine
 
         ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };
         m_sceneCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-        m_sceneCommandList->RSSetViewports(1, &m_deviceResources->GetScreenViewport());
-        m_sceneCommandList->RSSetScissorRects(1, &m_deviceResources->GetScissorRect());
+        auto viewPort = m_deviceResources->GetScreenViewport();
+        m_sceneCommandList->RSSetViewports(1, &viewPort);
+        auto scissorRect = m_deviceResources->GetScissorRect();
+        m_sceneCommandList->RSSetScissorRects(1, &scissorRect);
 
         const CD3DX12_CPU_DESCRIPTOR_HANDLE& rtvHandle = m_deviceResources->GetIntermediateRenderTargetViewCpu();
-        m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &m_deviceResources->GetDepthStencilView());
+        auto depthStencilView = m_deviceResources->GetDepthStencilView();
+        m_sceneCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &depthStencilView);
 
         // Record commands.
         m_sceneCommandList->ClearRenderTargetView(rtvHandle, m_deviceResources->GetClearColor(), 0, nullptr);

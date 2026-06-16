@@ -78,16 +78,17 @@ namespace CPyburnRTXEngine
             m_bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             m_bufDesc.Width = info.ScratchDataSizeInBytes;
 
+            auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             if (!m_scratch.Get())
             {
-                DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_scratch)));
+                DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_scratch)));
                 m_scratch->SetName(L"BLAS Scratch");
             }
 
             if (!m_result.Get())
             {
                 m_bufDesc.Width = info.ResultDataMaxSizeInBytes;
-                DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&m_result)));
+                DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&m_result)));
                 m_result->SetName(L"BLAS Result");
             }
 
@@ -160,12 +161,13 @@ namespace CPyburnRTXEngine
             m_bufDesc.Width = info.ScratchDataSizeInBytes;
 
             Microsoft::WRL::ComPtr<ID3D12Resource> pScratch;
-            DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
+            auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+            DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&pScratch)));
             pScratch->SetName(L"BLAS Scratch");
 
             m_bufDesc.Width = info.ResultDataMaxSizeInBytes;
             Microsoft::WRL::ComPtr<ID3D12Resource> pResult;
-            DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
+            DX::ThrowIfFailed(deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&pResult)));
             pResult->SetName(L"BLAS Result");
 
             // Create the bottom-level AS

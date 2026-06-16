@@ -133,7 +133,8 @@ namespace CPyburnRTXEngine
         const UINT groups = (static_cast<UINT>(m_baseVertexBuffer->CpuData.size()) + 255u) / 256u;
         commandList->Dispatch(groups, 1, 1);
 
-        commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(m_outVertexBuffer.DefaultHeapResource.Get()));
+        auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(m_outVertexBuffer.DefaultHeapResource.Get());
+        commandList->ResourceBarrier(1, &barrier);
 
         PIXEndEvent(commandList);
     }

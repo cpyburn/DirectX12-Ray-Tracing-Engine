@@ -77,7 +77,8 @@ namespace CPyburnRTXEngine
 		for (UINT i = 0; i < paiMesh->mNumVertices; i++)
 		{
 			const aiVector3D* pPos = &paiMesh->mVertices[i];
-			const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &paiMesh->mTextureCoords[0][i] : &aiVector3D(0.0f, 0.0f, 0.0f);
+			auto v3dzero = aiVector3D(0.0f, 0.0f, 0.0f);
+			const aiVector3D* pTexCoord = paiMesh->HasTextureCoords(0) ? &paiMesh->mTextureCoords[0][i] : &v3dzero;
 			const aiVector3D* pNormal = &paiMesh->mNormals[i];
 			const aiVector3D* pTangent = &paiMesh->mTangents[i];
 			//const aiVector3D* pBiTangent = &paiMesh->mBitangents[i];

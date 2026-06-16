@@ -38,7 +38,7 @@ namespace CPyburnRTXEngine
 
 		struct Model
 		{
-			UINT modelId;
+			UINT modelId = MAXUINT;
 			std::string name;
 			UINT meshEntryLocation;
 			std::string contentLocation;
@@ -133,7 +133,7 @@ namespace CPyburnRTXEngine
 		DX::DeviceResources* m_deviceResources = nullptr;
 
 		std::vector<MeshEntry> m_meshEntries;
-		UINT m_modelId = MAXUINT;
+		Model* m_ptrModel = nullptr;
 		std::string m_pathFileName;
 		std::string m_fileName;
 		std::string m_pathDirectory;
@@ -190,7 +190,7 @@ namespace CPyburnRTXEngine
 		const std::unordered_map<std::string, unsigned int>& GetBoneMapping() { return m_boneMapping; }
 		const std::vector<XMMATRIX>& GetBoneInfo() { return m_boneInfo; }
 		const UINT& GetNumBones() const { return m_numBones; }
-		const UINT& GetModelId() { return m_modelId; }
+		const Model* GetModel() { return m_ptrModel; }
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>* GetVertexBuffer() { return &m_vertexBuffer; }
@@ -198,7 +198,7 @@ namespace CPyburnRTXEngine
 		BufferHeap<AssimpFactory::VertexBoneData>* GetBoneBuffer() { return m_boneBuffer.get(); }
 		const aiScene* GetAiScene() { return m_pScene; }
 
-		AssimpFactory(const UINT modelId, const std::string& fileName,
+		AssimpFactory(Model* model, const std::string& fileName,
 			unsigned int customFlags = aiProcess_Triangulate
 			//| aiProcess_MakeLeftHanded
 			| aiProcess_GenSmoothNormals
@@ -215,6 +215,7 @@ namespace CPyburnRTXEngine
 		void CreateShaderResources();
 
 		static void LoadJson();
+		static AssimpFactory::Model* LoadJsonByModelId(const UINT& id);
 
 		void ReleaseUploadResources();
 		void Release();

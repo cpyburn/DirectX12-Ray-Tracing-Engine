@@ -364,10 +364,10 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	AssimpFactory::AssimpFactory(const UINT modelId, const std::string& fileName, unsigned int customFlags) :
+	AssimpFactory::AssimpFactory(Model* model, const std::string& fileName, unsigned int customFlags) :
 		m_boundingSphereRadiusTranslation(XMMatrixIdentity())
 	{
-		m_modelId = modelId;
+		m_ptrModel = model;
 		m_pathFileName = fileName;
 
 		char drive[_MAX_DRIVE];
@@ -437,7 +437,7 @@ namespace CPyburnRTXEngine
 			m_boneBuffer = std::make_shared<BufferHeap<AssimpFactory::VertexBoneData>>();
 			m_boneBuffer->CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 			m_boneBuffer->CpuData = m_bones;
-			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_modelId));
+			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_ptrModel->modelId));
 		}
 	}
 
@@ -473,16 +473,54 @@ namespace CPyburnRTXEngine
 					model.textures.push_back(tex.GetString());
 				}
 
-				//for (char& c : name)
-				//{
-				//	c = static_cast<char>(
-				//		std::tolower(static_cast<unsigned char>(c))
-				//		);
-				//}
-
 				AssimpFactory::Models[model.modelId] = model;
 			}
 		}
+	}
+
+	AssimpFactory::Model* AssimpFactory::LoadJsonByModelId(const UINT& id)
+	{
+		// Already loaded?
+		if (auto it = AssimpFactory::Models.find(id);
+			it != AssimpFactory::Models.end())
+		{
+			return &it->second;
+		}
+
+		std::string filePath = "../../Assets/Json/Models.json";
+		rapidjson::Document doc = LoadJsonDocument(filePath);
+
+		const auto models = doc["models"].GetArray();
+
+		auto jsonIt = std::ranges::find_if(
+			models,
+			[id](const auto& v)
+			{
+				return v["id"].GetUint() == id;
+			});
+
+		if (jsonIt == models.end())
+		{
+			throw std::runtime_error(
+				"Model ID " + std::to_string(id) + " not found.");
+		}
+
+		Model model;
+
+		model.modelId = (*jsonIt)["id"].GetUint();
+		model.name = (*jsonIt)["name"].GetString();
+		model.meshEntryLocation = (*jsonIt)["meshEntryLocation"].GetInt();
+		model.contentLocation = (*jsonIt)["contentLocation"].GetString();
+
+		for (const auto& tex : (*jsonIt)["textureBaseColorList"].GetArray())
+		{
+			model.textures.push_back(tex.GetString());
+		}
+
+		auto [insertedIt, inserted] =
+			AssimpFactory::Models.emplace(model.modelId, std::move(model));
+
+		return &insertedIt->second;
 	}
 
 	void AssimpFactory::ReleaseUploadResources()

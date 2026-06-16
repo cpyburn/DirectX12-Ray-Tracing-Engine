@@ -53,6 +53,10 @@ namespace CPyburnRTXEngine
 				entityProperties->SetRotation({ v["rotationX"].GetFloat(), v["rotationY"].GetFloat(), v["rotationZ"].GetFloat() });
 				entityProperties->SetModelId(v["modelId"].GetUint());
 
+				// load the model
+				AssimpFactory::Model* ptrModel = AssimpFactory::LoadJsonByModelId(entityProperties->GetModelId());
+				entity.SetAssimpFactoryModel(ptrModel);
+
 				LoadedEntities[entityProperties->GetId()] = entity;
 			}
 		}

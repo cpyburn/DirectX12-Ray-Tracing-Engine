@@ -789,8 +789,6 @@ namespace CPyburnRTXEngine
 
         m_environment.CreateDeviceDependentResources(deviceResources);
 
-        AssimpFactory::LoadJson();
-
         // reserve the uav position and srv position
         mUavPosition = GraphicsContexts::GetAvailableHeapPosition();
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
@@ -804,13 +802,13 @@ namespace CPyburnRTXEngine
         // load all models
         for (auto& unorderedModel : AssimpFactory::Models)
         {
-            AssimpFactory::Model& model = unorderedModel.second;
+            AssimpFactory::Model* model = &unorderedModel.second;
 
-            std::string modelPath = "..\\..\\Assets\\Models\\" + model.contentLocation + model.name;
-            model.assimpFactory = std::make_unique<AssimpFactory>(model.modelId, modelPath);
-            model.assimpFactory->CreateDeviceDependentResources(deviceResources);
+            std::string modelPath = "..\\..\\Assets\\Models\\" + model->contentLocation + model->name;
+            model->assimpFactory = std::make_unique<AssimpFactory>(model, modelPath);
+            model->assimpFactory->CreateDeviceDependentResources(deviceResources);
 
-            m_elfAnimated = std::make_unique<AssimpAnimations>(model.assimpFactory.get());
+            m_elfAnimated = std::make_unique<AssimpAnimations>(model->assimpFactory.get());
             m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
 
             // todo: move this eventually, really only testing right now

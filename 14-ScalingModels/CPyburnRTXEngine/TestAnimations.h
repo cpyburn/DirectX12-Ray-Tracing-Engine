@@ -96,7 +96,7 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::Wrappers::Event m_fenceEvent;
 		std::atomic_uint64_t m_nextFenceValue = 1;
 
-		struct MaterialData
+		struct RtxModelData
 		{
 			UINT verticesSrvIndex = MAXUINT;
 			UINT indicesSrvIndex = MAXUINT;
@@ -104,8 +104,8 @@ namespace CPyburnRTXEngine
 			UINT normalTexIndex = 0;
 			UINT ormTexIndex = 0;
 		};
-		std::vector<MaterialData> m_materialData;
-		BufferHeap<MaterialData> m_materialDataBuffer;
+		std::vector<RtxModelData> m_modelData;
+		BufferHeap<RtxModelData> m_modelDataBuffer;
 
 		BufferBlas<AssimpFactory::VSVertices> m_blas;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;

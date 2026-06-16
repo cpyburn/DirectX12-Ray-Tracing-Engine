@@ -65,9 +65,9 @@ namespace CPyburnRTXEngine
         m_elfAnimated->CreateBuffers(commandList.Get());
 
         // create materials
-        m_materialData.resize(m_instanceData.size());
-		m_materialDataBuffer.CpuData = m_materialData;
-		m_materialDataBuffer.CreateOnDefaultHeap(commandList.Get(), L"Material Buffer");
+        m_modelData.resize(m_instanceData.size());
+		m_modelDataBuffer.CpuData = m_modelData;
+		m_modelDataBuffer.CreateOnDefaultHeap(commandList.Get(), L"Material Buffer");
 
         // create createPlaneVB
         std::vector<XMFLOAT3> planeVertices(6);
@@ -84,7 +84,7 @@ namespace CPyburnRTXEngine
 
         // after all the buffers are created, create the shader resource views in the correct order for shader table
         m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute, // t0, t1 for rtx shader
-        m_materialDataBuffer.CreateShaderResourceView(); // t2 for rtx shader
+        m_modelDataBuffer.CreateShaderResourceView(); // t2 for rtx shader
 
         // create textures AFTER the last shader views
         for (auto& unorderedModel : AssimpFactory::Models)
@@ -107,15 +107,15 @@ namespace CPyburnRTXEngine
 
         for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
         {
-            m_materialData[i].verticesSrvIndex = m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
-            m_materialData[i].indicesSrvIndex = m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().HeapIndex;
-            m_materialData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
-            m_materialData[i].normalTexIndex = normal.indexInMaterialBuffer;
-            m_materialData[i].ormTexIndex = pbrOrm.indexInMaterialBuffer;
+            m_modelData[i].verticesSrvIndex = m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
+            m_modelData[i].indicesSrvIndex = m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().HeapIndex;
+            m_modelData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
+            m_modelData[i].normalTexIndex = normal.indexInMaterialBuffer;
+            m_modelData[i].ormTexIndex = pbrOrm.indexInMaterialBuffer;
         }
 
-        m_materialDataBuffer.CpuData = m_materialData;
-        m_materialDataBuffer.CopyUploadToDefault(commandList.Get());
+        m_modelDataBuffer.CpuData = m_modelData;
+        m_modelDataBuffer.CopyUploadToDefault(commandList.Get());
 
         // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
         DX::ThrowIfFailed(commandList->Close());
@@ -128,7 +128,7 @@ namespace CPyburnRTXEngine
 
         // release any uploads that will not be used again
         m_elfAnimated->ReleaseUploadResources();
-        m_materialDataBuffer.ReleaseUploadResource();
+        m_modelDataBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
     }
 
@@ -813,7 +813,7 @@ namespace CPyburnRTXEngine
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
 
-        m_materialDataBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+        m_modelDataBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
         // load all models

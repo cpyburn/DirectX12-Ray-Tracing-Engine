@@ -8,16 +8,6 @@ namespace CPyburnRTXEngine
 
 	}
 
-	EntityDescription::EntityDescription(const EntityDescription& other)
-	{
-		m_properties = other.m_properties;
-	}
-
-	EntityDescription& EntityDescription::operator=(const EntityDescription& other)
-	{
-		m_properties = other.m_properties;
-	}
-
 	EntityDescription::~EntityDescription()
 	{
 

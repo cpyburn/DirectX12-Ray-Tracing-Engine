@@ -8,10 +8,13 @@ namespace CPyburnRTXEngine
 	{
 	private:
 		Properties m_properties;
+
 	public:
+		Properties* GetProperties() { return &m_properties; }
+
 		EntityDescription();
-		EntityDescription(const EntityDescription& other);
-		EntityDescription& EntityDescription::operator=(const EntityDescription& other);
+		EntityDescription(const EntityDescription&) = default;
+		EntityDescription& operator=(const EntityDescription&) = default;
 		~EntityDescription();
 	};
 }

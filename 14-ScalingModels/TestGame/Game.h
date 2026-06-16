@@ -11,6 +11,7 @@
 
 #include <FrameResource.h>
 #include <RtxScene.h>
+#include <EntitiesManager.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -68,6 +69,7 @@ private:
 	CPyburnRTXEngine::RtxScene                  m_triangle;
     CPyburnRTXEngine::CameraBase                m_camera;
     CPyburnRTXEngine::GameInput                 m_gameInput;
+    CPyburnRTXEngine::EntitiesManager           m_entitiesManager;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:
     // std::unique_ptr<DirectX::GraphicsMemory> m_graphicsMemory;

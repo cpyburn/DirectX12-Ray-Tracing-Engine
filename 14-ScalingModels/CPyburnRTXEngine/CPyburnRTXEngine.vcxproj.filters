@@ -115,6 +115,9 @@
     <ClInclude Include="EntitiesManager.h">
       <Filter>Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -175,6 +178,9 @@
       <Filter>Entities</Filter>
     </ClCompile>
     <ClCompile Include="EntitiesManager.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
   </ItemGroup>

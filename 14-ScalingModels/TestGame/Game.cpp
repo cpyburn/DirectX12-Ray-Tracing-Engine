@@ -88,6 +88,7 @@ void Game::Update(DX::StepTimer const& timer)
 
     m_triangle.Update(timer, &m_camera);
     m_camera.Update(timer, &m_gameInput);
+    m_entitiesManager.Update(timer, &m_camera);
 
     PIXEndEvent();
 }
@@ -247,6 +248,7 @@ void Game::CreateDeviceDependentResources()
 	m_triangle.CreateDeviceDependentResources(m_deviceResources.get());
     m_camera.CreateDeviceDependentResources(m_deviceResources.get());
     m_gameInput.CreateDeviceDependentResources(m_deviceResources.get());
+    m_entitiesManager.CreateDeviceDependentResources(m_deviceResources.get());
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.

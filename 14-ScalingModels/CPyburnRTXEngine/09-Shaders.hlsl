@@ -13,8 +13,6 @@ struct STriVertex
     float3 normal;
     float3 tangent;
 };
-StructuredBuffer<STriVertex> BTriVertex : register(t0, space1);
-StructuredBuffer<uint3> gIndices : register(t1, space1);
 struct RtxModelData
 {
     uint verticesSrvIndex;
@@ -23,8 +21,8 @@ struct RtxModelData
     uint normalTexIndex;
     uint ormTexIndex;
 };
-StructuredBuffer<RtxModelData> gModels : register(t2, space1);
-Texture2D<float4> gTextures[] : register(t3, space1);
+StructuredBuffer<RtxModelData> gModels : register(t0, space1);
+Texture2D<float4> gTextures[] : register(t1, space1);
 SamplerState gSampler : register(s0);
 
 struct EnvironmentData
@@ -132,7 +130,7 @@ struct ShadowPayload
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     uint primIndex = PrimitiveIndex();
-    uint3 indices = gIndices[primIndex];
+    //uint3 indices = gIndices[primIndex];
     
     RtxModelData models = gModels[InstanceID()];
     StructuredBuffer<STriVertex> vb = ResourceDescriptorHeap[NonUniformResourceIndex(models.verticesSrvIndex)];

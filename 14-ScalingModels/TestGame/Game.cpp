@@ -86,7 +86,6 @@ void Game::Update(DX::StepTimer const& timer)
         CreateWindowSizeDependentResources();
     }
 
-    //m_fullscreen.Update(timer);
     m_triangle.Update(timer, &m_camera);
     m_camera.Update(timer, &m_gameInput);
 

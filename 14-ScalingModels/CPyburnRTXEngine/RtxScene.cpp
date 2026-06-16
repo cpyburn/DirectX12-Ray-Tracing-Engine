@@ -1,5 +1,5 @@
 #include "pchlib.h"
-#include "TestAnimations.h"
+#include "RtxScene.h"
 
 #include "BufferBlas.h"
 #include "AnimationCompute.h"
@@ -18,7 +18,7 @@ namespace CPyburnRTXEngine
     static const WCHAR* kShadowMiss = L"shadowMiss";
     static const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
 
-    void TestAnimations::CreateCommandObjects()
+    void RtxScene::CreateCommandObjects()
     {
         for (size_t i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -41,7 +41,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    void TestAnimations::CreateBuffers()
+    void RtxScene::CreateBuffers()
     {
         int count = 0;
         for (UINT x = 0; x < 4; x++)
@@ -132,7 +132,7 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.ReleaseUploadResource();
     }
 
-    void TestAnimations::createAccelerationStructures()
+    void RtxScene::createAccelerationStructures()
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
@@ -158,7 +158,7 @@ namespace CPyburnRTXEngine
         m_deviceResources->WaitForGpu();
     }
 
-    void TestAnimations::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
+    void RtxScene::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
     {
         // First, get the size of the TLAS buffers and create them
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -264,7 +264,7 @@ namespace CPyburnRTXEngine
         commandList->ResourceBarrier(1, &uavBarrier);
     }
 
-    void TestAnimations::RefitOrRebuildTLASNext()
+    void RtxScene::RefitOrRebuildTLASNext()
     {
         // Build the TLAS for the next frame while the current frame is being rendered.
         UINT currentFrame = m_deviceResources->GetCurrentFrameIndex();
@@ -291,7 +291,7 @@ namespace CPyburnRTXEngine
             });
     }
 
-    void TestAnimations::WaitForFrameSlot(UINT frameIndex)
+    void RtxScene::WaitForFrameSlot(UINT frameIndex)
     {
         const UINT64 fenceValue = m_fenceValues[frameIndex].load();
         if (fenceValue != 0 && m_fence->GetCompletedValue() < fenceValue)
@@ -301,7 +301,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    UINT TestAnimations::GetReadyFrameIndex() const
+    UINT RtxScene::GetReadyFrameIndex() const
     {
         const UINT current = m_deviceResources->GetCurrentFrameIndex();
 
@@ -318,7 +318,7 @@ namespace CPyburnRTXEngine
         return prev;
     }
 
-    void TestAnimations::createRtPipelineState()
+    void RtxScene::createRtPipelineState()
     {
         //  1 for the DXIL library
         //  1 for hit-group triangle
@@ -412,33 +412,21 @@ namespace CPyburnRTXEngine
         std::vector<D3D12_DESCRIPTOR_RANGE> rangeHit;
         std::vector<D3D12_ROOT_PARAMETER> rootParamsHit;
 
-        rangeHit.resize(1 + 1 + 1 + 1); // srv vertex + srv index + srv material + texture array (bindless)
+        rangeHit.resize(1 + 1); // srv material + texture array (bindless)
         rootParamsHit.resize(1); // (srv + diffuseSRV)
 
-        // SRV vertex
+        // SRV materials
         rangeHit[0].BaseShaderRegister = 0; // gOutput used the first t() register in the shader
         rangeHit[0].NumDescriptors = 1;
         rangeHit[0].RegisterSpace = 1;
         rangeHit[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[0].OffsetInDescriptorsFromTableStart = 0;
-        // SRV index
-        rangeHit[1].BaseShaderRegister = 1; // gOutput used the first t() register in the shader
-        rangeHit[1].NumDescriptors = 1;
+        rangeHit[0].OffsetInDescriptorsFromTableStart = 2;
+        // t4 - texture array (bindless)
+        rangeHit[1].BaseShaderRegister = 1;
+        rangeHit[1].NumDescriptors = 100; // todo: make it use cbv size
         rangeHit[1].RegisterSpace = 1;
         rangeHit[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[1].OffsetInDescriptorsFromTableStart = 1;
-        // SRV materials
-        rangeHit[2].BaseShaderRegister = 2; // gOutput used the first t() register in the shader
-        rangeHit[2].NumDescriptors = 1;
-        rangeHit[2].RegisterSpace = 1;
-        rangeHit[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[2].OffsetInDescriptorsFromTableStart = 2;
-        // t4 - texture array (bindless)
-        rangeHit[3].BaseShaderRegister = 3;
-        rangeHit[3].NumDescriptors = 100; // todo: make it use cbv size
-        rangeHit[3].RegisterSpace = 1;
-        rangeHit[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[3].OffsetInDescriptorsFromTableStart = 3;
+        rangeHit[1].OffsetInDescriptorsFromTableStart = 3;
 
         // SRVs
         rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -662,7 +650,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&mpPipelineState)));
     }
 
-    uint8_t* TestAnimations::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
+    uint8_t* RtxScene::shaderTableEntryHelper(UINT entry, ID3D12StateObjectProperties* pRtsoProps, uint8_t* pData, const WCHAR* exportName, const Microsoft::WRL::ComPtr<ID3D12Resource>& resource)
     {
         uint8_t* pDataEntry = pData + (entry * mShaderTableEntrySize);
         memcpy(pDataEntry, pRtsoProps->GetShaderIdentifier(exportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
@@ -677,7 +665,7 @@ namespace CPyburnRTXEngine
         return pDataEntry;
     }
 
-    void TestAnimations::createShaderTable()
+    void RtxScene::createShaderTable()
     {
         const size_t kShaderId = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
         //const size_t kCbvSize = sizeof(D3D12_GPU_VIRTUAL_ADDRESS); // 8
@@ -742,7 +730,7 @@ namespace CPyburnRTXEngine
     }
 
     // todo: handle this in a more elegant way when we implement resizing
-    void TestAnimations::createShaderResources()
+    void RtxScene::createShaderResources()
     {
         createShaderResourcesForWindowSize();
 
@@ -758,7 +746,7 @@ namespace CPyburnRTXEngine
         }
     }
 
-    void TestAnimations::createShaderResourcesForWindowSize()
+    void RtxScene::createShaderResourcesForWindowSize()
     {
         // Create the output resource. The dimensions and format should match the swap-chain
         D3D12_RESOURCE_DESC resDesc = {};
@@ -780,29 +768,21 @@ namespace CPyburnRTXEngine
         m_deviceResources->GetD3DDevice()->CreateUnorderedAccessView(mpOutputResource.Get(), nullptr, &uavDesc, GraphicsContexts::GetCpuHandle(mUavPosition));
     }
 
-    void TestAnimations::createConstantBuffer()
-    {
-        m_EnvironmentCb.CreateCbvOnUploadHeap(m_deviceResources->GetD3DDevice(), L"TestModel Cbv");
-
-        for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
-        {
-            m_EnvironmentCb.CopyToGpu(i);
-        }
-    }
-
-    TestAnimations::TestAnimations()
+    RtxScene::RtxScene()
     {
 
     }
 
-    TestAnimations::~TestAnimations()
+    RtxScene::~RtxScene()
     {
         Release();
     }
 
-    void TestAnimations::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
+    void RtxScene::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
     {
         m_deviceResources = deviceResources;
+
+        m_environment.CreateDeviceDependentResources(deviceResources);
 
         AssimpFactory::LoadJson();
 
@@ -842,18 +822,17 @@ namespace CPyburnRTXEngine
         CreateCommandObjects();
         CreateBuffers();
         createAccelerationStructures(); // Tutorial 03
-        createConstantBuffer(); // Tutorial 09
         createRtPipelineState(); // Tutorial 04
         createShaderResources(); // Tutorial 06. Need to do this before initializing the shader-table
         createShaderTable(); // Tutorial 05
     }
 
-    void TestAnimations::CreateWindowSizeDependentResources()
+    void RtxScene::CreateWindowSizeDependentResources()
     {
         createShaderResourcesForWindowSize();
     }
 
-    void TestAnimations::Update(DX::StepTimer const& timer, CameraBase* camera)
+    void RtxScene::Update(DX::StepTimer const& timer, CameraBase* camera)
     {
         float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
@@ -877,13 +856,10 @@ namespace CPyburnRTXEngine
 #else
 
 #endif
-
-        XMFLOAT3 lightDir = XMFLOAT3(0.5f, 0.5f, -0.5f);
-        m_EnvironmentCb.CpuData.lightDirection = lightDir;
-        m_EnvironmentCb.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
+        m_environment.Update(timer, camera);
     }
 
-    void TestAnimations::Render(CameraBase* camera)
+    void RtxScene::Render(CameraBase* camera)
     {
 
 #pragma region Testing Bounding Sphere
@@ -988,7 +964,7 @@ namespace CPyburnRTXEngine
                 // 6.4.e Bind the empty root signature
                 m_sceneCommandList->SetComputeRootSignature(mpEmptyRootSig.Get());
                 m_sceneCommandList->SetComputeRootConstantBufferView(0, camera->GetCbv()->GetGPUVirtualAddressBuffered(camera->GetDeviceResources()->GetCurrentFrameIndex()));
-                m_sceneCommandList->SetComputeRootConstantBufferView(1, m_EnvironmentCb.Resource->GetGPUVirtualAddress());
+                m_sceneCommandList->SetComputeRootConstantBufferView(1, m_environment.GetEnvironmentConstantBuffer().Resource->GetGPUVirtualAddress());
                 m_sceneCommandList->SetComputeRootDescriptorTable(2, GraphicsContexts::GetGpuHandle(mUavPosition));
                 UINT tlasFrame = GetReadyFrameIndex();
                 m_sceneCommandList->SetComputeRootDescriptorTable(3, GraphicsContexts::GetGpuHandle(mTlasSrvPosition[tlasFrame]));
@@ -1031,7 +1007,7 @@ namespace CPyburnRTXEngine
     }
     
 
-    void TestAnimations::Release()
+    void RtxScene::Release()
     {
         m_planeBlas.Reset();
         m_blas.Release();
@@ -1039,10 +1015,6 @@ namespace CPyburnRTXEngine
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();
         mpOutputResource.Reset();
-        //for (UINT cbvIndex = 0; cbvIndex < m_instanceCount; cbvIndex++)
-        {
-            m_EnvironmentCb.Release();
-        }
 
         GraphicsContexts::RemoveHeapPosition(mUavPosition);
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)

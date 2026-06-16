@@ -6,10 +6,11 @@
 #include "BufferConstant.h"
 #include "BufferHeap.h"
 #include "BufferBlas.h"
+#include "Environment.h"
 
 namespace CPyburnRTXEngine
 {
-	class TestAnimations
+	class RtxScene
 	{
 	private:
 		// 14.3.b bottom-level acceleration structure
@@ -74,20 +75,11 @@ namespace CPyburnRTXEngine
 		std::unique_ptr<AssimpAnimations> m_elfAnimated = nullptr;
 		Texture::HeapTexture m_heapTextureDiffuse = {};
 
-		struct EnvironmentData
-		{
-			XMFLOAT3 lightDirection = XMFLOAT3(0.5f, 0.5f, -0.5f);
-		};
-		EnvironmentData m_environmentData = {};
-		BufferConstant<EnvironmentData> m_EnvironmentCb;
-
 		struct InstanceData
 		{
 			XMMATRIX world = XMMatrixIdentity();
 		};
 		std::vector<InstanceData> m_instanceData;
-
-		void createConstantBuffer();
 				
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator[DX::DeviceResources::c_backBufferCount];
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_commandList[DX::DeviceResources::c_backBufferCount];
@@ -109,10 +101,12 @@ namespace CPyburnRTXEngine
 
 		BufferBlas<AssimpFactory::VSVertices> m_blas;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
+		
+		Environment m_environment;
 
 	public:
-		TestAnimations();
-		~TestAnimations();
+		RtxScene();
+		~RtxScene();
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
 		void Update(DX::StepTimer const& timer, CameraBase* camera);

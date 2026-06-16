@@ -161,18 +161,16 @@
     <ClInclude Include="BufferConstant.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DeviceResources.h" />
+    <ClInclude Include="Environment.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="GameInput.h" />
     <ClInclude Include="AssimpFactory.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="ShapeHelper.h" />
-    <ClInclude Include="TestAnimations.h" />
-    <ClInclude Include="TestFullscreen.h" />
+    <ClInclude Include="RtxScene.h" />
     <ClInclude Include="GraphicsContexts.h" />
     <ClInclude Include="pchlib.h" />
     <ClInclude Include="StepTimer.h" />
-    <ClInclude Include="TestModel.h" />
-    <ClInclude Include="TestTriangle.h" />
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
@@ -185,12 +183,12 @@
     <ClCompile Include="BufferHeap.h" />
     <ClCompile Include="CameraBase.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
+    <ClCompile Include="Environment.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="GameInput.cpp" />
     <ClCompile Include="AssimpFactory.cpp" />
     <ClCompile Include="ShapeHelper.cpp" />
-    <ClCompile Include="TestAnimations.cpp" />
-    <ClCompile Include="TestFullscreen.cpp" />
+    <ClCompile Include="RtxScene.cpp" />
     <ClCompile Include="GraphicsContexts.cpp" />
     <ClCompile Include="pchlib.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -198,8 +196,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TestModel.cpp" />
-    <ClCompile Include="TestTriangle.cpp" />
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -221,14 +217,6 @@
     <CustomBuild Include="sceneShaders.hlsl">
       <DeploymentContent>true</DeploymentContent>
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(Identity) "$(OutDir)" &gt; NUL</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\%(Identity)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="04-Shaders.hlsl">
-      <FileType>Document</FileType>
-      <DeploymentContent>true</DeploymentContent>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy %(Identity) "$(OutDir)" &gt; NUL</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\%(Identity)</Outputs>
     </CustomBuild>

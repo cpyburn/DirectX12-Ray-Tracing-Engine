@@ -9,13 +9,8 @@
 #include <DeviceResources.h>
 #include <StepTimer.h>
 
-#include <TestFullscreen.h>
 #include <FrameResource.h>
-//#include <TestTriangle.h>
-//#include <AssimpFactory.h>
-//#include <TestModel.h>
-//#include <TestInstances.h>
-#include <TestAnimations.h>
+#include <RtxScene.h>
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -70,11 +65,9 @@ private:
     // Rendering loop timer.
     DX::StepTimer                               m_timer;
 
-	//CPyburnRTXEngine::TestFullscreen            m_fullscreen;
-	CPyburnRTXEngine::TestAnimations            m_triangle;
+	CPyburnRTXEngine::RtxScene                  m_triangle;
     CPyburnRTXEngine::CameraBase                m_camera;
     CPyburnRTXEngine::GameInput                 m_gameInput;
-    //CPyburnRTXEngine::AssimpFactory                m_model;
 
     // If using the DirectX Tool Kit for DX12, uncomment this line:
     // std::unique_ptr<DirectX::GraphicsMemory> m_graphicsMemory;

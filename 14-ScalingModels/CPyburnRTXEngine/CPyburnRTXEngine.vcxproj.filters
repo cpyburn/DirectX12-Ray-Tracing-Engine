@@ -29,6 +29,12 @@
     <Filter Include="Environment">
       <UniqueIdentifier>{948021fa-805b-4870-9806-f5252fbc10ef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Entities">
+      <UniqueIdentifier>{0d9b6311-7632-4e40-bf9f-5a57dbd79940}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entities\Descriptions">
+      <UniqueIdentifier>{af0643df-bab3-470c-bb1b-2288a91f248f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StepTimer.h">
@@ -100,6 +106,15 @@
     <ClInclude Include="Environment.h">
       <Filter>Environment</Filter>
     </ClInclude>
+    <ClInclude Include="EntityDescription.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Properties.h">
+      <Filter>Entities\Descriptions</Filter>
+    </ClInclude>
+    <ClInclude Include="EntitiesManager.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceResources.cpp">
@@ -155,6 +170,12 @@
     </ClCompile>
     <ClCompile Include="Environment.cpp">
       <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityDescription.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="EntitiesManager.cpp">
+      <Filter>Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

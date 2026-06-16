@@ -420,13 +420,13 @@ namespace CPyburnRTXEngine
         rangeHit[0].NumDescriptors = 1;
         rangeHit[0].RegisterSpace = 1;
         rangeHit[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[0].OffsetInDescriptorsFromTableStart = 2;
+        rangeHit[0].OffsetInDescriptorsFromTableStart = 0; // this has to match the shader table entries
         // t4 - texture array (bindless)
         rangeHit[1].BaseShaderRegister = 1;
         rangeHit[1].NumDescriptors = 100; // todo: make it use cbv size
         rangeHit[1].RegisterSpace = 1;
         rangeHit[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        rangeHit[1].OffsetInDescriptorsFromTableStart = 3;
+        rangeHit[1].OffsetInDescriptorsFromTableStart = 1; // this has to match the shader table entries
 
         // SRVs
         rootParamsHit[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -713,7 +713,7 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
         //*(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().GpuHandle;
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_modelDataBuffer.GpuHandle;
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);

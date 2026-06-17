@@ -65,7 +65,10 @@ namespace CPyburnRTXEngine
 
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
-        m_elfAnimated->CreateBuffers(commandList.Get());
+        //m_elfAnimated->CreateBuffers(commandList.Get());
+        //m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute
+
+        EntitiesManager::CreateBuffers(commandList.Get());
 
         // create materials
         m_modelData.resize(m_instanceData.size());
@@ -86,8 +89,8 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Plane Buffer");
 
         // after all the buffers are created, create the shader resource views in the correct order for shader table
-        m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute
-        m_modelDataBuffer.CreateShaderResourceView(); // t2 for rtx shader
+        
+        m_modelDataBuffer.CreateShaderResourceView(); // t0 for rtx shader
 
         // create textures AFTER the last shader views
         for (auto& unorderedModel : AssimpFactory::Models)
@@ -820,9 +823,6 @@ namespace CPyburnRTXEngine
 
             //m_elfAnimated = std::make_unique<AssimpAnimations>(model->assimpFactory.get());
             //m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
-
-
-            //m_elfAnimated = EntitiesManager::LoadedEntities.find(1);
 
             // todo: move this eventually, really only testing right now
             m_instanceData.resize(18); // this is RTX instances, so it includes planes and other things, make sure the testing only includes the range, a better way would be to have an instance vector for models, which we will make eventually

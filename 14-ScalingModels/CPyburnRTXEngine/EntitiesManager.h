@@ -16,6 +16,7 @@ namespace CPyburnRTXEngine
 		~EntitiesManager();
 
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
+		static void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 		void Update(DX::StepTimer const& timer, CameraBase* camera);
 
 		static void LoadJson();

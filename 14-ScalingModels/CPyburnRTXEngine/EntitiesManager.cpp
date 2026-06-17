@@ -45,6 +45,17 @@ namespace CPyburnRTXEngine
 		}
 	}
 
+	// todo: not sure I want to keep this static, need to think about it
+	void EntitiesManager::CreateBuffers(ID3D12GraphicsCommandList4* commandList)
+	{
+		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
+		{
+			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
+			animation->CreateBuffers(commandList);
+			animation->CreateShaderResources();
+		}
+	}
+
 	void EntitiesManager::Update(DX::StepTimer const& timer, CameraBase* camera)
 	{
 

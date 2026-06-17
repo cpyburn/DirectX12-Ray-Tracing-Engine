@@ -28,16 +28,16 @@ namespace CPyburnRTXEngine
 		if (m_assimpAnimationsOwner)
 		{
 			m_assimpAnimationsOwner->CreateDeviceDependentResources(deviceResources);
-//#ifdef _DEBUG
-//			if (m_assimpFactoryModelPtr)
-//			{
-//				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
-//				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
-//				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
-//			}
-//#else
-//
-//#endif
+#ifdef _DEBUG
+			if (m_assimpFactoryModelPtr)
+			{
+				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
+				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
+				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
+			}
+#else
+
+#endif
 
 		}
 	}

@@ -58,7 +58,41 @@ namespace CPyburnRTXEngine
 
 	void EntitiesManager::Update(DX::StepTimer const& timer, CameraBase* camera)
 	{
+		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
+		{
+			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
+			animation->Update(timer);
 
+			AssimpFactory* model = animation->GetAssimpFactory();
+			model->GetBoundingBoxRenderer().Update(XMMatrixIdentity(), camera);
+			model->GetBoundingSphereRenderer().Update(XMMatrixIdentity(), camera);
+		}
+	}
+
+	void EntitiesManager::RenderBounding(ID3D12GraphicsCommandList4* commandList)
+	{
+		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
+		{
+			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
+			animation->GetAssimpFactory()->GetBoundingBoxRenderer().Render(commandList);
+			animation->GetAssimpFactory()->GetBoundingSphereRenderer().Render(commandList);
+		}
+	}
+
+	void EntitiesManager::DispatchAndUpdateBlas(ID3D12GraphicsCommandList4* commandList)
+	{
+		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
+		{
+			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
+			animation->GetAnimationCompute()->Dispatch(commandList);
+
+			D3D12_RESOURCE_BARRIER uavBarrier = {};
+			uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+			uavBarrier.UAV.pResource = animation->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
+			commandList->ResourceBarrier(1, &uavBarrier);
+
+			animation->GetAnimationBlas()->UpdateDynamicBlas(commandList);
+		}
 	}
 
 	void EntitiesManager::LoadJson()

@@ -72,9 +72,6 @@ namespace CPyburnRTXEngine
 		UINT mUavPosition = MAXUINT;
 		UINT mTlasSrvPosition[DX::DeviceResources::c_backBufferCount] = {};
 
-		AssimpAnimations* m_elfAnimated = nullptr;
-		Texture::HeapTexture m_heapTextureDiffuse = {};
-
 		struct InstanceData
 		{
 			XMMATRIX world = XMMatrixIdentity();

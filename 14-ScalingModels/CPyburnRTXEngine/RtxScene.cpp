@@ -46,23 +46,6 @@ namespace CPyburnRTXEngine
 
     void RtxScene::CreateBuffers()
     {
-        int count = 0;
-        for (UINT x = 0; x < 4; x++)
-        {
-            for (UINT y = 0; y < 4; y++)
-            {
-                if (count > 1)
-                {
-                    m_instanceData[count].world = XMMatrixRotationY(DirectX::XMConvertToRadians(180.0f)) * XMMatrixTranslation((float)x, 0, (float)y);
-                }
-                else
-                {
-                    m_instanceData[count].world = XMMatrixIdentity();
-                }
-                count++;
-            }
-        }
-
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
 
         //m_elfAnimated->CreateBuffers(commandList.Get());
@@ -113,11 +96,17 @@ namespace CPyburnRTXEngine
 
         for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
         {
-            m_modelData[i].verticesSrvIndex = m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
-            m_modelData[i].indicesSrvIndex = m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().HeapIndex;
-            m_modelData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
-            m_modelData[i].normalTexIndex = normal.indexInMaterialBuffer;
-            m_modelData[i].ormTexIndex = pbrOrm.indexInMaterialBuffer;
+           
+                 auto it = EntitiesManager::LoadedEntities.find(i);
+            if (it != EntitiesManager::LoadedEntities.end())
+            {
+                Entity* entity = &it->second;
+                m_modelData[i].verticesSrvIndex = entity->GetAssimpAnimations()->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
+                m_modelData[i].indicesSrvIndex = entity->GetAssimpAnimations()->GetAssimpFactory()->GetIndexBuffer().HeapIndex;
+                m_modelData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
+                m_modelData[i].normalTexIndex = normal.indexInMaterialBuffer;
+                m_modelData[i].ormTexIndex = pbrOrm.indexInMaterialBuffer;
+            }
         }
 
         m_modelDataBuffer.CpuData = m_modelData;
@@ -133,7 +122,7 @@ namespace CPyburnRTXEngine
         DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
 
         // release any uploads that will not be used again
-        m_elfAnimated->ReleaseUploadResources();
+        //m_elfAnimated->ReleaseUploadResources(); // todo: chad
         m_modelDataBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
     }
@@ -236,14 +225,21 @@ namespace CPyburnRTXEngine
         // model
         for (size_t i = 1; i < m_instanceData.size(); i++)
         {
-            pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
-            // 13.3.a
-            pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace()
-            pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
-            memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
-            pInstanceDesc[i].AccelerationStructure = m_elfAnimated->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
-            pInstanceDesc[i].InstanceMask = 0xFF;
+            auto it = EntitiesManager::LoadedEntities.find(i);
+            if (it != EntitiesManager::LoadedEntities.end())
+            {
+                Entity* entity = &it->second;
+
+
+                pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
+                // 13.3.a
+                pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace()
+                pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+                XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
+                memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
+                pInstanceDesc[i].AccelerationStructure = entity->GetAssimpAnimations()->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
+                pInstanceDesc[i].InstanceMask = 0xFF;
+            }
         }
 
         // Unmap
@@ -809,7 +805,7 @@ namespace CPyburnRTXEngine
         if (it != EntitiesManager::LoadedEntities.end())
         {
             Entity* entity = &it->second;
-            m_elfAnimated = entity->GetAssimpAnimations();
+            //m_elfAnimated = entity->GetAssimpAnimations();
         }
 
         // load all models
@@ -825,14 +821,14 @@ namespace CPyburnRTXEngine
             //m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
 
             // todo: move this eventually, really only testing right now
-            m_instanceData.resize(18); // this is RTX instances, so it includes planes and other things, make sure the testing only includes the range, a better way would be to have an instance vector for models, which we will make eventually
-#ifdef _DEBUG
-            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
-            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
-            m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
-#else
-
-#endif
+            m_instanceData.resize(1 + EntitiesManager::LoadedEntities.size()); // this is RTX instances, so it includes planes and other things, make sure the testing only includes the range, a better way would be to have an instance vector for models, which we will make eventually
+//#ifdef _DEBUG
+//            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
+//            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
+//            m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
+//#else
+//
+//#endif
         }
 
 
@@ -852,28 +848,31 @@ namespace CPyburnRTXEngine
 
     void RtxScene::Update(DX::StepTimer const& timer, CameraBase* camera)
     {
-        float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
+        //float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
-        XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
-        XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
+        //XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
+        //XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
 
-        // 3 instances
-        m_instanceData[1].world = XMMatrixRotationY(rotation) * translation1;
-        m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(-rotation);
+        //// 3 instances
+        //m_instanceData[1].world = XMMatrixRotationY(rotation) * translation1;
+        //m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(-rotation);
 
         // update the bones
-        m_elfAnimated->Update(timer);
-#ifdef _DEBUG
-        std::vector<XMMATRIX> testingBoundingSphereInstances(17);
-        for (size_t i = 1; i < m_instanceData.size(); i++)
-        {
-            testingBoundingSphereInstances[i - 1] = m_instanceData[i].world;
-        }
-        m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
-        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
-#else
-
-#endif
+        //m_elfAnimated->Update(timer);
+        
+        // chad: being done in game now
+        //EntitiesManager::Update(timer, camera);
+//#ifdef _DEBUG
+//        std::vector<XMMATRIX> testingBoundingSphereInstances(17);
+//        for (size_t i = 1; i < m_instanceData.size(); i++)
+//        {
+//            testingBoundingSphereInstances[i - 1] = m_instanceData[i].world;
+//        }
+//        m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
+//        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
+//#else
+//
+//#endif
         m_environment.Update(timer, camera);
     }
 
@@ -902,8 +901,10 @@ namespace CPyburnRTXEngine
 
 #ifdef _DEBUG
         BoundingRendererParent::RenderBegin(m_sceneCommandList, camera);
-        m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Render(m_sceneCommandList);
-        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);
+
+        /*m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Render(m_sceneCommandList);
+        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);*/
+        EntitiesManager::RenderBounding(m_sceneCommandList);
 #else
 
 #endif
@@ -920,17 +921,20 @@ namespace CPyburnRTXEngine
 
         //ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(FrameResource::COMMAND_LIST_SCENE_0, nullptr);
 
-        m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
-        {
-            D3D12_RESOURCE_BARRIER uavBarrier = {};
-            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-            uavBarrier.UAV.pResource =
-                m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
+        //m_elfAnimated->GetAnimationCompute()->Dispatch(m_sceneCommandList);
+        //{
+        //    D3D12_RESOURCE_BARRIER uavBarrier = {};
+        //    uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        //    uavBarrier.UAV.pResource =
+        //        m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
 
-            m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
-        }
+        //    m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
+        //}
 
-        m_elfAnimated->GetAnimationBlas()->UpdateDynamicBlas(m_sceneCommandList);
+        //m_elfAnimated->GetAnimationBlas()->UpdateDynamicBlas(m_sceneCommandList);
+
+        EntitiesManager::DispatchAndUpdateBlas(m_sceneCommandList);
+
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {

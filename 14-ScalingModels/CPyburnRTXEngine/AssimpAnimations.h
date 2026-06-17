@@ -3,11 +3,12 @@
 #include "AssimpFactory.h"
 #include "Animation.h"
 
+#include "AnimationPlayer.h"
+#include "AnimationCompute.h"
+#include "BufferBlas.h"
+
 namespace CPyburnRTXEngine
 {
-	class AnimationPlayer; // forward declaration
-	class AnimationCompute; // forward declaration
-
 	class AssimpAnimations
 	{
 	private:
@@ -23,6 +24,7 @@ namespace CPyburnRTXEngine
 			}
 		};
 
+		DX::DeviceResources* m_deviceResources;
 		AssimpFactory* m_assimpFactory = nullptr;
 
 		float m_ticksPerSecond = 0;
@@ -59,12 +61,13 @@ namespace CPyburnRTXEngine
 					return it->first;
 		}
 
-		// add animation player
-		std::unique_ptr<AnimationPlayer> m_animationPlayer = nullptr;
-		std::unique_ptr<AnimationCompute> m_animationCompute = nullptr;
+		AnimationPlayer m_animationPlayer;
+		AnimationCompute m_animationCompute;
+		BufferBlas<AssimpFactory::VSVertices> m_animationBlas;
 	public:
 		AssimpFactory* GetAssimpFactory() { return m_assimpFactory; }
-		AnimationCompute* GetAnimationCompute() { return m_animationCompute.get(); }
+		AnimationCompute* GetAnimationCompute() { return &m_animationCompute; }
+		BufferBlas<AssimpFactory::VSVertices>* GetAnimationBlas() { return &m_animationBlas; }
 
 		static std::unordered_map<UINT, std::string> AnimationTypes;
 		static std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> Animations;

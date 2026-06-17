@@ -39,15 +39,15 @@ namespace CPyburnRTXEngine
 		struct Model
 		{
 			UINT modelId = MAXUINT;
-			std::string name;
-			UINT meshEntryLocation;
-			std::string contentLocation;
+			std::string name = "not set";
+			UINT meshEntryLocation = MAXUINT;
+			std::string contentLocation = "not set";
 			std::vector<std::string> textures;
 
 			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
 			std::shared_ptr<BufferHeap<AssimpFactory::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
 		};
-		static std::unordered_map<UINT, Model> Models;
+		static std::map<UINT, Model> Models;
 
 		struct VSVertices
 		{

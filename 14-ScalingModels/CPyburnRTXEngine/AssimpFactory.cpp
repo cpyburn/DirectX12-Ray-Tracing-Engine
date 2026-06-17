@@ -5,7 +5,7 @@
 
 namespace CPyburnRTXEngine
 {
-	std::unordered_map<UINT, AssimpFactory::Model> AssimpFactory::Models;
+	std::map<UINT, AssimpFactory::Model> AssimpFactory::Models;
 
 	void AssimpFactory::DoMeshTransforms(aiNode* node, XMMATRIX parentTransform)
 	{

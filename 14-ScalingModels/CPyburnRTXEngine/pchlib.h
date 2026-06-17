@@ -68,8 +68,8 @@
 #include <tuple>
 
 #include <vector>
-//#include <map> // chad: commented out because we don't think we will use map unless we require sorting at some point
-#include <unordered_map>
+#include <map> // using maps for sorted indexs and loading texures in the right expected order
+#include <unordered_map> // when sorting doesn't matter, these are faster
 #include <mutex>
 #include <fstream>
 #include <sstream> // istringstream

@@ -1,6 +1,5 @@
 #pragma once
 #include "AssimpFactory.h"
-#include "AssimpAnimations.h"
 #include "BufferHeap.h"
 
 namespace CPyburnRTXEngine

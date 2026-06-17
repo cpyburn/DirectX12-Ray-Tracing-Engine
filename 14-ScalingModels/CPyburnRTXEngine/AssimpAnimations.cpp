@@ -1,9 +1,6 @@
 #include "pchlib.h"
 #include "AssimpAnimations.h"
 
-#include "AnimationPlayer.h"
-#include "AnimationCompute.h"
-
 namespace CPyburnRTXEngine
 {
 	std::unordered_map<UINT, std::string> AssimpAnimations::AnimationTypes;
@@ -356,11 +353,11 @@ namespace CPyburnRTXEngine
 			m_ticksPerSecond = (float)(pScene->mAnimations[0]->mTicksPerSecond != 0 ? pScene->mAnimations[0]->mTicksPerSecond : 25.0f);
 			m_duration = (float)pScene->mAnimations[0]->mDuration;
 
-			m_animationPlayer = std::make_unique<AnimationPlayer>(this);
+			m_animationPlayer.SetAssimpAnimation(this);
 			// todo: remove after testing
 			//m_animationPlayer->PlayClip(L"sword_action_3", true);
 			//m_animationPlayer->PlayClip("walk", true);
-			m_animationPlayer->PlayClipByAnimationType(Animation::AnimationType::run, true);
+			m_animationPlayer.PlayClipByAnimationType(Animation::AnimationType::run, true);
 		}
 		else
 		{
@@ -375,22 +372,23 @@ namespace CPyburnRTXEngine
 
 	void AssimpAnimations::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
-		m_animationCompute = std::make_unique<AnimationCompute>();
-		m_animationCompute->CreateDeviceDependentResources(deviceResources);
+		m_deviceResources = deviceResources;
+		m_animationCompute.CreateDeviceDependentResources(deviceResources);
 	}
 
 	void AssimpAnimations::CreateBuffers(ID3D12GraphicsCommandList4* commandList)
 	{
 		m_assimpFactory->CreateBuffers(commandList);
-		
-		m_animationCompute->CreateBuffers(commandList, m_assimpFactory->GetVertexBuffer(), m_assimpFactory->GetBoneBuffer(), m_assimpFactory->GetBoneInfo());
+		m_animationCompute.CreateBuffers(commandList, m_assimpFactory->GetVertexBuffer(), m_assimpFactory->GetBoneBuffer(), m_assimpFactory->GetBoneInfo());
+		m_animationBlas.InitDynamicBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_assimpFactory->GetMeshEntries()[0].vertices.size()), m_animationCompute.GetVertexOutputBuffer().DefaultHeapResource, commandList, m_assimpFactory->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_assimpFactory->GetMeshEntries()[0].indices.size()));
+		m_animationBlas.UpdateDynamicBlas(commandList);
 	}
 
 	void AssimpAnimations::CreateShaderResources()
 	{
 		m_assimpFactory->GetVertexBuffer()->CreateShaderResourceView(); // t0 for compute shader
 		m_assimpFactory->GetBoneBuffer()->CreateShaderResourceView(); // t1 for compute shader
-		m_animationCompute->CreateShaderResources(); // t2, u0 for compute shader, t0 rtx shader
+		m_animationCompute.CreateShaderResources(); // t2, u0 for compute shader, t0 rtx shader
 
 		// put the indices heap position right after the vertices heap position since they are used together shader table
 		m_assimpFactory->GetIndexBuffer().CreateShaderResourceView(); // t1 for rtx shader
@@ -417,16 +415,16 @@ namespace CPyburnRTXEngine
 
 	void AssimpAnimations::Update(DX::StepTimer const& timer)
 	{
-		if (m_animationPlayer)
+		if (m_animationPlayer.GetAssimpAnimation())
 		{
-			m_animationPlayer->Update(timer);
-			m_animationCompute->Update(m_animationPlayer->GetBones());
+			m_animationPlayer.Update(timer);
+			m_animationCompute.Update(m_animationPlayer.GetBones());
 
 			double time = timer.GetTotalSeconds();
 			if (time > 5.0 && played == false)
 			{
 				played = true;
-				m_animationPlayer->BlendClipByAnimationType(Animation::AnimationType::action_sword, true);
+				m_animationPlayer.BlendClipByAnimationType(Animation::AnimationType::action_sword, true);
 			}
 		}
 	}
@@ -434,15 +432,11 @@ namespace CPyburnRTXEngine
 	void AssimpAnimations::ReleaseUploadResources()
 	{
 		m_assimpFactory->ReleaseUploadResources();
-		m_animationCompute->ReleaseUploadResources();
+		m_animationCompute.ReleaseUploadResources();
 	}
 
 	void AssimpAnimations::Release()
 	{
-		m_animationPlayer.reset();
-		m_animationPlayer = nullptr;
-
-		m_animationCompute.reset();
-		m_animationCompute = nullptr;
+		m_animationBlas.Release();
 	}
 }

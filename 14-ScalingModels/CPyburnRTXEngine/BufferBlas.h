@@ -30,7 +30,7 @@ namespace CPyburnRTXEngine
             Release();
         }
 
-        void InitBlas(ID3D12Device5* m_d3dDevice, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, ID3D12GraphicsCommandList4* commandList, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
+        void InitDynamicBlas(ID3D12Device5* m_d3dDevice, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, ID3D12GraphicsCommandList4* commandList, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
         {
             m_bufDesc.Alignment = 0;
             m_bufDesc.DepthOrArraySize = 1;
@@ -102,7 +102,7 @@ namespace CPyburnRTXEngine
             m_uavBarrier.UAV.pResource = m_result.Get();
         }
         
-        void UpdateBlas(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList)
+        void UpdateDynamicBlas(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList)
         {
             commandList->BuildRaytracingAccelerationStructure(&m_asDesc, 0, nullptr);
 
@@ -110,7 +110,7 @@ namespace CPyburnRTXEngine
             commandList->ResourceBarrier(1, &m_uavBarrier);
         }
 
-        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBlas(DX::DeviceResources* deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, ID3D12GraphicsCommandList4* commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
+        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateStaticBlas(DX::DeviceResources* deviceResources, const UINT& count, const Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer, ID3D12GraphicsCommandList4* commandList, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12Resource> indicesBuffer = nullptr, UINT indicesCount = 0)
         {
             D3D12_RESOURCE_DESC m_bufDesc = {};
             m_bufDesc.Alignment = 0;

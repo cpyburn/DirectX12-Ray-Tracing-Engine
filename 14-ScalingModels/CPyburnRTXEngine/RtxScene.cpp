@@ -83,7 +83,7 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Plane Buffer");
 
         // after all the buffers are created, create the shader resource views in the correct order for shader table
-        m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute, // t0, t1 for rtx shader
+        m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute
         m_modelDataBuffer.CreateShaderResourceView(); // t2 for rtx shader
 
         // create textures AFTER the last shader views
@@ -139,9 +139,9 @@ namespace CPyburnRTXEngine
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferBlas<XMFLOAT3>::CreateBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            m_blas.InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
-            m_blas.UpdateBlas(commandList);
+            m_planeBlas = BufferBlas<XMFLOAT3>::CreateStaticBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
+            //m_blas.InitDynamicBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
+            //m_blas.UpdateDynamicBlas(commandList);
         }
 
         // Top Level AS
@@ -236,7 +236,7 @@ namespace CPyburnRTXEngine
             pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
             XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
             memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
-            pInstanceDesc[i].AccelerationStructure = m_blas.GetResult()->GetGPUVirtualAddress(); // triangle blas
+            pInstanceDesc[i].AccelerationStructure = m_elfAnimated->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
             pInstanceDesc[i].InstanceMask = 0xFF;
         }
 
@@ -915,7 +915,7 @@ namespace CPyburnRTXEngine
             m_sceneCommandList->ResourceBarrier(1, &uavBarrier);
         }
 
-        m_blas.UpdateBlas(m_sceneCommandList);
+        m_elfAnimated->GetAnimationBlas()->UpdateDynamicBlas(m_sceneCommandList);
 
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {
@@ -1016,7 +1016,6 @@ namespace CPyburnRTXEngine
     void RtxScene::Release()
     {
         m_planeBlas.Reset();
-        m_blas.Release();
         mpPipelineState.Reset();
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();

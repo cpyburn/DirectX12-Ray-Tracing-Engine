@@ -41,7 +41,10 @@ namespace CPyburnRTXEngine
 		void BlendClip(const std::string& clipName, bool repeat = true, bool forward = true);
 
 	public:
-		AnimationPlayer(AssimpAnimations* skinnedMesh);
+		const AssimpAnimations* GetAssimpAnimation() { return m_skinnedMesh; }
+		void SetAssimpAnimation(AssimpAnimations* skinnedMesh);
+
+		AnimationPlayer();
 		~AnimationPlayer();
 
 		void PlayClipByAnimationType(const Animation::AnimationType& animationType, bool repeat = true, bool forward = true);
@@ -72,7 +75,7 @@ namespace CPyburnRTXEngine
 		bool DoesAnimationTypeExist(const Animation::AnimationType& animationType)
 		{
 			UINT animationTypeId = (UINT)animationType;
-			auto iter = m_animationsByModelId->find((UINT)animationType);
+			auto iter = m_animationsByModelId->find(animationTypeId);
 			if (iter != m_animationsByModelId->end())
 			{
 				if (iter->second.size() > 0)

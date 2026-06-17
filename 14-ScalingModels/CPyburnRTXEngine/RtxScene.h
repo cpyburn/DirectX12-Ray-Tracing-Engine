@@ -99,7 +99,6 @@ namespace CPyburnRTXEngine
 		std::vector<RtxModelData> m_modelData;
 		BufferHeap<RtxModelData> m_modelDataBuffer;
 
-		BufferBlas<AssimpFactory::VSVertices> m_blas;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
 		
 		Environment m_environment;

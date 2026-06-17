@@ -447,7 +447,7 @@ namespace CPyburnRTXEngine
 		m_indexBuffer.CreateShaderResourceView();
 	}
 
-	void AssimpFactory::LoadJson()
+	void AssimpFactory::LoadJsonForAllModels()
 	{
 		// see if animations have already been loaded
 		if (AssimpFactory::Models.size() > 0)
@@ -517,8 +517,7 @@ namespace CPyburnRTXEngine
 			model.textures.push_back(tex.GetString());
 		}
 
-		auto [insertedIt, inserted] =
-			AssimpFactory::Models.emplace(model.modelId, std::move(model));
+		auto [insertedIt, inserted] = AssimpFactory::Models.emplace(model.modelId, std::move(model));
 
 		return &insertedIt->second;
 	}

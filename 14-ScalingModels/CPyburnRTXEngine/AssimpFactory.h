@@ -46,6 +46,8 @@ namespace CPyburnRTXEngine
 
 			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
 			std::shared_ptr<BufferHeap<AssimpFactory::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
+
+			AssimpFactory* GetAssimpFactoryPtr() { return assimpFactory.get(); }
 		};
 		static std::map<UINT, Model> Models;
 
@@ -214,7 +216,7 @@ namespace CPyburnRTXEngine
 		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
 		void CreateShaderResources();
 
-		static void LoadJson();
+		static void LoadJsonForAllModels();
 		static AssimpFactory::Model* LoadJsonByModelId(const UINT& id);
 
 		void ReleaseUploadResources();

@@ -19,6 +19,30 @@ namespace CPyburnRTXEngine
 	void EntitiesManager::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
 		m_deviceResources = deviceResources;
+
+		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
+		{
+			Entity* entity = &loadedEntity.second;
+			const UINT& modelId = entity->GetEntityDescription()->GetProperties()->GetModelId();
+
+			auto it = AssimpFactory::Models.find(modelId);
+			if (it != AssimpFactory::Models.end())
+			{
+				AssimpFactory::Model* model = &it->second;
+				if (!model->assimpFactory)
+				{
+					std::string modelPath = "..\\..\\Assets\\Models\\" + model->contentLocation + model->name;
+					model->assimpFactory = std::make_unique<AssimpFactory>(model, modelPath);
+					model->assimpFactory->CreateDeviceDependentResources(deviceResources);
+
+					entity->CreateAssimpAnimations(model->GetAssimpFactoryPtr());
+					entity->CreateDeviceDependentResources(deviceResources);
+
+					//m_elfAnimated = std::make_unique<AssimpAnimations>(model->assimpFactory.get());
+					//m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
+				}
+			}
+		}
 	}
 
 	void EntitiesManager::Update(DX::StepTimer const& timer, CameraBase* camera)
@@ -57,7 +81,7 @@ namespace CPyburnRTXEngine
 				AssimpFactory::Model* ptrModel = AssimpFactory::LoadJsonByModelId(entityProperties->GetModelId());
 				entity.SetAssimpFactoryModel(ptrModel);
 
-				LoadedEntities[entityProperties->GetId()] = entity;
+				LoadedEntities.emplace(entityProperties->GetId(), std::move(entity));
 			}
 		}
 	}

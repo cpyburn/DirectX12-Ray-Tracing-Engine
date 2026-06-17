@@ -66,7 +66,7 @@ private:
     // Rendering loop timer.
     DX::StepTimer                               m_timer;
 
-	CPyburnRTXEngine::RtxScene                  m_triangle;
+	CPyburnRTXEngine::RtxScene                  m_rtxScene;
     CPyburnRTXEngine::CameraBase                m_camera;
     CPyburnRTXEngine::GameInput                 m_gameInput;
     CPyburnRTXEngine::EntitiesManager           m_entitiesManager;

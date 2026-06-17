@@ -4,6 +4,9 @@
 #include "BufferBlas.h"
 #include "AnimationCompute.h"
 
+#include "EntitiesManager.h"
+#include "Entity.h"
+
 namespace CPyburnRTXEngine
 {
     static const WCHAR* kRayGenShader = L"rayGen";
@@ -799,17 +802,27 @@ namespace CPyburnRTXEngine
         m_modelDataBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
-        // load all models
-        for (auto& unorderedModel : AssimpFactory::Models)
+        auto it = EntitiesManager::LoadedEntities.find(1);
+        if (it != EntitiesManager::LoadedEntities.end())
         {
-            AssimpFactory::Model* model = &unorderedModel.second;
+            Entity* entity = &it->second;
+            m_elfAnimated = entity->GetAssimpAnimations();
+        }
 
-            std::string modelPath = "..\\..\\Assets\\Models\\" + model->contentLocation + model->name;
-            model->assimpFactory = std::make_unique<AssimpFactory>(model, modelPath);
-            model->assimpFactory->CreateDeviceDependentResources(deviceResources);
+        // load all models
+        for (auto& mapModel : AssimpFactory::Models)
+        {
+            AssimpFactory::Model* model = &mapModel.second;
 
-            m_elfAnimated = std::make_unique<AssimpAnimations>(model->assimpFactory.get());
-            m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
+            //std::string modelPath = "..\\..\\Assets\\Models\\" + model->contentLocation + model->name;
+            //model->assimpFactory = std::make_unique<AssimpFactory>(model, modelPath);
+            //model->assimpFactory->CreateDeviceDependentResources(deviceResources);
+
+            //m_elfAnimated = std::make_unique<AssimpAnimations>(model->assimpFactory.get());
+            //m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
+
+
+            //m_elfAnimated = EntitiesManager::LoadedEntities.find(1);
 
             // todo: move this eventually, really only testing right now
             m_instanceData.resize(18); // this is RTX instances, so it includes planes and other things, make sure the testing only includes the range, a better way would be to have an instance vector for models, which we will make eventually
@@ -821,6 +834,8 @@ namespace CPyburnRTXEngine
 
 #endif
         }
+
+
 
         CreateCommandObjects();
         CreateBuffers();

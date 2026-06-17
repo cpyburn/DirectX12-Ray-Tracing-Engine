@@ -86,7 +86,7 @@ void Game::Update(DX::StepTimer const& timer)
         CreateWindowSizeDependentResources();
     }
 
-    m_triangle.Update(timer, &m_camera);
+    m_rtxScene.Update(timer, &m_camera);
     m_camera.Update(timer, &m_gameInput);
     m_entitiesManager.Update(timer, &m_camera);
 
@@ -105,7 +105,7 @@ void Game::Render()
     }
 
     //m_fullscreen.Render();
-	m_triangle.Render(&m_camera);
+	m_rtxScene.Render(&m_camera);
     m_deviceResources->Render();
 
     ID3D12GraphicsCommandList4* m_sceneCommandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(CPyburnRTXEngine::FrameResource::COMMAND_LIST_SCENE_0);
@@ -244,18 +244,17 @@ void Game::CreateDeviceDependentResources()
     // TODO: Initialize device dependent objects here (independent of window size).
     CPyburnRTXEngine::Texture::CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 
-    //m_fullscreen.CreateDeviceDependentResources(m_deviceResources);
-	m_triangle.CreateDeviceDependentResources(m_deviceResources.get());
+    m_entitiesManager.CreateDeviceDependentResources(m_deviceResources.get());
+	m_rtxScene.CreateDeviceDependentResources(m_deviceResources.get());
     m_camera.CreateDeviceDependentResources(m_deviceResources.get());
     m_gameInput.CreateDeviceDependentResources(m_deviceResources.get());
-    m_entitiesManager.CreateDeviceDependentResources(m_deviceResources.get());
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
     // TODO: Initialize windows-size dependent objects here.
-    m_triangle.CreateWindowSizeDependentResources();
+    m_rtxScene.CreateWindowSizeDependentResources();
     m_camera.CreateWindowSizeDependentResources();
 }
 

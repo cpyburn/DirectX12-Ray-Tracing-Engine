@@ -7,6 +7,22 @@ namespace CPyburnRTXEngine
 {
 	std::unordered_map<UINT, Entity> EntitiesManager::LoadedEntities;
 
+	std::unordered_map<UINT, size_t> EntitiesManager::m_batchIndexByModelId;
+	std::vector<EntitiesManager::Batch> EntitiesManager::m_visibleBatches;
+
+	void EntitiesManager::AddVisible(Entity* entity, AssimpFactory::Model* model, UINT modelId, const XMMATRIX& world)
+	{
+		auto [it, inserted] = m_batchIndexByModelId.try_emplace(modelId, m_visibleBatches.size());
+
+		if (inserted)
+		{
+			m_visibleBatches.push_back(Batch{ model, {} });
+			m_visibleBatches.back().instances.reserve(64); // estimate
+		}
+
+		m_visibleBatches[it->second].instances.push_back(VisibleInstance{ entity, world });
+	}
+
 	EntitiesManager::EntitiesManager()
 	{
 		LoadJson();
@@ -55,6 +71,9 @@ namespace CPyburnRTXEngine
 
 	void EntitiesManager::Update(DX::StepTimer const& timer, CameraBase* camera)
 	{
+		m_batchIndexByModelId.clear();
+		m_visibleBatches.clear();
+
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
 			Entity* entity = &loadedEntity.second;
@@ -66,6 +85,8 @@ namespace CPyburnRTXEngine
 			AssimpFactory* model = animation->GetAssimpFactory();
 			model->GetBoundingBoxRenderer().Update(entity->GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform(), camera);
 			model->GetBoundingSphereRenderer().Update(entity->GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform(), camera);
+
+			AddVisible(entity, model->GetModel(), model->GetModel()->modelId, entity->GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform());
 		}
 	}
 

@@ -197,7 +197,7 @@ namespace CPyburnRTXEngine
 		const std::unordered_map<std::string, unsigned int>& GetBoneMapping() { return m_boneMapping; }
 		const std::vector<XMMATRIX>& GetBoneInfo() { return m_boneInfo; }
 		const UINT& GetNumBones() const { return m_numBones; }
-		const Model* GetModel() { return m_ptrModel; }
+		Model* GetModel() { return m_ptrModel; }
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>* GetVertexBuffer() { return &m_vertexBuffer; }

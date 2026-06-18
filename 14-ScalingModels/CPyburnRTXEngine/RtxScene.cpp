@@ -848,6 +848,14 @@ namespace CPyburnRTXEngine
 
     void RtxScene::Update(DX::StepTimer const& timer, CameraBase* camera)
     {
+        auto it = EntitiesManager::LoadedEntities.find(1);
+        if (it != EntitiesManager::LoadedEntities.end())
+        {
+            // Found
+            Entity& entity = it->second;
+            m_instanceData[1].world = entity.GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform();
+        }
+
         //float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
         //XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);

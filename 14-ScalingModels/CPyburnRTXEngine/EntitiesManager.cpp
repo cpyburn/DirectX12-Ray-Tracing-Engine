@@ -64,8 +64,8 @@ namespace CPyburnRTXEngine
 			animation->Update(timer);
 
 			AssimpFactory* model = animation->GetAssimpFactory();
-			model->GetBoundingBoxRenderer().Update(XMMatrixIdentity(), camera);
-			model->GetBoundingSphereRenderer().Update(XMMatrixIdentity(), camera);
+			model->GetBoundingBoxRenderer().Update(entity->GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform(), camera);
+			model->GetBoundingSphereRenderer().Update(entity->GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform(), camera);
 		}
 	}
 

@@ -21,6 +21,11 @@ namespace CPyburnRTXEngine
 		}
 	}
 
+	void Entity::Update()
+	{
+		m_entityDescriptionCurrentState.GetProperties()->Update();
+	}
+
 	void Entity::CreateDeviceDependentResources(DX::DeviceResources* deviceResources)
 	{
 		m_deviceResources = deviceResources;

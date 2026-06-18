@@ -32,6 +32,7 @@ namespace CPyburnRTXEngine
 		Entity& operator=(Entity&&) noexcept = default;
 		~Entity() = default;
 
+		void Update();
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 	};
 }

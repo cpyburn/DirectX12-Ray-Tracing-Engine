@@ -57,7 +57,10 @@ namespace CPyburnRTXEngine
 	{
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
-			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
+			Entity* entity = &loadedEntity.second;
+			entity->Update();
+
+			AssimpAnimations* animation = entity->GetAssimpAnimations();
 			animation->Update(timer);
 
 			AssimpFactory* model = animation->GetAssimpFactory();

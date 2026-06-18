@@ -68,9 +68,9 @@ namespace CPyburnRTXEngine
         //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)));
         //DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
-		m_baseVertexBuffer = baseVertices;
+		m_baseVertexBufferPtr = baseVertices;
 
-		m_boneBuffer = boneData;
+		m_boneBufferPtr = boneData;
 
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
@@ -79,7 +79,7 @@ namespace CPyburnRTXEngine
         }
 
         // Output buffer
-        m_outVertexBuffer.CpuData = m_baseVertexBuffer->CpuData;
+        m_outVertexBuffer.CpuData = m_baseVertexBufferPtr->CpuData;
         m_outVertexBuffer.CreateOnDefaultHeap(commandList, L"Out Vertices Buffer", D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
         //DX::ThrowIfFailed(commandList->Close());
@@ -124,13 +124,13 @@ namespace CPyburnRTXEngine
         commandList->SetComputeRootSignature(m_rootSig.Get());
 
         // Root parameter 0: SRVs t0-t1
-        commandList->SetComputeRootDescriptorTable(0, m_baseVertexBuffer->GpuHandle);
+        commandList->SetComputeRootDescriptorTable(0, m_baseVertexBufferPtr->GpuHandle);
         // Root parameter 1: SRVs t2 because we have to buffer
         commandList->SetComputeRootDescriptorTable(1, m_boneMatricesBuffer[m_deviceResources->GetCurrentFrameIndex()].GpuHandle);
         // Root parameter 2: UAV u0
         commandList->SetComputeRootDescriptorTable(2, m_outVertexBuffer.GpuHandle);
 
-        const UINT groups = (static_cast<UINT>(m_baseVertexBuffer->CpuData.size()) + 255u) / 256u;
+        const UINT groups = (static_cast<UINT>(m_baseVertexBufferPtr->CpuData.size()) + 255u) / 256u;
         commandList->Dispatch(groups, 1, 1);
 
         auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(m_outVertexBuffer.DefaultHeapResource.Get());

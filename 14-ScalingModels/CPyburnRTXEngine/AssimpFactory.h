@@ -45,7 +45,6 @@ namespace CPyburnRTXEngine
 			std::vector<std::string> textures;
 
 			std::unique_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
-			std::unique_ptr<BufferHeap<AssimpFactory::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
 
 			AssimpFactory* GetAssimpFactoryPtr() { return assimpFactory.get(); }
 
@@ -180,7 +179,7 @@ namespace CPyburnRTXEngine
 		// directX 12 buffers
 		BufferHeap<AssimpFactory::VSVertices> m_vertexBuffer;
 		BufferHeap<UINT> m_indexBuffer;
-		std::shared_ptr<BufferHeap<AssimpFactory::VertexBoneData>> m_boneBuffer = nullptr;
+		std::unique_ptr<BufferHeap<AssimpFactory::VertexBoneData>> m_boneBuffer = nullptr;
 
 		UINT m_numBones = 0;
 		std::vector<XMMATRIX> m_boneInfo;

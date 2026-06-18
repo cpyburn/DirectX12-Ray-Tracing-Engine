@@ -434,7 +434,7 @@ namespace CPyburnRTXEngine
 
 		if (m_numBones > 0)
 		{
-			m_boneBuffer = std::make_shared<BufferHeap<AssimpFactory::VertexBoneData>>();
+			m_boneBuffer = std::make_unique<BufferHeap<AssimpFactory::VertexBoneData>>();
 			m_boneBuffer->CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 			m_boneBuffer->CpuData = m_bones;
 			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_ptrModel->modelId));

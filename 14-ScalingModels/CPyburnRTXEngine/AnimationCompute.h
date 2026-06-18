@@ -7,8 +7,8 @@ namespace CPyburnRTXEngine
 	class AnimationCompute
 	{
 	private:
-		BufferHeap<AssimpFactory::VSVertices>* m_baseVertexBuffer = nullptr;
-		BufferHeap<AssimpFactory::VertexBoneData>* m_boneBuffer = nullptr;
+		BufferHeap<AssimpFactory::VSVertices>* m_baseVertexBufferPtr = nullptr;
+		BufferHeap<AssimpFactory::VertexBoneData>* m_boneBufferPtr = nullptr;
 		BufferHeap<XMMATRIX> m_boneMatricesBuffer[DX::DeviceResources::c_backBufferCount];
 		BufferHeap<AssimpFactory::VSVertices> m_outVertexBuffer;
 

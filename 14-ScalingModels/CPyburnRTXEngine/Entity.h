@@ -11,7 +11,8 @@ namespace CPyburnRTXEngine
 	private:
 		DX::DeviceResources* m_deviceResources = nullptr;
 
-		EntityDescription m_startingEntityDescription;
+		EntityDescription m_entityDescriptionInitialState; // starting description or respawn or reverting
+		EntityDescription m_entityDescriptionCurrentState; // current modified description
 
 		AssimpFactory::Model* m_assimpFactoryModelPtr = nullptr;
 		std::unique_ptr<AssimpAnimations> m_assimpAnimationsOwner = nullptr; // Entities will be the owner of the animation that their entity needs
@@ -21,7 +22,8 @@ namespace CPyburnRTXEngine
 		void CreateAssimpAnimations(AssimpFactory* assimpFactory);
 		AssimpAnimations* GetAssimpAnimations() { return m_assimpAnimationsOwner.get(); }
 
-		EntityDescription* GetEntityDescription() { return &m_startingEntityDescription;  }
+		void SetEntityDescriptionInitialState(const EntityDescription& entityDescriptionInitialState) { m_entityDescriptionInitialState = entityDescriptionInitialState; }
+		EntityDescription* GetEntityDescriptionCurrentState() { return &m_entityDescriptionCurrentState;  }
 		
 		Entity() = default;
 		Entity(const Entity&) = delete;

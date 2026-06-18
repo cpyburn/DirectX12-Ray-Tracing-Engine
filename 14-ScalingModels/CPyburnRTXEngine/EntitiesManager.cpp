@@ -23,7 +23,7 @@ namespace CPyburnRTXEngine
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
 			Entity* entity = &loadedEntity.second;
-			const UINT& modelId = entity->GetEntityDescription()->GetProperties()->GetModelId();
+			const UINT& modelId = entity->GetEntityDescriptionCurrentState()->GetProperties()->GetModelId();
 
 			auto it = AssimpFactory::Models.find(modelId);
 			if (it != AssimpFactory::Models.end())
@@ -34,13 +34,10 @@ namespace CPyburnRTXEngine
 					std::string modelPath = "..\\..\\Assets\\Models\\" + model->contentLocation + model->name;
 					model->assimpFactory = std::make_unique<AssimpFactory>(model, modelPath);
 					model->assimpFactory->CreateDeviceDependentResources(deviceResources);
-
-					entity->CreateAssimpAnimations(model->GetAssimpFactoryPtr());
-					entity->CreateDeviceDependentResources(deviceResources);
-
-					//m_elfAnimated = std::make_unique<AssimpAnimations>(model->assimpFactory.get());
-					//m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
 				}
+
+				entity->CreateAssimpAnimations(model->GetAssimpFactoryPtr());
+				entity->CreateDeviceDependentResources(deviceResources);
 			}
 		}
 	}
@@ -112,7 +109,7 @@ namespace CPyburnRTXEngine
 
 			for (auto& v : arr.GetArray()) {
 				Entity entity;
-				EntityDescription* entityDescription = entity.GetEntityDescription();
+				EntityDescription* entityDescription = entity.GetEntityDescriptionCurrentState();
 				Properties* entityProperties = entityDescription->GetProperties();
 
 				entityProperties->SetId(v["id"].GetUint());
@@ -121,6 +118,8 @@ namespace CPyburnRTXEngine
 				entityProperties->SetScale({ v["scaleX"].GetFloat(), v["scaleY"].GetFloat(), v["scaleZ"].GetFloat() });
 				entityProperties->SetRotation({ v["rotationX"].GetFloat(), v["rotationY"].GetFloat(), v["rotationZ"].GetFloat() });
 				entityProperties->SetModelId(v["modelId"].GetUint());
+
+				entity.SetEntityDescriptionInitialState(*entityDescription); // set the initial entity description, this should always match the created stated
 
 				// load the model
 				AssimpFactory::Model* ptrModel = AssimpFactory::LoadJsonByModelId(entityProperties->GetModelId());

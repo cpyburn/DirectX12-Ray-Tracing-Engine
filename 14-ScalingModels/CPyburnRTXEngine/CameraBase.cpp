@@ -5,9 +5,9 @@ namespace CPyburnRTXEngine
 {
     CameraBase::CameraBase() :
         m_fieldOfView(70.0f * XM_PI / 180.0f),
-        m_up(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)),
-        m_eye(XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f)),
-        m_lookAt(XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f))
+        m_up({ 0.0f, 1.0f, 0.0f }),
+        m_eye({ 0.0f, 1.0f, -5.0f }),
+        m_lookAt({ 0.0f, 0.0f, 0.0f })
 	{
 
 	}
@@ -75,13 +75,15 @@ namespace CPyburnRTXEngine
         if (!XMVector3Equal(move, XMVectorZero()))
             move = XMVector3Normalize(move);
 
-        m_eye += move * m_movementSpeed * dt;
+        XMVECTOR movement = move * m_movementSpeed * dt;
+        XMVECTOR eye = XMLoadFloat3(&m_eye);
+        eye += movement;
 
         // =========================
         // 4. BUILD VIEW / PROJECTION
         // =========================
-        XMVECTOR lookAt = m_eye + forward;
-        XMMATRIX view = XMMatrixLookAtLH(m_eye, lookAt, up);
+        XMVECTOR lookAt = eye + forward;
+        XMMATRIX view = XMMatrixLookAtLH(eye, lookAt, up);
         float nearPlane = 0.1f;
         float farPlane = 10000.0f;
 
@@ -97,6 +99,9 @@ namespace CPyburnRTXEngine
         DirectX::BoundingFrustum::CreateFromMatrix(frustumViewSpace, projForBounding);
         frustumViewSpace.Transform(m_boundingFrustum, invViewForBounding);
 
+        // store eye in m_eye
+        XMStoreFloat3(&m_eye, eye);
+
         // =========================
         // 5. UPDATE CONSTANT BUFFER
         // =========================
@@ -104,8 +109,7 @@ namespace CPyburnRTXEngine
         XMStoreFloat4x4(&m_cameraCbv.CpuData.gProj, proj);
         XMStoreFloat4x4(&m_cameraCbv.CpuData.gInvView, invView);
         XMStoreFloat4x4(&m_cameraCbv.CpuData.gInvProj, invProj);
-
-        XMStoreFloat3(&m_cameraCbv.CpuData.gCameraPos, m_eye);
+        m_cameraCbv.CpuData.gCameraPos = m_eye;
 
         m_cameraCbv.CopyToGpu(m_deviceResources->GetCurrentFrameIndex());
     }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pchlib.h"
+
 namespace CPyburnRTXEngine
 {
 	class Properties 
@@ -11,6 +13,8 @@ namespace CPyburnRTXEngine
 		XMFLOAT3 m_scale = XMFLOAT3(1, 1, 1);
 		XMFLOAT3 m_rotation = XMFLOAT3(0, 0, 0);
 		UINT m_modelId = MAXUINT;
+
+		XMMATRIX m_worldTransform;
 
 	public:
 		const UINT& GetId() { return m_id; }
@@ -28,6 +32,8 @@ namespace CPyburnRTXEngine
 		XMVECTOR GetXMRotation() { return XMLoadFloat3(&m_rotation); }
 		void SetRotation(XMFLOAT3 rotation) { m_rotation = rotation; }
 
+		const XMMATRIX& GetXMTransform() { return m_worldTransform; }
+
 		const UINT& GetModelId() { return m_modelId; }
 		void SetModelId(UINT modelId) { m_modelId = modelId; }
 
@@ -35,5 +41,10 @@ namespace CPyburnRTXEngine
 		Properties(const Properties&) = default;
 		Properties& operator=(const Properties&) = default;
 		~Properties() = default;
+
+		void Update() 
+		{
+			m_worldTransform = XMMatrixScalingFromVector(GetXMScale()) * XMMatrixRotationRollPitchYawFromVector(GetXMRotation()) * XMMatrixTranslationFromVector(GetXMPosition());
+		}
 	};
 }

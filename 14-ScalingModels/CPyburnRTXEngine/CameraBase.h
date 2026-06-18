@@ -25,9 +25,9 @@ namespace CPyburnRTXEngine
 		float m_aspectRatio = 0;
 		float m_fieldOfView = 0;
 
-		XMVECTOR m_up;
-		XMVECTOR m_eye;
-		XMVECTOR m_lookAt;
+		XMFLOAT3 m_up;
+		XMFLOAT3 m_eye;
+		XMFLOAT3 m_lookAt;
 
 		const float m_movementSpeed = 10.0f;
 		float m_yaw = 0;

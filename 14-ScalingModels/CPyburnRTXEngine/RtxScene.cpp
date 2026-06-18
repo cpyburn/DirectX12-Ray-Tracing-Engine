@@ -94,10 +94,10 @@ namespace CPyburnRTXEngine
         fileName = RemoveExtension(AssimpFactory::Models[1].textures[0], outExtension) + "_ORM." + outExtension;
         Texture::HeapTexture pbrOrm = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + AssimpFactory::Models[1].contentLocation + fileName, commandList.Get());
 
-        for (size_t i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
+        for (UINT i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
         {
            
-                 auto it = EntitiesManager::LoadedEntities.find(i);
+            auto it = EntitiesManager::LoadedEntities.find(i);
             if (it != EntitiesManager::LoadedEntities.end())
             {
                 Entity* entity = &it->second;
@@ -223,7 +223,7 @@ namespace CPyburnRTXEngine
         pInstanceDesc[0].InstanceMask = 0xFF;
 
         // model
-        for (size_t i = 1; i < m_instanceData.size(); i++)
+        for (UINT i = 1; i < m_instanceData.size(); i++)
         {
             auto it = EntitiesManager::LoadedEntities.find(i);
             if (it != EntitiesManager::LoadedEntities.end())

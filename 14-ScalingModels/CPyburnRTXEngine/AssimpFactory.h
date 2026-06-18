@@ -44,10 +44,16 @@ namespace CPyburnRTXEngine
 			std::string contentLocation = "not set";
 			std::vector<std::string> textures;
 
-			std::shared_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
-			std::shared_ptr<BufferHeap<AssimpFactory::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
+			std::unique_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
+			std::unique_ptr<BufferHeap<AssimpFactory::VertexBoneData>> boneBuffer = nullptr; // pointer to the ONE copy of the animation bones so the resource isn't created over and over again
 
 			AssimpFactory* GetAssimpFactoryPtr() { return assimpFactory.get(); }
+
+			Model() = default;
+			Model(const Model&) = delete;
+			Model& operator=(const Model&) = delete;
+			Model(Model&&) noexcept = default;
+			Model& operator=(Model&&) noexcept = default;
 		};
 		static std::map<UINT, Model> Models;
 

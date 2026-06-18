@@ -473,7 +473,7 @@ namespace CPyburnRTXEngine
 					model.textures.push_back(tex.GetString());
 				}
 
-				AssimpFactory::Models[model.modelId] = model;
+				Models.emplace(model.modelId, std::move(model));
 			}
 		}
 	}

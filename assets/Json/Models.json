@@ -1,28 +1,12 @@
 {
   "models": [
     {
-      "id": 1,
-      "name": "Elf-ranger.X",
+      "id": 2,
+      "name": "rocks.fbx",
       "meshEntryLocation": 0,
-      "contentLocation": "Elf\\",
+      "contentLocation": "Rocks 1\\",
       "textureBaseColorList": [
-        "elf_ranger_t01.jpg",
-        "elf_ranger_t02.jpg",
-        "elf_ranger_t03.jpg",
-        "elf_ranger_t04.jpg",
-        "elf_ranger_t05.jpg",
-        "elf_ranger_t06.jpg",
-        "elf_ranger_t07.jpg",
-        "elf_ranger_t08.jpg",
-        "elf_ranger_t09.jpg",
-        "elf_ranger_t10.jpg",
-        "elf_ranger_t11.jpg",
-        "elf_ranger_t12.jpg",
-        "elf_ranger_t13.jpg",
-        "elf_ranger_t14.jpg",
-        "elf_ranger_t15.jpg",
-        "elf_ranger_t16.jpg",
-        "elf_ranger_t17.jpg"
+        "rocks.png"
       ]
     }
   ]

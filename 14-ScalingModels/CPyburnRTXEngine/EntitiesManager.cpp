@@ -124,6 +124,7 @@ namespace CPyburnRTXEngine
 	{
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
+			Entity* entity = &loadedEntity.second;
 			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
 			if (animation)
 			{
@@ -136,12 +137,14 @@ namespace CPyburnRTXEngine
 
 				animation->GetAnimationBlas()->UpdateBlas(commandList);
 			}
-			else if (loadedEntity.second.GetAssimpFactoryModel()->assimpFactory)
+			else if (entity->GetAssimpFactoryModel()->assimpFactory)
 			{
-				D3D12_RESOURCE_BARRIER uavBarrier = {};
-				uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-				uavBarrier.UAV.pResource = loadedEntity.second.GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetVertexBuffer()->DefaultHeapResource.Get();
-				commandList->ResourceBarrier(1, &uavBarrier);
+				//D3D12_RESOURCE_BARRIER uavBarrier = {};
+				//uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+				//uavBarrier.UAV.pResource = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetVertexBuffer()->DefaultHeapResource.Get();
+				//commandList->ResourceBarrier(1, &uavBarrier);
+
+				entity->GetAssimpFactoryModel()->blas->UpdateBlas(commandList);
 			}
 		}
 	}

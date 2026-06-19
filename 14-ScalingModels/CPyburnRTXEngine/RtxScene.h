@@ -93,10 +93,10 @@ namespace CPyburnRTXEngine
 			UINT normalTexIndex = 0;
 			UINT ormTexIndex = 0;
 		};
-		std::vector<RtxModelData> m_modelData;
-		BufferHeap<RtxModelData> m_modelDataBuffer;
+		std::vector<RtxModelData> m_modelDataPerInstance; // todo: always writing to this, needs to be multibuffered?
+		BufferHeap<RtxModelData> m_modelDataPerInstanceBuffer;
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_planeBlas;
+		BufferBlas<XMFLOAT3> m_planeBlas;
 		
 		Environment m_environment;
 

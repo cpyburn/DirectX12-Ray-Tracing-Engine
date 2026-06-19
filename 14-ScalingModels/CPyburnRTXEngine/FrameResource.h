@@ -19,8 +19,11 @@ namespace CPyburnRTXEngine
 		~FrameResource();
 
 		void Init(ID3D12Device* d3dDevice);
-		ID3D12GraphicsCommandList4* ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState = nullptr);
-		ID3D12GraphicsCommandList4* GetCommandList(int commandList) { return m_commandLists[commandList].Get(); }
+		ID3D12GraphicsCommandList4* ResetCommandList(const int commandListIndex, ID3D12PipelineState* pInitialState = nullptr);
+		ID3D12GraphicsCommandList4* GetCommandList(int commandListIndex) 
+		{ 
+			return m_commandLists[commandListIndex].Get(); 
+		}
 		void Release();
 	};
 }

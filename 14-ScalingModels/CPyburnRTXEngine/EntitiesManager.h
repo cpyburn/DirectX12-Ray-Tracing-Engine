@@ -10,20 +10,15 @@ namespace CPyburnRTXEngine
 	class EntitiesManager
 	{
 	public:
-		struct VisibleInstance
-		{
-			Entity* entity;      // non-owning
-			XMMATRIX world;
-		};
-
 		struct Batch
 		{
 			AssimpFactory::Model* model;   // non-owning
-			std::vector<VisibleInstance> instances;
+			std::vector<XMMATRIX> instances;
 		};
 
-		static std::unordered_map<UINT, size_t> m_batchIndexByModelId;
-		static std::vector<Batch> m_visibleBatches;
+		static std::unordered_map<UINT, size_t> m_batchIndexByModelIdStatic;
+		static std::vector<Batch> m_visibleBatchesStatic;
+		inline static UINT m_instanceCountStatic;
 
 		static void AddVisible(Entity* entity, AssimpFactory::Model* model, UINT modelId, const XMMATRIX& world);
 

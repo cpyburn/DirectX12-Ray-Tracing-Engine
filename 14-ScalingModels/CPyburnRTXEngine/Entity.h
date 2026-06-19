@@ -21,10 +21,11 @@ namespace CPyburnRTXEngine
 		void SetAssimpFactoryModel(AssimpFactory::Model* assimpFactoryModel);
 		void CreateAssimpAnimations(AssimpFactory* assimpFactory);
 		AssimpAnimations* GetAssimpAnimations() { return m_assimpAnimationsOwner.get(); }
+		AssimpFactory::Model* GetAssimpFactoryModel() {return m_assimpFactoryModelPtr; }
 
 		void SetEntityDescriptionInitialState(const EntityDescription& entityDescriptionInitialState) { m_entityDescriptionInitialState = entityDescriptionInitialState; }
 		EntityDescription* GetEntityDescriptionCurrentState() { return &m_entityDescriptionCurrentState;  }
-		
+		 
 		Entity() = default;
 		Entity(const Entity&) = delete;
 		Entity& operator=(const Entity&) = delete;

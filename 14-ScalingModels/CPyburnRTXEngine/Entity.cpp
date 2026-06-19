@@ -15,7 +15,7 @@ namespace CPyburnRTXEngine
 
 	void Entity::CreateAssimpAnimations(AssimpFactory* assimpFactory)
 	{
-		if (!m_assimpAnimationsOwner)
+		if (assimpFactory->GetNumBones() > 0 && !m_assimpAnimationsOwner)
 		{
 			m_assimpAnimationsOwner = std::make_unique<AssimpAnimations>(assimpFactory);
 		}
@@ -30,20 +30,20 @@ namespace CPyburnRTXEngine
 	{
 		m_deviceResources = deviceResources;
 
-		if (m_assimpAnimationsOwner)
-		{
-			m_assimpAnimationsOwner->CreateDeviceDependentResources(deviceResources);
 #ifdef _DEBUG
-			if (m_assimpFactoryModelPtr)
-			{
-				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
-				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
-				m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
-			}
+		if (m_assimpFactoryModelPtr)
+		{
+			m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
+			m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
+			m_assimpFactoryModelPtr->GetAssimpFactoryPtr()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources); // only 1 instance for entity
+		}
 #else
 
 #endif
 
+		if (m_assimpAnimationsOwner)
+		{
+			m_assimpAnimationsOwner->CreateDeviceDependentResources(deviceResources);
 		}
 	}
 }

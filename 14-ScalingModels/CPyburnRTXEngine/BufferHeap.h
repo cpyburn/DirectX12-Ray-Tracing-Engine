@@ -184,7 +184,7 @@ namespace CPyburnRTXEngine
             }
         }
 
-        void CreateShaderResourceView(bool useUploadHeap = false)
+        void CreateShaderResourceView(bool useUploadHeap)
         {
             CreateHeapPosition();
 

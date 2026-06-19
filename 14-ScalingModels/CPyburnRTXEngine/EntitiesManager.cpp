@@ -7,20 +7,25 @@ namespace CPyburnRTXEngine
 {
 	std::unordered_map<UINT, Entity> EntitiesManager::LoadedEntities;
 
-	std::unordered_map<UINT, size_t> EntitiesManager::m_batchIndexByModelId;
-	std::vector<EntitiesManager::Batch> EntitiesManager::m_visibleBatches;
+	std::unordered_map<UINT, size_t> EntitiesManager::m_batchIndexByModelIdStatic;
+	std::vector<EntitiesManager::Batch> EntitiesManager::m_visibleBatchesStatic;
 
 	void EntitiesManager::AddVisible(Entity* entity, AssimpFactory::Model* model, UINT modelId, const XMMATRIX& world)
 	{
-		auto [it, inserted] = m_batchIndexByModelId.try_emplace(modelId, m_visibleBatches.size());
-
-		if (inserted)
+		if (!entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->IsSkinned())
 		{
-			m_visibleBatches.push_back(Batch{ model, {} });
-			m_visibleBatches.back().instances.reserve(64); // estimate
-		}
+			auto [it, inserted] = m_batchIndexByModelIdStatic.try_emplace(modelId, m_visibleBatchesStatic.size());
 
-		m_visibleBatches[it->second].instances.push_back(VisibleInstance{ entity, world });
+			if (inserted)
+			{
+				m_visibleBatchesStatic.push_back(Batch{ model, {} });
+				m_visibleBatchesStatic.back().instances.reserve(64); // estimate
+			}
+
+			m_visibleBatchesStatic[it->second].instances.push_back(world);
+
+			m_instanceCountStatic++;
+		}
 	}
 
 	EntitiesManager::EntitiesManager()
@@ -63,16 +68,26 @@ namespace CPyburnRTXEngine
 	{
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
-			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
-			animation->CreateBuffers(commandList);
-			animation->CreateShaderResources();
+			Entity* entity = &loadedEntity.second;
+			AssimpAnimations* animation = entity->GetAssimpAnimations();
+			if (animation)
+			{
+				animation->CreateBuffers(commandList);
+				animation->CreateShaderResources();
+			}
+			else if(!entity->GetAssimpFactoryModel()->blas)
+			{
+				entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->CreateBuffers(commandList);
+				entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->CreateShaderResources();
+			}
 		}
 	}
 
 	void EntitiesManager::Update(DX::StepTimer const& timer, CameraBase* camera)
 	{
-		m_batchIndexByModelId.clear();
-		m_visibleBatches.clear();
+		m_instanceCountStatic = 0;
+		m_batchIndexByModelIdStatic.clear();
+		m_visibleBatchesStatic.clear();
 
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
@@ -80,9 +95,12 @@ namespace CPyburnRTXEngine
 			entity->Update();
 
 			AssimpAnimations* animation = entity->GetAssimpAnimations();
-			animation->Update(timer);
-
-			AssimpFactory* model = animation->GetAssimpFactory();
+			if (animation)
+			{
+				animation->Update(timer);
+			}
+			
+			AssimpFactory* model = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr();
 			model->GetBoundingBoxRenderer().Update(entity->GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform(), camera);
 			model->GetBoundingSphereRenderer().Update(entity->GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform(), camera);
 
@@ -94,9 +112,11 @@ namespace CPyburnRTXEngine
 	{
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
-			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
-			animation->GetAssimpFactory()->GetBoundingBoxRenderer().Render(commandList);
-			animation->GetAssimpFactory()->GetBoundingSphereRenderer().Render(commandList);
+			Entity* entity = &loadedEntity.second;
+			AssimpFactory* model = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr();
+
+			model->GetBoundingBoxRenderer().Render(commandList);
+			model->GetBoundingSphereRenderer().Render(commandList);
 		}
 	}
 
@@ -105,14 +125,24 @@ namespace CPyburnRTXEngine
 		for (auto& loadedEntity : EntitiesManager::LoadedEntities)
 		{
 			AssimpAnimations* animation = loadedEntity.second.GetAssimpAnimations();
-			animation->GetAnimationCompute()->Dispatch(commandList);
+			if (animation)
+			{
+				animation->GetAnimationCompute()->Dispatch(commandList);
 
-			D3D12_RESOURCE_BARRIER uavBarrier = {};
-			uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-			uavBarrier.UAV.pResource = animation->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
-			commandList->ResourceBarrier(1, &uavBarrier);
+				D3D12_RESOURCE_BARRIER uavBarrier = {};
+				uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+				uavBarrier.UAV.pResource = animation->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
+				commandList->ResourceBarrier(1, &uavBarrier);
 
-			animation->GetAnimationBlas()->UpdateDynamicBlas(commandList);
+				animation->GetAnimationBlas()->UpdateBlas(commandList);
+			}
+			else if (loadedEntity.second.GetAssimpFactoryModel()->assimpFactory)
+			{
+				D3D12_RESOURCE_BARRIER uavBarrier = {};
+				uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+				uavBarrier.UAV.pResource = loadedEntity.second.GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetVertexBuffer()->DefaultHeapResource.Get();
+				commandList->ResourceBarrier(1, &uavBarrier);
+			}
 		}
 	}
 

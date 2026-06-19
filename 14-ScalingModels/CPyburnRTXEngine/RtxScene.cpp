@@ -46,7 +46,7 @@ namespace CPyburnRTXEngine
 
     void RtxScene::CreateBuffers()
     {
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0, nullptr);
 
         //m_elfAnimated->CreateBuffers(commandList.Get());
         //m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute
@@ -54,9 +54,9 @@ namespace CPyburnRTXEngine
         EntitiesManager::CreateBuffers(commandList.Get());
 
         // create materials
-        m_modelData.resize(m_instanceData.size());
-		m_modelDataBuffer.CpuData = m_modelData;
-		m_modelDataBuffer.CreateOnDefaultHeap(commandList.Get(), L"Material Buffer");
+        m_modelDataPerInstance.resize(64);
+		m_modelDataPerInstanceBuffer.CpuData = m_modelDataPerInstance;
+		m_modelDataPerInstanceBuffer.CreateOnUploadHeap(L"ModelDataPerInstance Buffer");
 
         // create createPlaneVB
         std::vector<XMFLOAT3> planeVertices(6);
@@ -73,7 +73,7 @@ namespace CPyburnRTXEngine
 
         // after all the buffers are created, create the shader resource views in the correct order for shader table
         
-        m_modelDataBuffer.CreateShaderResourceView(); // t0 for rtx shader
+        m_modelDataPerInstanceBuffer.CreateShaderResourceView(true); // t0 for rtx shader
 
         // create textures AFTER the last shader views
         for (auto& unorderedModel : AssimpFactory::Models)
@@ -82,17 +82,19 @@ namespace CPyburnRTXEngine
             for (size_t texIndex = 0; texIndex < model.textures.size(); texIndex++)
             {
                 std::string textureLocation = model.textures[texIndex];
-                Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + textureLocation, commandList.Get());
+                model.texturesHeap.push_back(Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + textureLocation, commandList.Get()));
             }
+
+            // load the normal and the ORM
+            std::string outExtension;
+            std::string fileName = RemoveExtension(model.textures[0], outExtension) + "_NRM." + outExtension;
+            model.texturesNrm.push_back(fileName);
+            model.texturesHeapNrm.push_back(Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + fileName, commandList.Get()));
+
+            fileName = RemoveExtension(model.textures[0], outExtension) + "_ORM." + outExtension;
+            model.texturesOrm.push_back(fileName);
+            model.texturesHeapOrm.push_back(Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + fileName, commandList.Get()));
         }
-
-        // load the normal and the ORM
-        std::string outExtension;
-        std::string fileName = RemoveExtension(AssimpFactory::Models[1].textures[0], outExtension) + "_NRM." + outExtension;
-        Texture::HeapTexture normal = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + AssimpFactory::Models[1].contentLocation + fileName, commandList.Get());
-
-        fileName = RemoveExtension(AssimpFactory::Models[1].textures[0], outExtension) + "_ORM." + outExtension;
-        Texture::HeapTexture pbrOrm = Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + AssimpFactory::Models[1].contentLocation + fileName, commandList.Get());
 
         for (UINT i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
         {
@@ -101,16 +103,25 @@ namespace CPyburnRTXEngine
             if (it != EntitiesManager::LoadedEntities.end())
             {
                 Entity* entity = &it->second;
-                m_modelData[i].verticesSrvIndex = entity->GetAssimpAnimations()->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
-                m_modelData[i].indicesSrvIndex = entity->GetAssimpAnimations()->GetAssimpFactory()->GetIndexBuffer().HeapIndex;
-                m_modelData[i].baseColorTexIndex = static_cast<UINT>(i - 1);
-                m_modelData[i].normalTexIndex = normal.indexInMaterialBuffer;
-                m_modelData[i].ormTexIndex = pbrOrm.indexInMaterialBuffer;
+                if (entity->GetAssimpAnimations())
+                {
+                    m_modelDataPerInstance[i].verticesSrvIndex = entity->GetAssimpAnimations()->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
+                    m_modelDataPerInstance[i].indicesSrvIndex = entity->GetAssimpAnimations()->GetAssimpFactory()->GetIndexBuffer()->HeapIndex;
+                }
+                else
+                {
+                    m_modelDataPerInstance[i].verticesSrvIndex = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetVertexBuffer()->HeapIndex;
+                    m_modelDataPerInstance[i].indicesSrvIndex = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetIndexBuffer()->HeapIndex;
+                }
+
+                m_modelDataPerInstance[i].baseColorTexIndex = entity->GetAssimpFactoryModel()->texturesHeap[0].indexInMaterialBuffer;
+                m_modelDataPerInstance[i].normalTexIndex = entity->GetAssimpFactoryModel()->texturesHeapNrm[0].indexInMaterialBuffer;
+                m_modelDataPerInstance[i].ormTexIndex = entity->GetAssimpFactoryModel()->texturesHeapOrm[0].indexInMaterialBuffer;
             }
         }
 
-        m_modelDataBuffer.CpuData = m_modelData;
-        m_modelDataBuffer.CopyUploadToDefault(commandList.Get());
+        m_modelDataPerInstanceBuffer.CpuData = m_modelDataPerInstance;
+        m_modelDataPerInstanceBuffer.CopyCpuDataToUploadHeap();
 
         // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
         DX::ThrowIfFailed(commandList->Close());
@@ -118,25 +129,22 @@ namespace CPyburnRTXEngine
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         m_deviceResources->WaitForGpu();
 
-        DX::ThrowIfFailed(m_commandAllocator[0]->Reset());
-        DX::ThrowIfFailed(commandList->Reset(m_commandAllocator[0].Get(), nullptr));
+        m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0);
 
         // release any uploads that will not be used again
         //m_elfAnimated->ReleaseUploadResources(); // todo: chad
-        m_modelDataBuffer.ReleaseUploadResource();
+        //m_modelDataPerInstanceBuffer.ReleaseUploadResource();
 		m_planeVertexBuffer.ReleaseUploadResource();
     }
 
     void RtxScene::createAccelerationStructures()
     {
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_commandList[0];
-
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_deviceResources->GetCurrentFrameResource()->GetCommandList(0);
         // Bottom Level AS
         {
             // Store the AS buffers. The rest of the buffers will be released once we exit the function
-            m_planeBlas = BufferBlas<XMFLOAT3>::CreateStaticBlas(m_deviceResources, 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get(), m_commandAllocator[0]);
-            //m_blas.InitDynamicBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].vertices.size()), m_elfAnimated->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource, commandList.Get(), m_elfAnimated->GetAssimpFactory()->GetIndexBuffer().DefaultHeapResource, static_cast<UINT>(m_elfAnimated->GetAssimpFactory()->GetMeshEntries()[0].indices.size()));
-            //m_blas.UpdateDynamicBlas(commandList);
+            m_planeBlas.InitBlas(m_deviceResources->GetD3DDevice(), 6, m_planeVertexBuffer.DefaultHeapResource, commandList.Get());
+            m_planeBlas.UpdateBlas(commandList.Get());
         }
 
         // Top Level AS
@@ -151,6 +159,8 @@ namespace CPyburnRTXEngine
         ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
         m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
         m_deviceResources->WaitForGpu();
+
+        //m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0, nullptr);
     }
 
     void RtxScene::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
@@ -193,7 +203,7 @@ namespace CPyburnRTXEngine
         {
             //ComPtr<ID3D12Resource> pScratch;
             auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
 
             m_bufDesc.Width = info.ResultDataMaxSizeInBytes;
             //ComPtr<ID3D12Resource> pResult;
@@ -219,7 +229,7 @@ namespace CPyburnRTXEngine
         pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
         XMMATRIX transpose = XMMatrixTranspose(m_instanceData[0].world);
         memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
-        pInstanceDesc[0].AccelerationStructure = m_planeBlas->GetGPUVirtualAddress(); // plane blas
+        pInstanceDesc[0].AccelerationStructure = m_planeBlas.GetResult()->GetGPUVirtualAddress(); // plane blas
         pInstanceDesc[0].InstanceMask = 0xFF;
 
         // model
@@ -230,7 +240,6 @@ namespace CPyburnRTXEngine
             {
                 Entity* entity = &it->second;
 
-
                 pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
                 // 13.3.a
                 pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace()
@@ -238,6 +247,7 @@ namespace CPyburnRTXEngine
                 XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
                 memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
                 pInstanceDesc[i].AccelerationStructure = entity->GetAssimpAnimations()->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
+                //pInstanceDesc[i].AccelerationStructure = entity->GetAssimpFactoryModel()->blas->GetResult()->GetGPUVirtualAddress(); // triangle blas
                 pInstanceDesc[i].InstanceMask = 0xFF;
             }
         }
@@ -718,7 +728,7 @@ namespace CPyburnRTXEngine
         //*(uint64_t*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + kSrvSize * 2) = GraphicsContexts::GetGpuHandle(m_heapTextureDiffuse.heapPosition).ptr; //heapStart + GraphicsContexts::c_descriptorSize * mVertexBufferSrvPosition; // The SRV
         uint8_t* pEntry3 = shaderTableEntryHelper(3, pRtsoProps.Get(), pData, kHitGroup);
         //*(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_triangleVertexBuffer.GpuHandle;
-        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_modelDataBuffer.GpuHandle;
+        *(D3D12_GPU_DESCRIPTOR_HANDLE*)(pEntry3 + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = m_modelDataPerInstanceBuffer.GpuHandle;
 
         // Entry 4 - Triangle 0, shadow ray. ProgramID only
         shaderTableEntryHelper(4, pRtsoProps.Get(), pData, kShadowHitGroup);
@@ -798,40 +808,13 @@ namespace CPyburnRTXEngine
             mTlasSrvPosition[i] = GraphicsContexts::GetAvailableHeapPosition();
         }
 
-        m_modelDataBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
+        m_modelDataPerInstanceBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
-        auto it = EntitiesManager::LoadedEntities.find(1);
-        if (it != EntitiesManager::LoadedEntities.end())
-        {
-            Entity* entity = &it->second;
-            //m_elfAnimated = entity->GetAssimpAnimations();
-        }
-
-        // load all models
-        for (auto& mapModel : AssimpFactory::Models)
-        {
-            AssimpFactory::Model* model = &mapModel.second;
-
-            //std::string modelPath = "..\\..\\Assets\\Models\\" + model->contentLocation + model->name;
-            //model->assimpFactory = std::make_unique<AssimpFactory>(model, modelPath);
-            //model->assimpFactory->CreateDeviceDependentResources(deviceResources);
-
-            //m_elfAnimated = std::make_unique<AssimpAnimations>(model->assimpFactory.get());
-            //m_elfAnimated->CreateDeviceDependentResources(m_deviceResources);
-
-            // todo: move this eventually, really only testing right now
-            m_instanceData.resize(1 + EntitiesManager::LoadedEntities.size()); // this is RTX instances, so it includes planes and other things, make sure the testing only includes the range, a better way would be to have an instance vector for models, which we will make eventually
-//#ifdef _DEBUG
-//            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
-//            m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().SetColor(Colors::Blue);
-//            m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().CreateDeviceDependentResources(deviceResources, static_cast<UINT>(m_instanceData.size()) - 1); // -1 for plane
-//#else
-//
-//#endif
-        }
-
-
+        m_instanceData.reserve(64);
+        m_instanceData.resize(2); // 1 at least for plane
+        m_instanceData[0].world = XMMatrixIdentity();
+        m_instanceData[1].world = XMMatrixIdentity();
 
         CreateCommandObjects();
         CreateBuffers();
@@ -848,13 +831,16 @@ namespace CPyburnRTXEngine
 
     void RtxScene::Update(DX::StepTimer const& timer, CameraBase* camera)
     {
-        auto it = EntitiesManager::LoadedEntities.find(1);
-        if (it != EntitiesManager::LoadedEntities.end())
-        {
-            // Found
-            Entity& entity = it->second;
-            m_instanceData[1].world = entity.GetEntityDescriptionCurrentState()->GetProperties()->GetXMTransform();
-        }
+        //UINT terrainInstanceCount = 1;
+        //m_instanceData.reserve(terrainInstanceCount + EntitiesManager::m_instanceCountStatic);
+        //UINT addedInstanceCount = terrainInstanceCount;
+        //for (UINT i = 0; i < EntitiesManager::m_visibleBatchesStatic.size(); i++)
+        //{
+        //    std::vector<InstanceData>& dst = m_instanceData;
+        //    std::vector<XMMATRIX>& src = EntitiesManager::m_visibleBatchesStatic[i].instances;
+        //    m_instanceData.insert(m_instanceData.begin() + addedInstanceCount, src.begin(), src.end());
+        //    addedInstanceCount += src.size();
+        //}
 
         //float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
 
@@ -1042,7 +1028,7 @@ namespace CPyburnRTXEngine
 
     void RtxScene::Release()
     {
-        m_planeBlas.Reset();
+        m_planeBlas.Release();
         mpPipelineState.Reset();
         mpEmptyRootSig.Reset();
         mpShaderTable.Reset();

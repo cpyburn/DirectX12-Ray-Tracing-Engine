@@ -367,7 +367,7 @@ namespace CPyburnRTXEngine
 	AssimpFactory::AssimpFactory(Model* model, const std::string& fileName, unsigned int customFlags) :
 		m_boundingSphereRadiusTranslation(XMMatrixIdentity())
 	{
-		m_ptrModel = model;
+		m_modelPtr = model;
 		m_pathFileName = fileName;
 
 		char drive[_MAX_DRIVE];
@@ -437,14 +437,19 @@ namespace CPyburnRTXEngine
 			m_boneBuffer = std::make_unique<BufferHeap<AssimpFactory::VertexBoneData>>();
 			m_boneBuffer->CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());
 			m_boneBuffer->CpuData = m_bones;
-			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_ptrModel->modelId));
+			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_modelPtr->modelId));
+		}
+		else if (!m_modelPtr->blas.get()) // no bones
+		{
+			m_modelPtr->blas = std::make_unique<BufferBlas<AssimpFactory::VSVertices>>();
+			m_modelPtr->blas->InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_meshEntries[0].vertices.size()), m_vertexBuffer.DefaultHeapResource, commandList, m_indexBuffer.DefaultHeapResource, static_cast<UINT>(m_meshEntries[0].indices.size()));
 		}
 	}
 
 	void AssimpFactory::CreateShaderResources()
 	{
-		m_vertexBuffer.CreateShaderResourceView();
-		m_indexBuffer.CreateShaderResourceView();
+		m_vertexBuffer.CreateShaderResourceView(false);
+		m_indexBuffer.CreateShaderResourceView(false);
 	}
 
 	void AssimpFactory::LoadJsonForAllModels()

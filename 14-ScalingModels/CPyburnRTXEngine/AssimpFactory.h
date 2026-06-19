@@ -8,12 +8,22 @@
 #include "BoundingBoxRenderer.h"
 #include "BoundingSphereRenderer.h"
 #include "BufferHeap.h"
+#include "BufferBlas.h"
+#include "Texture.h"
 
 namespace CPyburnRTXEngine
 {
 	class AssimpFactory
 	{
 	public:
+		struct VSVertices
+		{
+			XMFLOAT3 position;
+			XMFLOAT2 texture;
+			XMFLOAT3 normal;
+			XMFLOAT3 tangent;
+		};
+
 		struct VertexBoneData
 		{
 			unsigned int IDs[4];
@@ -43,8 +53,14 @@ namespace CPyburnRTXEngine
 			UINT meshEntryLocation = MAXUINT;
 			std::string contentLocation = "not set";
 			std::vector<std::string> textures;
+			std::vector<std::string> texturesNrm;
+			std::vector<std::string> texturesOrm;
+			std::vector<Texture::HeapTexture> texturesHeap;
+			std::vector<Texture::HeapTexture> texturesHeapNrm;
+			std::vector<Texture::HeapTexture> texturesHeapOrm;
 
 			std::unique_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
+			std::unique_ptr<BufferBlas<AssimpFactory::VSVertices>> blas = nullptr;
 
 			AssimpFactory* GetAssimpFactoryPtr() { return assimpFactory.get(); }
 
@@ -56,13 +72,7 @@ namespace CPyburnRTXEngine
 		};
 		static std::map<UINT, Model> Models;
 
-		struct VSVertices
-		{
-			XMFLOAT3 position;
-			XMFLOAT2 texture;
-			XMFLOAT3 normal;
-			XMFLOAT3 tangent;
-		};
+
 
 		struct MeshEntry
 		{
@@ -140,7 +150,7 @@ namespace CPyburnRTXEngine
 		DX::DeviceResources* m_deviceResources = nullptr;
 
 		std::vector<MeshEntry> m_meshEntries;
-		Model* m_ptrModel = nullptr;
+		Model* m_modelPtr = nullptr;
 		std::string m_pathFileName;
 		std::string m_fileName;
 		std::string m_pathDirectory;
@@ -196,12 +206,13 @@ namespace CPyburnRTXEngine
 		const std::vector<AssimpFactory::VertexBoneData>& GetBones() { return m_bones; }
 		const std::unordered_map<std::string, unsigned int>& GetBoneMapping() { return m_boneMapping; }
 		const std::vector<XMMATRIX>& GetBoneInfo() { return m_boneInfo; }
+		const bool& IsSkinned() { return m_isSkinned; }
 		const UINT& GetNumBones() const { return m_numBones; }
-		Model* GetModel() { return m_ptrModel; }
+		Model* GetModel() { return m_modelPtr; }
 		std::vector<MeshEntry>& GetMeshEntries() { return m_meshEntries; }
 		std::string GetTextureDiffuse() const { return m_textureDiffuse; }
 		BufferHeap<AssimpFactory::VSVertices>* GetVertexBuffer() { return &m_vertexBuffer; }
-		BufferHeap<UINT>& GetIndexBuffer() { return m_indexBuffer; }
+		BufferHeap<UINT>* GetIndexBuffer() { return &m_indexBuffer; }
 		BufferHeap<AssimpFactory::VertexBoneData>* GetBoneBuffer() { return m_boneBuffer.get(); }
 		const aiScene* GetAiScene() { return m_pScene; }
 

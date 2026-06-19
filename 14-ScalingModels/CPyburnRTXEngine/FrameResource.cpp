@@ -31,11 +31,11 @@ namespace CPyburnRTXEngine
         BatchSubmit[1] = m_commandLists[COMMAND_LIST_POST_1].Get();
     }
 
-    ID3D12GraphicsCommandList4* FrameResource::ResetCommandList(const int commandList, ID3D12PipelineState* pInitialState)
+    ID3D12GraphicsCommandList4* FrameResource::ResetCommandList(const int commandListIndex, ID3D12PipelineState* pInitialState)
     {
-        DX::ThrowIfFailed(m_commandAllocators[commandList]->Reset());
-        DX::ThrowIfFailed(m_commandLists[commandList]->Reset(m_commandAllocators[commandList].Get(), pInitialState));
-        return m_commandLists[commandList].Get();
+        DX::ThrowIfFailed(m_commandAllocators[commandListIndex]->Reset());
+        DX::ThrowIfFailed(m_commandLists[commandListIndex]->Reset(m_commandAllocators[commandListIndex].Get(), pInitialState));
+        return m_commandLists[commandListIndex].Get();
     }
 
     void FrameResource::Release()

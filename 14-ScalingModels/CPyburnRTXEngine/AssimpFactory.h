@@ -48,6 +48,7 @@ namespace CPyburnRTXEngine
 
 		struct Model
 		{
+		public:
 			UINT modelId = MAXUINT;
 			std::string name = "not set";
 			UINT meshEntryLocation = MAXUINT;
@@ -59,10 +60,29 @@ namespace CPyburnRTXEngine
 			std::vector<Texture::HeapTexture> texturesHeapNrm;
 			std::vector<Texture::HeapTexture> texturesHeapOrm;
 
-			std::unique_ptr<AssimpFactory> assimpFactory = nullptr; // pointer to the ONE copy of the static model and resources
-			std::unique_ptr<BufferBlas<AssimpFactory::VSVertices>> blas = nullptr;
+		private:
+			std::unique_ptr<AssimpFactory> assimpFactoryOwner = nullptr; // pointer to the ONE copy of the static model and resources, everything should point here
+			std::unique_ptr<BufferBlas<AssimpFactory::VSVertices>> blasOwner = nullptr; // pointer to the ONE copy of the blas, everything should point here
 
-			AssimpFactory* GetAssimpFactoryPtr() { return assimpFactory.get(); }
+		public:
+			void CreateAssimpFactory(std::string modelPath)
+			{
+				if (!assimpFactoryOwner)
+				{
+					assimpFactoryOwner = std::make_unique<AssimpFactory>(this, modelPath);
+				}
+			}
+
+			void CreateBlas()
+			{
+				if (!blasOwner)
+				{
+					blasOwner = std::make_unique<BufferBlas<AssimpFactory::VSVertices>>();
+				}
+			}
+
+			AssimpFactory* GetAssimpFactoryPtr() { return assimpFactoryOwner.get(); }
+			BufferBlas<AssimpFactory::VSVertices>* GetBlasPtr() { return blasOwner.get(); } // owner but only for static objects, animation/vegitation will have their own blas if they are not static
 
 			Model() = default;
 			Model(const Model&) = delete;
@@ -71,8 +91,6 @@ namespace CPyburnRTXEngine
 			Model& operator=(Model&&) noexcept = default;
 		};
 		static std::map<UINT, Model> Models;
-
-
 
 		struct MeshEntry
 		{

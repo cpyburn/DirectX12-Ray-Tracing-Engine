@@ -247,7 +247,7 @@ namespace CPyburnRTXEngine
                 XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
                 memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
                 //pInstanceDesc[i].AccelerationStructure = entity->GetAssimpAnimations()->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
-                pInstanceDesc[i].AccelerationStructure = entity->GetAssimpFactoryModel()->blas->GetResult()->GetGPUVirtualAddress(); // triangle blas
+                pInstanceDesc[i].AccelerationStructure = entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress(); // triangle blas
                 pInstanceDesc[i].InstanceMask = 0xFF;
             }
         }

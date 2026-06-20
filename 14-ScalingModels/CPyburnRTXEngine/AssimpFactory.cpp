@@ -439,10 +439,10 @@ namespace CPyburnRTXEngine
 			m_boneBuffer->CpuData = m_bones;
 			m_boneBuffer->CreateOnDefaultHeap(commandList, L"Bone Data Buffer: " + static_cast<WCHAR>(m_modelPtr->modelId));
 		}
-		else if (!m_modelPtr->blas.get()) // no bones
+		else if (!m_modelPtr->GetBlasPtr()) // no bones
 		{
-			m_modelPtr->blas = std::make_unique<BufferBlas<AssimpFactory::VSVertices>>();
-			m_modelPtr->blas->InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_meshEntries[0].vertices.size()), m_vertexBuffer.DefaultHeapResource, commandList, m_indexBuffer.DefaultHeapResource, static_cast<UINT>(m_meshEntries[0].indices.size()));
+			m_modelPtr->CreateBlas();
+			m_modelPtr->GetBlasPtr()->InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_meshEntries[0].vertices.size()), m_vertexBuffer.DefaultHeapResource, commandList, m_indexBuffer.DefaultHeapResource, static_cast<UINT>(m_meshEntries[0].indices.size()));
 		}
 	}
 

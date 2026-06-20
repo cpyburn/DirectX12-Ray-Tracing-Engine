@@ -50,11 +50,11 @@ namespace CPyburnRTXEngine
 			if (it != AssimpFactory::Models.end())
 			{
 				AssimpFactory::Model* model = &it->second;
-				if (!model->assimpFactory)
+				if (!model->GetAssimpFactoryPtr())
 				{
 					std::string modelPath = "..\\..\\Assets\\Models\\" + model->contentLocation + model->name;
-					model->assimpFactory = std::make_unique<AssimpFactory>(model, modelPath);
-					model->assimpFactory->CreateDeviceDependentResources(deviceResources);
+					model->CreateAssimpFactory(modelPath);
+					model->GetAssimpFactoryPtr()->CreateDeviceDependentResources(deviceResources);
 				}
 
 				entity->CreateAssimpAnimations(model->GetAssimpFactoryPtr());
@@ -75,7 +75,7 @@ namespace CPyburnRTXEngine
 				animation->CreateBuffers(commandList);
 				animation->CreateShaderResources();
 			}
-			else if(!entity->GetAssimpFactoryModel()->blas)
+			else if(!entity->GetAssimpFactoryModel()->GetBlasPtr())
 			{
 				entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->CreateBuffers(commandList);
 				entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->CreateShaderResources();
@@ -137,14 +137,14 @@ namespace CPyburnRTXEngine
 
 				animation->GetAnimationBlas()->UpdateBlas(commandList);
 			}
-			else if (entity->GetAssimpFactoryModel()->assimpFactory)
+			else if (entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr())
 			{
 				//D3D12_RESOURCE_BARRIER uavBarrier = {};
 				//uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 				//uavBarrier.UAV.pResource = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetVertexBuffer()->DefaultHeapResource.Get();
 				//commandList->ResourceBarrier(1, &uavBarrier);
 
-				entity->GetAssimpFactoryModel()->blas->UpdateBlas(commandList);
+				entity->GetAssimpFactoryModel()->GetBlasPtr()->UpdateBlas(commandList);
 			}
 		}
 	}

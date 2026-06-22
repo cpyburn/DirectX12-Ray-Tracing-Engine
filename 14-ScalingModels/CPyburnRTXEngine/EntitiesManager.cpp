@@ -135,7 +135,7 @@ namespace CPyburnRTXEngine
 				uavBarrier.UAV.pResource = animation->GetAnimationCompute()->GetVertexOutputBuffer().DefaultHeapResource.Get();
 				commandList->ResourceBarrier(1, &uavBarrier);
 
-				animation->GetAnimationBlas()->UpdateBlas(commandList);
+				animation->GetAnimationBlasPtr()->UpdateBlas(commandList);
 			}
 			else if (entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr())
 			{
@@ -144,7 +144,7 @@ namespace CPyburnRTXEngine
 				//uavBarrier.UAV.pResource = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetVertexBuffer()->DefaultHeapResource.Get();
 				//commandList->ResourceBarrier(1, &uavBarrier);
 
-				entity->GetAssimpFactoryModel()->GetBlasPtr()->UpdateBlas(commandList);
+				//entity->GetAssimpFactoryModel()->GetBlasPtr()->UpdateBlas(commandList);
 			}
 		}
 	}

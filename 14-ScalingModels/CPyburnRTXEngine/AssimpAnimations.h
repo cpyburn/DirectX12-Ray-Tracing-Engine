@@ -67,7 +67,7 @@ namespace CPyburnRTXEngine
 	public:
 		AssimpFactory* GetAssimpFactory() { return m_assimpFactory; }
 		AnimationCompute* GetAnimationCompute() { return &m_animationCompute; }
-		BufferBlas<AssimpFactory::VSVertices>* GetAnimationBlas() { return &m_animationBlas; }
+		BufferBlas<AssimpFactory::VSVertices>* GetAnimationBlasPtr() { return &m_animationBlas; }
 
 		static std::unordered_map<UINT, std::string> AnimationTypes;
 		static std::unordered_map<UINT, std::unordered_map<UINT, std::unordered_map<std::string, Animation>>> Animations;

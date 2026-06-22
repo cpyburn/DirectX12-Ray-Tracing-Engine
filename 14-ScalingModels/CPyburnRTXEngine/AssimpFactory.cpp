@@ -443,6 +443,7 @@ namespace CPyburnRTXEngine
 		{
 			m_modelPtr->CreateBlas();
 			m_modelPtr->GetBlasPtr()->InitBlas(m_deviceResources->GetD3DDevice(), static_cast<UINT>(m_meshEntries[0].vertices.size()), m_vertexBuffer.DefaultHeapResource, commandList, m_indexBuffer.DefaultHeapResource, static_cast<UINT>(m_meshEntries[0].indices.size()));
+			m_modelPtr->GetBlasPtr()->UpdateBlas(commandList);
 		}
 	}
 

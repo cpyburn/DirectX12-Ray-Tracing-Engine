@@ -14,7 +14,7 @@ namespace CPyburnRTXEngine
 		struct Batch
 		{
 			AssimpFactory::Model* model;   // non-owning
-			//std::vector<XMMATRIX> instances;
+			std::vector<XMMATRIX> instances;
 			std::vector<UINT> instanceIndices;
 		};
 

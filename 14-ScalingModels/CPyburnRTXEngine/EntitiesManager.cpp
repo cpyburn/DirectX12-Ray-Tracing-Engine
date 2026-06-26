@@ -20,6 +20,7 @@ namespace CPyburnRTXEngine
 		if (inserted)
 		{
 			m_visibleBatchesStatic.push_back(Batch{ model, {} });
+			m_visibleBatchesStatic.back().instances.reserve(64);
 			m_visibleBatchesStatic.back().instanceIndices.reserve(64);
 		}
 
@@ -60,6 +61,7 @@ namespace CPyburnRTXEngine
 
 		m_modelDataGpuMapped[instanceIndex] = data;
 
+		batch.instances.push_back(world);
 		batch.instanceIndices.push_back(instanceIndex);
 	}
 

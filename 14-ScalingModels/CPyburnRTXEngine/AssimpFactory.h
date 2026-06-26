@@ -195,7 +195,7 @@ namespace CPyburnRTXEngine
 		XMMATRIX m_boundingSphereRadiusTranslation;
 
 		void DoMeshTransforms(aiNode* node, XMMATRIX parentTransform);
-		void CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh);
+		void CreateSingleMeshEntry(const UINT& i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh);
 		void InitializeMesh(const UINT& i, MeshEntry* meshEntry);
 
 		// todo: decide if LoadAllMaterials is worth using

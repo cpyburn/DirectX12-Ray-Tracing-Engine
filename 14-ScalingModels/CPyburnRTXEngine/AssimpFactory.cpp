@@ -32,7 +32,7 @@ namespace CPyburnRTXEngine
 		}
 	}
 
-	void AssimpFactory::CreateSingleMeshEntry(UINT i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh)
+	void AssimpFactory::CreateSingleMeshEntry(const UINT& i, UINT& numVertices, UINT& numIndices, MeshEntry* mesh)
 	{
 		const aiMesh* paiMesh = m_pScene->mMeshes[i];
 
@@ -432,7 +432,7 @@ namespace CPyburnRTXEngine
 		m_indexBuffer.CpuData = m_meshEntries[0].indices;
 		m_indexBuffer.CreateOnDefaultHeap(commandList, L"Index Buffer");
 
-		if (m_numBones > 0)
+		if (m_isSkinned)
 		{
 			m_boneBuffer = std::make_unique<BufferHeap<AssimpFactory::VertexBoneData>>();
 			m_boneBuffer->CreateDeviceDependentResources(m_deviceResources->GetD3DDevice());

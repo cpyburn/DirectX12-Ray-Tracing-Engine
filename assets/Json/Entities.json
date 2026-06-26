@@ -2,8 +2,36 @@
   "entities": [
     {
       "id": 1,
-      "name": "Elf",
+      "name": "Rock 1",
       "positionX": 1.1,
+      "positionY": 8,
+      "positionZ": 2.1,
+      "scaleX": 1.1,
+      "scaleY": 1.1,
+      "scaleZ": 1.1,
+      "rotationX": 0,
+      "rotationY": 0,
+      "rotationZ": 0,
+      "modelId": 2
+    },
+    {
+      "id": 2,
+      "name": "Rock 2",
+      "positionX": 2.1,
+      "positionY": 8,
+      "positionZ": 2.1,
+      "scaleX": 1.1,
+      "scaleY": 1.1,
+      "scaleZ": 1.1,
+      "rotationX": 0,
+      "rotationY": 0,
+      "rotationZ": 0,
+      "modelId": 2
+    },
+    {
+      "id": 3,
+      "name": "Rock 3",
+      "positionX": 3.1,
       "positionY": 8,
       "positionZ": 2.1,
       "scaleX": 1.1,

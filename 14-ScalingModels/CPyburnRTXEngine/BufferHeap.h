@@ -57,7 +57,7 @@ namespace CPyburnRTXEngine
         Microsoft::WRL::ComPtr<ID3D12Resource> DefaultHeapResource = nullptr;
 
         // Persistently mapped pointer
-        uint8_t* MappedData = nullptr;
+        T* MappedData = nullptr;
 
         void CreateOnUploadHeap(const WCHAR* name = L"Upload buffer not named")
         {

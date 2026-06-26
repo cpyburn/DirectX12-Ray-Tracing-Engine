@@ -12,6 +12,15 @@ namespace CPyburnRTXEngine
 {
 	class RtxScene
 	{
+	public:
+		struct RtxModelData
+		{
+			UINT verticesSrvIndex = MAXUINT;
+			UINT indicesSrvIndex = MAXUINT;
+			UINT baseColorTexIndex = 0;
+			UINT normalTexIndex = 0;
+			UINT ormTexIndex = 0;
+		};
 	private:
 		// 14.3.b bottom-level acceleration structure
 		struct AccelerationStructureBuffers
@@ -85,17 +94,7 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::Wrappers::Event m_fenceEvent;
 		std::atomic_uint64_t m_nextFenceValue = 1;
 
-		struct RtxModelData
-		{
-			UINT verticesSrvIndex = MAXUINT;
-			UINT indicesSrvIndex = MAXUINT;
-			UINT baseColorTexIndex = 0;
-			UINT normalTexIndex = 0;
-			UINT ormTexIndex = 0;
-		};
-		std::vector<RtxModelData> m_modelDataPerInstance; // todo: always writing to this, needs to be multibuffered?
-		BufferHeap<RtxModelData> m_modelDataPerInstanceBuffer;
-
+		BufferHeap<RtxModelData> m_modelDataPerInstanceBuffer; // todo: always writing to this, needs to be multibuffered?
 		BufferBlas<XMFLOAT3> m_planeBlas;
 		
 		Environment m_environment;

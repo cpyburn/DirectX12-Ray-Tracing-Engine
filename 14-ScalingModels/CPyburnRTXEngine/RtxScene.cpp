@@ -48,15 +48,9 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0, nullptr);
 
-        //m_elfAnimated->CreateBuffers(commandList.Get());
-        //m_elfAnimated->CreateShaderResources(); // t0, t1, t2, u0 for compute
-
         EntitiesManager::CreateBuffers(commandList.Get());
 
-        // create materials
-        m_modelDataPerInstance.resize(64);
-		m_modelDataPerInstanceBuffer.CpuData = m_modelDataPerInstance;
-		m_modelDataPerInstanceBuffer.CreateOnUploadHeap(L"ModelDataPerInstance Buffer");
+
 
         // create createPlaneVB
         std::vector<XMFLOAT3> planeVertices(6);
@@ -71,9 +65,12 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CpuData = planeVertices;
 		m_planeVertexBuffer.CreateOnDefaultHeap(commandList.Get(), L"Plane Buffer");
 
+        // create model data
         // after all the buffers are created, create the shader resource views in the correct order for shader table
-        
+        m_modelDataPerInstanceBuffer.CpuData.resize(64); // arbitary number to start testing
+        m_modelDataPerInstanceBuffer.CreateOnUploadHeap(L"ModelDataPerInstance Buffer");
         m_modelDataPerInstanceBuffer.CreateShaderResourceView(true); // t0 for rtx shader
+        EntitiesManager::m_modelDataGpuMapped = m_modelDataPerInstanceBuffer.MappedData; // point to the gpu mapped data to skip unneeded iterating and updates
 
         // create textures AFTER the last shader views
         for (auto& unorderedModel : AssimpFactory::Models)
@@ -95,33 +92,6 @@ namespace CPyburnRTXEngine
             model.texturesOrm.push_back(fileName);
             model.texturesHeapOrm.push_back(Texture::LoadTextureHeap("..\\..\\Assets\\Models\\" + model.contentLocation + fileName, commandList.Get()));
         }
-
-        for (UINT i = 1; i < m_instanceData.size(); i++) // start 1 to skip plane material, which doesn't have a texture
-        {
-           
-            auto it = EntitiesManager::LoadedEntities.find(i);
-            if (it != EntitiesManager::LoadedEntities.end())
-            {
-                Entity* entity = &it->second;
-                if (entity->GetAssimpAnimations())
-                {
-                    m_modelDataPerInstance[i].verticesSrvIndex = entity->GetAssimpAnimations()->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
-                    m_modelDataPerInstance[i].indicesSrvIndex = entity->GetAssimpAnimations()->GetAssimpFactory()->GetIndexBuffer()->HeapIndex;
-                }
-                else
-                {
-                    m_modelDataPerInstance[i].verticesSrvIndex = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetVertexBuffer()->HeapIndex;
-                    m_modelDataPerInstance[i].indicesSrvIndex = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->GetIndexBuffer()->HeapIndex;
-                }
-
-                m_modelDataPerInstance[i].baseColorTexIndex = entity->GetAssimpFactoryModel()->texturesHeap[0].indexInMaterialBuffer;
-                m_modelDataPerInstance[i].normalTexIndex = entity->GetAssimpFactoryModel()->texturesHeapNrm[0].indexInMaterialBuffer;
-                m_modelDataPerInstance[i].ormTexIndex = entity->GetAssimpFactoryModel()->texturesHeapOrm[0].indexInMaterialBuffer;
-            }
-        }
-
-        m_modelDataPerInstanceBuffer.CpuData = m_modelDataPerInstance;
-        m_modelDataPerInstanceBuffer.CopyCpuDataToUploadHeap();
 
         // upload goes out of scope if we don't execute the command list and wait for the GPU to finish before exiting the function, so execute and wait here
         DX::ThrowIfFailed(commandList->Close());
@@ -219,6 +189,7 @@ namespace CPyburnRTXEngine
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
         }
 
+        // todo: no need to map and unmap since we write every frame
         D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
         mpTopLevelAS[currentFrame].pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
         ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size()));
@@ -812,9 +783,10 @@ namespace CPyburnRTXEngine
 		m_planeVertexBuffer.CreateDeviceDependentResources(deviceResources->GetD3DDevice());
 
         m_instanceData.reserve(64);
-        m_instanceData.resize(2); // 1 at least for plane
+        m_instanceData.resize(3); // 1 at least for plane
         m_instanceData[0].world = XMMatrixIdentity();
         m_instanceData[1].world = XMMatrixIdentity();
+        m_instanceData[2].world = XMMatrixIdentity() * XMMatrixTranslation(1, 0, 0);
 
         CreateCommandObjects();
         CreateBuffers();
@@ -831,42 +803,6 @@ namespace CPyburnRTXEngine
 
     void RtxScene::Update(DX::StepTimer const& timer, CameraBase* camera)
     {
-        //UINT terrainInstanceCount = 1;
-        //m_instanceData.reserve(terrainInstanceCount + EntitiesManager::m_instanceCountStatic);
-        //UINT addedInstanceCount = terrainInstanceCount;
-        //for (UINT i = 0; i < EntitiesManager::m_visibleBatchesStatic.size(); i++)
-        //{
-        //    std::vector<InstanceData>& dst = m_instanceData;
-        //    std::vector<XMMATRIX>& src = EntitiesManager::m_visibleBatchesStatic[i].instances;
-        //    m_instanceData.insert(m_instanceData.begin() + addedInstanceCount, src.begin(), src.end());
-        //    addedInstanceCount += src.size();
-        //}
-
-        //float rotation = static_cast<float>(timer.GetTotalSeconds()) * 0.5f;
-
-        //XMVECTOR vec1 = XMVectorSet(-2, 0, 0, 0);
-        //XMMATRIX translation1 = XMMatrixTranslationFromVector(vec1);
-
-        //// 3 instances
-        //m_instanceData[1].world = XMMatrixRotationY(rotation) * translation1;
-        //m_instanceData[2].world = XMMatrixTranslation(2, 0, 0) * XMMatrixRotationY(-rotation);
-
-        // update the bones
-        //m_elfAnimated->Update(timer);
-        
-        // chad: being done in game now
-        //EntitiesManager::Update(timer, camera);
-//#ifdef _DEBUG
-//        std::vector<XMMATRIX> testingBoundingSphereInstances(17);
-//        for (size_t i = 1; i < m_instanceData.size(); i++)
-//        {
-//            testingBoundingSphereInstances[i - 1] = m_instanceData[i].world;
-//        }
-//        m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
-//        m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Update(XMMatrixIdentity(), camera, &testingBoundingSphereInstances, 0, static_cast<UINT>(testingBoundingSphereInstances.size()));
-//#else
-//
-//#endif
         m_environment.Update(timer, camera);
     }
 

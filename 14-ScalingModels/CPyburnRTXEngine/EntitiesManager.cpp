@@ -12,20 +12,55 @@ namespace CPyburnRTXEngine
 
 	void EntitiesManager::AddVisible(Entity* entity, AssimpFactory::Model* model, UINT modelId, const XMMATRIX& world)
 	{
-		if (!entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->IsSkinned())
+		if (entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr()->IsSkinned())
+			return;
+
+		auto [it, inserted] = m_batchIndexByModelIdStatic.try_emplace(modelId, m_visibleBatchesStatic.size());
+
+		if (inserted)
 		{
-			auto [it, inserted] = m_batchIndexByModelIdStatic.try_emplace(modelId, m_visibleBatchesStatic.size());
-
-			if (inserted)
-			{
-				m_visibleBatchesStatic.push_back(Batch{ model, {} });
-				m_visibleBatchesStatic.back().instances.reserve(64); // estimate
-			}
-
-			m_visibleBatchesStatic[it->second].instances.push_back(world);
-
-			m_instanceCountStatic++;
+			m_visibleBatchesStatic.push_back(Batch{ model, {} });
+			m_visibleBatchesStatic.back().instanceIndices.reserve(64);
 		}
+
+		Batch& batch = m_visibleBatchesStatic[it->second];
+
+		UINT instanceIndex = m_startingOffset + m_instanceCountStatic++;
+
+		D3D12_RAYTRACING_INSTANCE_DESC& instance = m_instanceDescGpuMapped[instanceIndex];
+
+		instance.InstanceID = instanceIndex;
+		instance.InstanceContributionToHitGroupIndex = 0;
+		instance.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+
+		XMMATRIX transpose = XMMatrixTranspose(world);
+		memcpy(instance.Transform, &transpose, sizeof(instance.Transform));
+
+		instance.AccelerationStructure = entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress();
+		instance.InstanceMask = 0xFF;
+
+		RtxScene::RtxModelData data{};
+
+		if (auto* anims = entity->GetAssimpAnimations())
+		{
+			data.verticesSrvIndex = anims->GetAnimationCompute()->GetVertexOutputBuffer().HeapIndex;
+			data.indicesSrvIndex = anims->GetAssimpFactory()->GetIndexBuffer()->HeapIndex;
+		}
+		else
+		{
+			auto* factory = entity->GetAssimpFactoryModel()->GetAssimpFactoryPtr();
+			data.verticesSrvIndex = factory->GetVertexBuffer()->HeapIndex;
+			data.indicesSrvIndex = factory->GetIndexBuffer()->HeapIndex;
+		}
+
+		auto* modelPtr = entity->GetAssimpFactoryModel();
+		data.baseColorTexIndex = modelPtr->texturesHeap[0].indexInMaterialBuffer;
+		data.normalTexIndex = modelPtr->texturesHeapNrm[0].indexInMaterialBuffer;
+		data.ormTexIndex = modelPtr->texturesHeapOrm[0].indexInMaterialBuffer;
+
+		m_modelDataGpuMapped[instanceIndex] = data;
+
+		batch.instanceIndices.push_back(instanceIndex);
 	}
 
 	EntitiesManager::EntitiesManager()
@@ -86,6 +121,7 @@ namespace CPyburnRTXEngine
 	void EntitiesManager::Update(DX::StepTimer const& timer, CameraBase* camera)
 	{
 		m_instanceCountStatic = 0;
+		m_startingOffset = 1; // todo: make this dynamic based on terrain, right now 1 is fine
 		m_batchIndexByModelIdStatic.clear();
 		m_visibleBatchesStatic.clear();
 

@@ -51,7 +51,6 @@ public:
     void GetDefaultSize( int& width, int& height ) const noexcept;
 
 private:
-
     void Update(DX::StepTimer const& timer);
     void Render();
 

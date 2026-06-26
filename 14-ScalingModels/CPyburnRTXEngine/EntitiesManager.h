@@ -26,23 +26,22 @@ namespace CPyburnRTXEngine
 		inline static UINT m_startingOffset = 1; // todo: 1 is hard coded for terrain/plane, but needs to be fixed
 		inline static RtxScene::RtxModelData* m_modelDataGpuMapped = nullptr;
 
-		static void AddVisible(Entity* entity, AssimpFactory::Model* model, UINT modelId, const XMMATRIX& world);
-
 	private:
+		void AddVisible(Entity* entity, AssimpFactory::Model* model, UINT modelId, const XMMATRIX& world);
+
 		DX::DeviceResources* m_deviceResources = nullptr;
 	public:
 		static std::unordered_map<UINT, Entity> LoadedEntities;
 		
-
 		EntitiesManager();
 		~EntitiesManager();
 
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
-		static void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
-		static void Update(DX::StepTimer const& timer, CameraBase* camera);
-		static void RenderBounding(ID3D12GraphicsCommandList4* commandList);
-		static void DispatchAndUpdateBlas(ID3D12GraphicsCommandList4* commandList);
-		static void LoadJson();
+		void CreateBuffers(ID3D12GraphicsCommandList4* commandList);
+		void Update(DX::StepTimer const& timer, CameraBase* camera);
+		void RenderBounding(ID3D12GraphicsCommandList4* commandList);
+		void DispatchAndUpdateBlas(ID3D12GraphicsCommandList4* commandList);
+		void LoadJson();
 	};
 }
 

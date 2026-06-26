@@ -10,6 +10,8 @@
 
 namespace CPyburnRTXEngine
 {
+	class EntitiesManager; // forward declaration
+
 	class RtxScene
 	{
 	public:
@@ -47,6 +49,7 @@ namespace CPyburnRTXEngine
 		};
 
 		DX::DeviceResources* m_deviceResources = nullptr;
+		EntitiesManager* m_entitiesManagerPtr = nullptr;
 
 		void CreateCommandObjects();
 		void CreateBuffers();
@@ -100,12 +103,14 @@ namespace CPyburnRTXEngine
 		Environment m_environment;
 
 	public:
+		void SetEntitiesManager(EntitiesManager* entitiesManager) { m_entitiesManagerPtr = entitiesManager; }
+
 		RtxScene();
 		~RtxScene();
 		void CreateDeviceDependentResources(DX::DeviceResources* deviceResources);
 		void CreateWindowSizeDependentResources(); // todo: this method when we visit refitting
 		void Update(DX::StepTimer const& timer, CameraBase* camera);
-		void Render(CameraBase* camera);
+		void Render(CameraBase* camera); // todo: rethink entities manager
 		void Release();
 	};
 }

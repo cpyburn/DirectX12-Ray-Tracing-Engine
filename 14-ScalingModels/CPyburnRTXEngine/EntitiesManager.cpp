@@ -96,6 +96,21 @@ namespace CPyburnRTXEngine
 				entity->CreateDeviceDependentResources(deviceResources);
 			}
 		}
+
+		// todo: move this eventually to game.cpp
+		{
+			// initialize Gpu resources
+			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0, nullptr);
+
+			CreateBuffers(commandList.Get());
+
+			DX::ThrowIfFailed(commandList->Close());
+			ID3D12CommandList* ppCommandLists[] = { commandList.Get() };
+			m_deviceResources->GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+			m_deviceResources->WaitForGpu();
+
+			//m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0);
+		}
 	}
 
 	// todo: not sure I want to keep this static, need to think about it

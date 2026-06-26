@@ -48,10 +48,6 @@ namespace CPyburnRTXEngine
     {
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> commandList = m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0, nullptr);
 
-        EntitiesManager::CreateBuffers(commandList.Get());
-
-
-
         // create createPlaneVB
         std::vector<XMFLOAT3> planeVertices(6);
         planeVertices[0] = XMFLOAT3(-100, -1, -2);
@@ -834,7 +830,7 @@ namespace CPyburnRTXEngine
 
         /*m_elfAnimated->GetAssimpFactory()->GetBoundingBoxRenderer().Render(m_sceneCommandList);
         m_elfAnimated->GetAssimpFactory()->GetBoundingSphereRenderer().Render(m_sceneCommandList);*/
-        EntitiesManager::RenderBounding(m_sceneCommandList);
+        m_entitiesManagerPtr->RenderBounding(m_sceneCommandList);
 #else
 
 #endif
@@ -863,7 +859,7 @@ namespace CPyburnRTXEngine
 
         //m_elfAnimated->GetAnimationBlas()->UpdateDynamicBlas(m_sceneCommandList);
 
-        EntitiesManager::DispatchAndUpdateBlas(m_sceneCommandList);
+        m_entitiesManagerPtr->DispatchAndUpdateBlas(m_sceneCommandList);
 
 
         // Populate m_sceneCommandList to render scene to intermediate render target.

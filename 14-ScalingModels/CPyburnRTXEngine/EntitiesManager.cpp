@@ -28,7 +28,7 @@ namespace CPyburnRTXEngine
 
 		UINT instanceIndex = m_startingOffset + m_instanceCountStatic++;
 
-		D3D12_RAYTRACING_INSTANCE_DESC& instance = m_instanceDescGpuMapped[instanceIndex];
+		D3D12_RAYTRACING_INSTANCE_DESC& instance = m_instanceDescGpuMapped[m_deviceResources->GetCurrentFrameIndex()][instanceIndex];
 
 		instance.InstanceID = instanceIndex;
 		instance.InstanceContributionToHitGroupIndex = 0;

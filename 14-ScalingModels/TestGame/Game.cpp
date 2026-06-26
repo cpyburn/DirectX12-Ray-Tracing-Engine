@@ -88,9 +88,9 @@ void Game::Update(DX::StepTimer const& timer)
         CreateWindowSizeDependentResources();
     }
 
-    m_rtxScene.Update(timer, &m_camera);
     m_camera.Update(timer, &m_gameInput);
     m_entitiesManager.Update(timer, &m_camera);
+    m_rtxScene.Update(timer, &m_camera);
 
     PIXEndEvent();
 }

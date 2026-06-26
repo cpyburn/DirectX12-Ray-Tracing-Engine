@@ -97,6 +97,7 @@ namespace CPyburnRTXEngine
 		Microsoft::WRL::Wrappers::Event m_fenceEvent;
 		std::atomic_uint64_t m_nextFenceValue = 1;
 
+		D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc[DX::DeviceResources::c_backBufferCount] = { nullptr };
 		BufferHeap<RtxModelData> m_modelDataPerInstanceBuffer; // todo: always writing to this, needs to be multibuffered?
 		BufferBlas<XMFLOAT3> m_planeBlas;
 		

@@ -11,6 +11,9 @@ namespace CPyburnRTXEngine
 	class EntitiesManager
 	{
 	public:
+		inline static UINT m_maxEntities = 8192; // 8K //65536; // 64K
+		inline static UINT m_startingOffset = 1; // todo: 1 is hard coded for terrain/plane, but needs to be fixed
+
 		struct Batch
 		{
 			AssimpFactory::Model* model;   // non-owning
@@ -18,12 +21,14 @@ namespace CPyburnRTXEngine
 			std::vector<UINT> instanceIndices;
 		};
 
-		inline static D3D12_RAYTRACING_INSTANCE_DESC* m_instanceDescGpuMapped = new D3D12_RAYTRACING_INSTANCE_DESC[64];
+		inline static D3D12_RAYTRACING_INSTANCE_DESC* m_instanceDescGpuMapped[DX::DeviceResources::c_backBufferCount] =
+		{
+			nullptr
+		};
+
 		static std::unordered_map<UINT, size_t> m_batchIndexByModelIdStatic;
 		static std::vector<Batch> m_visibleBatchesStatic;
 		inline static UINT m_instanceCountStatic;
-
-		inline static UINT m_startingOffset = 1; // todo: 1 is hard coded for terrain/plane, but needs to be fixed
 		inline static RtxScene::RtxModelData* m_modelDataGpuMapped = nullptr;
 
 	private:

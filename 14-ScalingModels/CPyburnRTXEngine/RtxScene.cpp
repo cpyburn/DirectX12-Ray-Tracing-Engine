@@ -117,6 +117,9 @@ namespace CPyburnRTXEngine
         for (UINT i = 0; i < DX::DeviceResources::c_backBufferCount; i++)
         {
             RefitOrRebuildTLAS(commandList.Get(), i, false);
+
+            // map the instances to the entities manager
+            
         }
 
         // Close the resource creation command list and execute it to begin the vertex buffer copy into
@@ -167,37 +170,42 @@ namespace CPyburnRTXEngine
         }
         else
         {
-            //ComPtr<ID3D12Resource> pScratch;
             auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
 
             m_bufDesc.Width = info.ResultDataMaxSizeInBytes;
-            //ComPtr<ID3D12Resource> pResult;
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
             mTlasSize = info.ResultDataMaxSizeInBytes;
 
             // The instance desc should be inside a buffer, create and map the buffer
             m_bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-            m_bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size());
-
-            //ComPtr<ID3D12Resource> pInstanceDescResource;
+            m_bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * EntitiesManager::m_maxEntities;
             auto heapPropertiesUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
             DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
+        
+            // todo: no need to map and unmap since we write every frame
+            mpTopLevelAS[currentFrame].pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc[currentFrame]);
+            ZeroMemory(pInstanceDesc[currentFrame], sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(EntitiesManager::m_maxEntities));
+            EntitiesManager::m_instanceDescGpuMapped[currentFrame] = pInstanceDesc[currentFrame];
+
+            // plane
+            pInstanceDesc[currentFrame][0].InstanceID = 0;
+            pInstanceDesc[currentFrame][0].InstanceContributionToHitGroupIndex = 2;
+            pInstanceDesc[currentFrame][0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+            XMMATRIX transpose = XMMatrixTranspose(m_instanceData[0].world);
+            memcpy(pInstanceDesc[currentFrame][0].Transform, &transpose, sizeof(pInstanceDesc[currentFrame][0].Transform));
+            pInstanceDesc[currentFrame][0].AccelerationStructure = m_planeBlas.GetResult()->GetGPUVirtualAddress(); // plane blas
+            pInstanceDesc[currentFrame][0].InstanceMask = 0xFF;
         }
 
-        // todo: no need to map and unmap since we write every frame
-        D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc;
-        mpTopLevelAS[currentFrame].pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc);
-        ZeroMemory(pInstanceDesc, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * static_cast<UINT>(m_instanceData.size()));
-
         // plane
-        pInstanceDesc[0].InstanceID = 0;
-        pInstanceDesc[0].InstanceContributionToHitGroupIndex = 2;
-        pInstanceDesc[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-        XMMATRIX transpose = XMMatrixTranspose(m_instanceData[0].world);
-        memcpy(pInstanceDesc[0].Transform, &transpose, sizeof(pInstanceDesc[0].Transform));
-        pInstanceDesc[0].AccelerationStructure = m_planeBlas.GetResult()->GetGPUVirtualAddress(); // plane blas
-        pInstanceDesc[0].InstanceMask = 0xFF;
+        //pInstanceDesc[currentFrame][0].InstanceID = 0;
+        //pInstanceDesc[currentFrame][0].InstanceContributionToHitGroupIndex = 2;
+        //pInstanceDesc[currentFrame][0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+        //XMMATRIX transpose = XMMatrixTranspose(m_instanceData[0].world);
+        //memcpy(pInstanceDesc[currentFrame][0].Transform, &transpose, sizeof(pInstanceDesc[currentFrame][0].Transform));
+        //pInstanceDesc[currentFrame][0].AccelerationStructure = m_planeBlas.GetResult()->GetGPUVirtualAddress(); // plane blas
+        //pInstanceDesc[currentFrame][0].InstanceMask = 0xFF;
 
         // model
         for (UINT i = 1; i < m_instanceData.size(); i++)
@@ -207,20 +215,22 @@ namespace CPyburnRTXEngine
             {
                 Entity* entity = &it->second;
 
-                pInstanceDesc[i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
+                //pInstanceDesc[currentFrame][i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
                 // 13.3.a
-                pInstanceDesc[i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace()
-                pInstanceDesc[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-                XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
-                memcpy(pInstanceDesc[i].Transform, &transpose, sizeof(pInstanceDesc[i].Transform));
+                //pInstanceDesc[currentFrame][i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace()
+                //pInstanceDesc[currentFrame][i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+                //XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
+                //memcpy(pInstanceDesc[currentFrame][i].Transform, &transpose, sizeof(pInstanceDesc[currentFrame][i].Transform));
                 //pInstanceDesc[i].AccelerationStructure = entity->GetAssimpAnimations()->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
-                pInstanceDesc[i].AccelerationStructure = entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress(); // triangle blas
-                pInstanceDesc[i].InstanceMask = 0xFF;
+                EntitiesManager::m_instanceDescGpuMapped[currentFrame][i].AccelerationStructure = entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress(); // triangle blas
+                //pInstanceDesc[currentFrame][i].InstanceMask = 0xFF;
             }
         }
 
+        //EntitiesManager::m_instanceDescGpuMapped[currentFrame] = pInstanceDesc[currentFrame];
+
         // Unmap
-        mpTopLevelAS[currentFrame].pInstanceDescResource->Unmap(0, nullptr);
+        //mpTopLevelAS[currentFrame].pInstanceDescResource->Unmap(0, nullptr);
 
         // Create the TLAS
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -861,7 +871,6 @@ namespace CPyburnRTXEngine
 
         m_entitiesManagerPtr->DispatchAndUpdateBlas(m_sceneCommandList);
 
-
         // Populate m_sceneCommandList to render scene to intermediate render target.
         {
             PIXBeginEvent(m_sceneCommandList, 0, L"TestModel.");
@@ -873,6 +882,7 @@ namespace CPyburnRTXEngine
                 //    RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true); // if the next one is not ready, fall back here, but if this happens, you should consider a different architecture as it means you are not able to keep up with the updates
                 //}
 
+                //m_deviceResources->WaitForGpu();
                 RefitOrRebuildTLAS(m_sceneCommandList, m_deviceResources->GetCurrentFrameIndex(), true);
 
                 //ID3D12DescriptorHeap* ppHeaps[] = { GraphicsContexts::c_heap.Get() };

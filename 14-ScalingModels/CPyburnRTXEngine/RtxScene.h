@@ -61,6 +61,9 @@ namespace CPyburnRTXEngine
 
 		BufferHeap<XMFLOAT3> m_planeVertexBuffer;
 
+		void InitializeTlas(ID3D12GraphicsCommandList4* commandList);
+		void UpdateTlas(ID3D12GraphicsCommandList4* commandList, const UINT& frame);
+
 		void RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update);
 		void RefitOrRebuildTLASNext();
 		void WaitForFrameSlot(UINT frameIndex);
@@ -98,6 +101,7 @@ namespace CPyburnRTXEngine
 		std::atomic_uint64_t m_nextFenceValue = 1;
 
 		D3D12_RAYTRACING_INSTANCE_DESC* pInstanceDesc[DX::DeviceResources::c_backBufferCount] = { nullptr };
+		
 		BufferHeap<RtxModelData> m_modelDataPerInstanceBuffer; // todo: always writing to this, needs to be multibuffered?
 		BufferBlas<XMFLOAT3> m_planeBlas;
 		

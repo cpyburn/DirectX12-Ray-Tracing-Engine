@@ -132,6 +132,176 @@ namespace CPyburnRTXEngine
         //m_deviceResources->GetCurrentFrameResource()->ResetCommandList(0, nullptr);
     }
 
+    void RtxScene::InitializeTlas(ID3D12GraphicsCommandList4* commandList)
+    {
+        for (UINT currentFrame = 0; currentFrame < DX::DeviceResources::c_backBufferCount; currentFrame++)
+        {
+            // First, get the size of the TLAS buffers and create them
+            D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+            inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+            // 14.1.b
+            inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+            inputs.NumDescs = static_cast<UINT>(m_instanceData.size());
+            inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
+            m_deviceResources->GetD3DDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
+
+            D3D12_RESOURCE_DESC m_bufDesc = {};
+            m_bufDesc.Alignment = 0;
+            m_bufDesc.DepthOrArraySize = 1;
+            m_bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            // Create the buffers
+            m_bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+            m_bufDesc.Format = DXGI_FORMAT_UNKNOWN;
+            m_bufDesc.Height = 1;
+            m_bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            m_bufDesc.MipLevels = 1;
+            m_bufDesc.SampleDesc.Count = 1;
+            m_bufDesc.SampleDesc.Quality = 0;
+            m_bufDesc.Width = info.ScratchDataSizeInBytes;
+
+            auto heapPropertiesDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pScratch)));
+
+            m_bufDesc.Width = info.ResultDataMaxSizeInBytes;
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesDefault, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pResult)));
+            mTlasSize = info.ResultDataMaxSizeInBytes;
+
+            // The instance desc should be inside a buffer, create and map the buffer
+            m_bufDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+            m_bufDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * EntitiesManager::m_maxEntities;
+            auto heapPropertiesUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+            DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateCommittedResource(&heapPropertiesUpload, D3D12_HEAP_FLAG_NONE, &m_bufDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mpTopLevelAS[currentFrame].pInstanceDescResource)));
+
+            // todo: no need to map and unmap since we write every frame
+            mpTopLevelAS[currentFrame].pInstanceDescResource->Map(0, nullptr, (void**)&pInstanceDesc[currentFrame]);
+            ZeroMemory(pInstanceDesc[currentFrame], m_bufDesc.Width);
+
+            // set pointers
+            EntitiesManager::m_instanceDescGpuMapped[currentFrame] = pInstanceDesc[currentFrame];
+
+            // plane
+            pInstanceDesc[currentFrame][0].InstanceID = 0;
+            pInstanceDesc[currentFrame][0].InstanceContributionToHitGroupIndex = 2;
+            pInstanceDesc[currentFrame][0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+            XMMATRIX transpose = XMMatrixTranspose(m_instanceData[0].world);
+            memcpy(pInstanceDesc[currentFrame][0].Transform, &transpose, sizeof(pInstanceDesc[currentFrame][0].Transform));
+            pInstanceDesc[currentFrame][0].AccelerationStructure = m_planeBlas.GetResult()->GetGPUVirtualAddress(); // plane blas
+            pInstanceDesc[currentFrame][0].InstanceMask = 0xFF;
+
+            // Create the TLAS
+            D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
+            asDesc.Inputs = inputs;
+            asDesc.Inputs.InstanceDescs = mpTopLevelAS[currentFrame].pInstanceDescResource->GetGPUVirtualAddress();
+            asDesc.DestAccelerationStructureData = mpTopLevelAS[currentFrame].pResult->GetGPUVirtualAddress();
+            asDesc.ScratchAccelerationStructureData = mpTopLevelAS[currentFrame].pScratch->GetGPUVirtualAddress();
+
+            commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+
+            // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
+            D3D12_RESOURCE_BARRIER uavBarrier = {};
+            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarrier.UAV.pResource = mpTopLevelAS[currentFrame].pResult.Get();
+            commandList->ResourceBarrier(1, &uavBarrier);
+        }
+    }
+
+    void RtxScene::UpdateTlas(ID3D12GraphicsCommandList4* commandList, const UINT& frame)
+    {
+        // First, get the size of the TLAS buffers and create them
+        D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+        inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+        // 14.1.b
+        inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+        inputs.NumDescs = static_cast<UINT>(m_instanceData.size());
+        inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+
+        D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
+        m_deviceResources->GetD3DDevice()->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
+
+        D3D12_RESOURCE_DESC m_bufDesc = {};
+        m_bufDesc.Alignment = 0;
+        m_bufDesc.DepthOrArraySize = 1;
+        m_bufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        // Create the buffers
+        m_bufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        m_bufDesc.Format = DXGI_FORMAT_UNKNOWN;
+        m_bufDesc.Height = 1;
+        m_bufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        m_bufDesc.MipLevels = 1;
+        m_bufDesc.SampleDesc.Count = 1;
+        m_bufDesc.SampleDesc.Quality = 0;
+        m_bufDesc.Width = info.ScratchDataSizeInBytes;
+
+        // If this a request for an update, then the TLAS was already used in a DispatchRay() call. We need a UAV barrier to make sure the read operation ends before updating the buffer
+        {
+            D3D12_RESOURCE_BARRIER uavBarrier = {};
+            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarrier.UAV.pResource = mpTopLevelAS[frame].pResult.Get();
+            commandList->ResourceBarrier(1, &uavBarrier);
+        }
+
+        // plane
+        //pInstanceDesc[currentFrame][0].InstanceID = 0;
+        //pInstanceDesc[currentFrame][0].InstanceContributionToHitGroupIndex = 2;
+        //pInstanceDesc[currentFrame][0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+        //XMMATRIX transpose = XMMatrixTranspose(m_instanceData[0].world);
+        //memcpy(pInstanceDesc[currentFrame][0].Transform, &transpose, sizeof(pInstanceDesc[currentFrame][0].Transform));
+        //pInstanceDesc[currentFrame][0].AccelerationStructure = m_planeBlas.GetResult()->GetGPUVirtualAddress(); // plane blas
+        //pInstanceDesc[currentFrame][0].InstanceMask = 0xFF;
+
+        assert(EntitiesManager::m_instanceDescGpuMapped[frame] == pInstanceDesc[frame]);
+
+        // model
+        for (UINT i = 1; i < m_instanceData.size(); i++)
+        {
+            auto it = EntitiesManager::LoadedEntities.find(i);
+            if (it != EntitiesManager::LoadedEntities.end())
+            {
+                Entity* entity = &it->second;
+
+                //pInstanceDesc[currentFrame][i].InstanceID = i;                            // This value will be exposed to the shader via InstanceID()
+                // 13.3.a
+                //pInstanceDesc[currentFrame][i].InstanceContributionToHitGroupIndex = 0;  // The indices are relative to to the start of the hit-table entries specified in Raytrace()
+                //pInstanceDesc[currentFrame][i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+                //XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
+                //memcpy(pInstanceDesc[currentFrame][i].Transform, &transpose, sizeof(pInstanceDesc[currentFrame][i].Transform));
+                //pInstanceDesc[i].AccelerationStructure = entity->GetAssimpAnimations()->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
+                //assert(EntitiesManager::m_instanceDescGpuMapped[currentFrame][i].AccelerationStructure == entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress());
+                UINT64 test = entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress();
+                EntitiesManager::m_instanceDescGpuMapped[frame][i].AccelerationStructure = test; // triangle blas
+                //pInstanceDesc[currentFrame][i].InstanceMask = 0xFF;
+            }
+        }
+
+        //EntitiesManager::m_instanceDescGpuMapped[currentFrame] = pInstanceDesc[currentFrame];
+
+        // Unmap
+        //mpTopLevelAS[currentFrame].pInstanceDescResource->Unmap(0, nullptr);
+
+        // Create the TLAS
+        D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
+        asDesc.Inputs = inputs;
+        asDesc.Inputs.InstanceDescs = mpTopLevelAS[frame].pInstanceDescResource->GetGPUVirtualAddress();
+        asDesc.DestAccelerationStructureData = mpTopLevelAS[frame].pResult->GetGPUVirtualAddress();
+        asDesc.ScratchAccelerationStructureData = mpTopLevelAS[frame].pScratch->GetGPUVirtualAddress();
+
+        // 14.1.e If this is an update operation, set the source buffer and the perform_update flag
+        asDesc.Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+        asDesc.SourceAccelerationStructureData = mpTopLevelAS[frame].pResult->GetGPUVirtualAddress();
+
+        commandList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+
+        // We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
+        {
+            D3D12_RESOURCE_BARRIER uavBarrier = {};
+            uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            uavBarrier.UAV.pResource = mpTopLevelAS[frame].pResult.Get();
+            commandList->ResourceBarrier(1, &uavBarrier);
+        }
+    }
+
     void RtxScene::RefitOrRebuildTLAS(ID3D12GraphicsCommandList4* commandList, UINT currentFrame, bool update)
     {
         // First, get the size of the TLAS buffers and create them
@@ -207,6 +377,8 @@ namespace CPyburnRTXEngine
         //pInstanceDesc[currentFrame][0].AccelerationStructure = m_planeBlas.GetResult()->GetGPUVirtualAddress(); // plane blas
         //pInstanceDesc[currentFrame][0].InstanceMask = 0xFF;
 
+        assert(EntitiesManager::m_instanceDescGpuMapped[currentFrame] == pInstanceDesc[currentFrame]);
+
         // model
         for (UINT i = 1; i < m_instanceData.size(); i++)
         {
@@ -222,7 +394,9 @@ namespace CPyburnRTXEngine
                 //XMMATRIX transpose = XMMatrixTranspose(m_instanceData[i].world);
                 //memcpy(pInstanceDesc[currentFrame][i].Transform, &transpose, sizeof(pInstanceDesc[currentFrame][i].Transform));
                 //pInstanceDesc[i].AccelerationStructure = entity->GetAssimpAnimations()->GetAnimationBlas()->GetResult()->GetGPUVirtualAddress(); // triangle blas
-                EntitiesManager::m_instanceDescGpuMapped[currentFrame][i].AccelerationStructure = entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress(); // triangle blas
+                //assert(EntitiesManager::m_instanceDescGpuMapped[currentFrame][i].AccelerationStructure == entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress());
+                UINT64 test = entity->GetAssimpFactoryModel()->GetBlasPtr()->GetResult()->GetGPUVirtualAddress();
+                EntitiesManager::m_instanceDescGpuMapped[currentFrame][i].AccelerationStructure = test; // triangle blas
                 //pInstanceDesc[currentFrame][i].InstanceMask = 0xFF;
             }
         }
